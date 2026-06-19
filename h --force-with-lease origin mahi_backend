@@ -1,0 +1,16 @@
+* [33m4d15a39[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmahi_backend[m[33m)[m Added cropknowledge ,news and schemes models
+* [33m2da4282[m added cropKnowledge and news models
+[31m|[m * [33mfdf40e3[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #5 from mahibansal12/hp
+[31m|[m[31m/[m[33m|[m 
+[31m|[m * [33mba2e4fc[m[33m ([m[1;31morigin/hp[m[33m)[m created frontend basic structure
+[31m|[m[31m/[m  
+[31m|[m * [33m7d28946[m[33m ([m[1;31morigin/mahi_backend[m[33m)[m added cropknowledeg and news models
+[31m|[m[31m/[m  
+*   [33m83bb034[m[33m ([m[1;32mmain[m[33m)[m Merge pull request #3 from mahibansal12/hemant_backend
+[35m|[m[36m\[m  
+[35m|[m * [33m2466411[m[33m ([m[1;31morigin/hemant_backend[m[33m)[m Add utility classes
+* [36m|[m [33m690a889[m Merge pull request #2 from mahibansal12/hemant_backend
+[1;31m|[m[36m\[m[36m|[m 
+[1;31m|[m * [33m5544460[m Database connection and express sever setup and updated backend structure completes
+* [1;32m|[m [33m565164f[m Merge pull request #1 from mahibansal12/hemant_backend
+[1;33m|[m[1;32m\[m[1;32m|[m 
