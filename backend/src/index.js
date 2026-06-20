@@ -2,8 +2,10 @@ import dotenv from "dotenv";
 dotenv.config({
     path: './src/.env'
 })
+import { createServer } from "http";  
 import connectDB from "./db/index.js";
 import { app } from "./app.js";
+import { initSocket} from "./config/socket.js"
 import dns from "dns";
 
 
@@ -11,9 +13,12 @@ import dns from "dns";
 dns.setServers(["8.8.8.8", "1.1.1.1"]);  
 console.log(process.env.MONGO_URI);
 
+const httpServer = createServer(app);
+initSocket(httpServer);
+
 connectDB()
 .then(()=>{
-    app.listen(process.env.PORT || 4000, () => {
+   httpServer.listen(process.env.PORT || 4000, () => {  // app is replace by httpServer
     console.log(`Server is running on port ${process.env.PORT || 4000}`);
     })
 })
