@@ -1,9 +1,15 @@
-function App() {
-  return (
-    <div className="flex items-center justify-center h-screen bg-green-50">
-      <h1 className="text-4xl font-bold text-green-700">Krishi is ready! 🌾</h1>
-    </div>
-  )
-}
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { loadUserFromStorage } from "./redux/slices/authSlice";
+import AppRoutes from "./routes/AppRoutes";
 
-export default App
+export default function App() {
+  const dispatch = useDispatch();
+
+  // Restore user session from localStorage on every page refresh
+  useEffect(() => {
+    dispatch(loadUserFromStorage());
+  }, [dispatch]);
+
+  return <AppRoutes />;
+}
