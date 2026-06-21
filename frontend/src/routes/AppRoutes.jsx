@@ -42,8 +42,8 @@ const ComingSoon = ({ name }) => (
 // import AIAssistant from "../pages/AIAssistant";
 
 // ─── ROOMMATE pages (import when roommate finishes them) ───────
-// import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
-// import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
+import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
+import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
 // import Weather             from "../pages/Weather";
 // import News                from "../pages/news/News";
 // import NewsDetail          from "../pages/news/NewsDetail";
