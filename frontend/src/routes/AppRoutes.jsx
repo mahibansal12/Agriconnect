@@ -16,9 +16,8 @@ const ComingSoon = ({ name }) => (
 );
 
 // ─── Import real pages as you build them ──────────────────────
-// Week 1 — YOU build these
-// import Login    from "../pages/auth/Login";
-// import Register from "../pages/auth/Register";
+ import Login    from "../pages/auth/Login";
+ import Register from "../pages/auth/Register";
 
 // Week 2 — YOU build these
 // import Landing         from "../pages/Landing";
@@ -66,8 +65,8 @@ export default function AppRoutes() {
 
       {/* ── Public routes ── */}
       <Route path="/"         element={<ComingSoon name="Landing Page" />} />
-      <Route path="/login"    element={<ComingSoon name="Login" />} />
-      <Route path="/register" element={<ComingSoon name="Register" />} />
+      <Route path="/login"    element={<Login/>} />
+      <Route path="/register" element={<Register/>} />
 
       {/* ── Marketplace ── */}
       <Route path="/marketplace"        element={<ComingSoon name="Marketplace" />} />
