@@ -16,9 +16,8 @@ const ComingSoon = ({ name }) => (
 );
 
 // ─── Import real pages as you build them ──────────────────────
-// Week 1 — YOU build these
-// import Login    from "../pages/auth/Login";
-// import Register from "../pages/auth/Register";
+ import Login    from "../pages/auth/Login";
+ import Register from "../pages/auth/Register";
 
 // Week 2 — YOU build these
 // import Landing         from "../pages/Landing";
