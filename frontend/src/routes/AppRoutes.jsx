@@ -65,8 +65,8 @@ export default function AppRoutes() {
 
       {/* ── Public routes ── */}
       <Route path="/"         element={<ComingSoon name="Landing Page" />} />
-      <Route path="/login"    element={<ComingSoon name="Login" />} />
-      <Route path="/register" element={<ComingSoon name="Register" />} />
+      <Route path="/login"    element={<Login/>} />
+      <Route path="/register" element={<Register/>} />
 
       {/* ── Marketplace ── */}
       <Route path="/marketplace"        element={<ComingSoon name="Marketplace" />} />
