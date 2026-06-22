@@ -21,7 +21,8 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 // routes import
-
+import cropKnowledgeRoutes from "./routes/cropKnowledge.routes.js"
+app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
 
 
 export  { app };
