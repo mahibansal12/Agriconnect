@@ -17,6 +17,7 @@ const ComingSoon = ({ name }) => (
  import Login    from "../pages/auth/Login";
  import Register from "../pages/auth/Register";
 
+ import Landing         from "../pages/Landing";
 
 
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
