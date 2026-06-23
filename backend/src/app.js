@@ -24,10 +24,14 @@ app.use(cookieParser());
 // routes import
 import userRouter from "./routes/user.routes.js";
 import cropKnowledgeRoutes from "./routes/cropKnowledge.routes.js"
+import newsRoutes from "./routes/news.routes.js"
+import schemeRoutes from "./routes/scheme.routes.js"
+
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
-
+app.use("/api/v1/news", newsRoutes)
+app.use("/api/v1/schemes", schemeRoutes)
 
 app.use(errorHandler); 
 
