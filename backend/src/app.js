@@ -26,12 +26,18 @@ import userRouter from "./routes/user.routes.js";
 import cropKnowledgeRoutes from "./routes/cropKnowledge.routes.js"
 import newsRoutes from "./routes/news.routes.js"
 import schemeRoutes from "./routes/scheme.routes.js"
+import pestRoutes from "./routes/pest.routes.js"
+import shopRoutes from "./routes/shop.routes.js"
+import donationRoutes from "./routes/donation.routes.js"
 
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
 app.use("/api/v1/news", newsRoutes)
 app.use("/api/v1/schemes", schemeRoutes)
+app.use("/api/v1/pests", pestRoutes)
+app.use("/api/v1/shops", shopRoutes)
+app.use("/api/v1/donations", donationRoutes)
 
 app.use(errorHandler); 
 
