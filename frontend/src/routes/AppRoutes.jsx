@@ -14,11 +14,16 @@ const ComingSoon = ({ name }) => (
   </div>
 );
 
- import Login    from "../pages/auth/Login";
- import Register from "../pages/auth/Register";
+import Login    from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
 
- import Landing         from "../pages/Landing";
+import Landing         from "../pages/Landing";
 
+import Marketplace from "../pages/marketplace/Marketplace";
+import CropDetail  from "../pages/marketplace/CropDetail";
+import AddListing  from "../pages/marketplace/AddListing";
+import PrivateRoute from '../components/common/PrivateRoute';
+import RoleRoute    from '../components/common/RoleRoute';
 
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
@@ -33,8 +38,13 @@ export default function AppRoutes() {
       <Route path="/login"    element={<Login/>} />
       <Route path="/register" element={<Register/>} />
 
+      {/* ── Marketplace ── */}
+      <Route path="/marketplace"        element={<Marketplace />} />
+      <Route path="/marketplace/:id"    element={<CropDetail />} />
+      <Route path="/marketplace/add"    element={<Add Listing />} />
 
-      {/* ── Crop knowledge (roommate) ── */}
+
+      {/* ── Crop knowledge */}
       <Route path="/crop-knowledge"     element={<CropKnowledge />} />
       <Route path="/crop-knowledge/:id" element={<CropKnowledgeDetail />} />
 
