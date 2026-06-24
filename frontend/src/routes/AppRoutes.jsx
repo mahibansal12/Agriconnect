@@ -22,7 +22,7 @@ const ComingSoon = ({ name }) => (
 
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
-
+import Weather              from "../pages/Weather";
 
 export default function AppRoutes() {
   return (
@@ -34,12 +34,16 @@ export default function AppRoutes() {
       <Route path="/register" element={<Register/>} />
 
 
-      {/* ── Crop knowledge (roommate) ── */}
+      {/* ── Crop knowledge  ── */}
       <Route path="/crop-knowledge"     element={<CropKnowledge />} />
       <Route path="/crop-knowledge/:id" element={<CropKnowledgeDetail />} />
 
-      
+      {/* ── Weather  ── */}
+      <Route path="/weather" element={<Weather />} />
 
-    </Routes>
+      {/* ── Catch all ── */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+
+      </Routes>
   );
 }
