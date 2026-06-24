@@ -2,6 +2,7 @@ import express from 'express';
 import cors from "cors";
 import cookieParser from "cookie-parser"
 import {apiLimiter} from "./middlewares/rateLimiter.middleware.js"
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -21,8 +22,26 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 // routes import
+import userRouter from "./routes/user.routes.js";
 import cropKnowledgeRoutes from "./routes/cropKnowledge.routes.js"
+import newsRoutes from "./routes/news.routes.js"
+import schemeRoutes from "./routes/scheme.routes.js"
+import pestRoutes from "./routes/pest.routes.js"
+import shopRoutes from "./routes/shop.routes.js"
+import donationRoutes from "./routes/donation.routes.js"
+import weatherRoutes from "./routes/weather.routes.js"
+
+
+app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
+app.use("/api/v1/news", newsRoutes)
+app.use("/api/v1/schemes", schemeRoutes)
+app.use("/api/v1/pests", pestRoutes)
+app.use("/api/v1/shops", shopRoutes)
+app.use("/api/v1/donations", donationRoutes)
+app.use("/api/v1/weather", weatherRoutes)
+
+app.use(errorHandler); 
 
 
 export  { app };

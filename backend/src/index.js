@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({
-    path: './src/.env'
+    path: './.env'
 })
 import { createServer } from "http";  
 import connectDB from "./db/index.js";
