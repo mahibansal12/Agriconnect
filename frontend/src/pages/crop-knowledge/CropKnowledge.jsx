@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { mockCrops } from "./mockData";
+import { mockCrops } from "../../mockdata/cropKnowledgeMock";
 import CropInfoCard from "../../components/crop-knowledge/CropInfoCard";
 
 function CropKnowledge() {

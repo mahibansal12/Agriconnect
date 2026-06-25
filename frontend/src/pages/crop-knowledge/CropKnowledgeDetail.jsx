@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { mockCrops } from "./mockData";
+import { mockCrops } from "../../mockdata/cropKnowledgeMock";
 import GrowingGuide from "../../components/crop-knowledge/GrowingGuide";
 import FertilizerGuide from "../../components/crop-knowledge/FertilizerGuide";
 import IrrigationGuide from "../../components/crop-knowledge/IrrigationGuide";
