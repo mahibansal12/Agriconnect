@@ -25,6 +25,10 @@ import AddListing  from "../pages/marketplace/AddListing";
 import PrivateRoute from '../components/common/PrivateRoute';
 import RoleRoute    from '../components/common/RoleRoute';
 
+import MandiRates from "../pages/MandiRates";
+import FarmerDashboard from '../pages/dashboard/FarmerDashboard';
+
+
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
 import Weather              from "../pages/Weather";
@@ -45,6 +49,17 @@ export default function AppRoutes() {
       <Route path="/marketplace/:id"    element={<CropDetail />} />
       <Route path="/marketplace/add"    element={<AddListing />} />
 
+      <Route path="/mandi" element={<MandiRates />} />
+      <Route
+        path="/dashboard/farmer"
+        element={
+        <PrivateRoute>
+          <RoleRoute role="farmer">
+            <FarmerDashboard />
+          </RoleRoute>
+        </PrivateRoute>
+        }
+      />
 
       {/* ── Crop knowledge */}
       <Route path="/crop-knowledge"     element={<CropKnowledge />} />
