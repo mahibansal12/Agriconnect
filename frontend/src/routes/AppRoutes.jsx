@@ -28,6 +28,8 @@ import RoleRoute    from '../components/common/RoleRoute';
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
 import Weather              from "../pages/Weather";
+import News from "../pages/news/News";
+import NewsDetail from "../pages/news/NewsDetail";
 
 export default function AppRoutes() {
   return (
@@ -41,7 +43,7 @@ export default function AppRoutes() {
       {/* ── Marketplace ── */}
       <Route path="/marketplace"        element={<Marketplace />} />
       <Route path="/marketplace/:id"    element={<CropDetail />} />
-      <Route path="/marketplace/add"    element={<Add Listing />} />
+      <Route path="/marketplace/add"    element={<AddListing />} />
 
 
       {/* ── Crop knowledge */}
@@ -50,6 +52,10 @@ export default function AppRoutes() {
 
       {/* ── Weather  ── */}
       <Route path="/weather" element={<Weather />} />
+
+      {/* ── News  ── */}
+      <Route path="/news" element={<News />} />
+      <Route path="/news/:id" element={<NewsDetail />} /> 
 
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
