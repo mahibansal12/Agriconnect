@@ -29,6 +29,18 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 };
 
+// accepts public_id directly (stored in listing.images[].public_id)
+const deleteFromCloudinary = async (publicId) => {
+    try {
+        if (!publicId) return null;
+        const response = await cloudinary.uploader.destroy(publicId);
+        return response;
+    } catch (error) {
+        console.error("Cloudinary delete failed:", error.message);
+        return null;
+    }
+};
 
 
-export {uploadOnCloudinary}
+
+export {uploadOnCloudinary,deleteFromCloudinary}
