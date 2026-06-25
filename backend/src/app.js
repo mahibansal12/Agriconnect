@@ -29,6 +29,7 @@ import schemeRoutes from "./routes/scheme.routes.js"
 import pestRoutes from "./routes/pest.routes.js"
 import shopRoutes from "./routes/shop.routes.js"
 import donationRoutes from "./routes/donation.routes.js"
+import  cropListingRouter from "./routes/cropListing.routes.js"
 
 
 app.use("/api/v1/user", userRouter);
@@ -38,6 +39,7 @@ app.use("/api/v1/schemes", schemeRoutes)
 app.use("/api/v1/pests", pestRoutes)
 app.use("/api/v1/shops", shopRoutes)
 app.use("/api/v1/donations", donationRoutes)
+app.use("/api/v1/listing", cropListingRouter)
 
 app.use(errorHandler); 
 

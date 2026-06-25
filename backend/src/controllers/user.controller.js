@@ -9,6 +9,8 @@ const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
 
+        // console.log("ACCESS_TOKEN_SECRET →", process.env.ACCESS_TOKEN_SECRET)  // 
+        // console.log("REFRESH_TOKEN_SECRET →", process.env.REFRESH_TOKEN_SECRET)
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
@@ -17,6 +19,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
         return { accessToken, refreshToken };
     } catch (error) {
+        //console.error("Actual error →", error)
         throw new ApiError(
             500,
             "Something went wrong while generating access and refresh tokens"
