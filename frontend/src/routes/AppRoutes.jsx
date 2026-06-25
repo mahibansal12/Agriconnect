@@ -34,6 +34,8 @@ import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
 import Weather              from "../pages/Weather";
 import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail";
+import Schemes from "../pages/schemes/Schemes";
+import SchemeDetail from "../pages/schemes/SchemeDetail";
 
 export default function AppRoutes() {
   return (
@@ -71,7 +73,11 @@ export default function AppRoutes() {
       {/* ── News  ── */}
       <Route path="/news" element={<News />} />
       <Route path="/news/:id" element={<NewsDetail />} /> 
-
+        
+      {/* ── Schemes  ── */}
+      <Route path="/schemes" element={<Schemes />} />
+      <Route path="/schemes/:id" element={<SchemeDetail />} />  
+      
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
 
