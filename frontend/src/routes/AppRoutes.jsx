@@ -28,6 +28,11 @@ import RoleRoute    from '../components/common/RoleRoute';
 import MandiRates from "../pages/MandiRates";
 import FarmerDashboard from '../pages/dashboard/FarmerDashboard';
 
+import CropRecommendation  from "../pages/recommendations/CropRecommendation";
+import WaterBasedSuggestion from "../pages/recommendations/WaterBasedSuggestion";
+import SeedRecommendation  from "../pages/recommendations/SeedRecommendation";
+import Calculators         from "../pages/Calculators";
+
 
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
@@ -62,6 +67,11 @@ export default function AppRoutes() {
         </PrivateRoute>
         }
       />
+
+      <Route path="/recommendations/crop"  element={<CropRecommendation />}   />
+      <Route path="/recommendations/water" element={<WaterBasedSuggestion />} />
+      <Route path="/recommendations/seed"  element={<SeedRecommendation />}   />
+      <Route path="/calculators"           element={<Calculators />}          />
 
       {/* ── Crop knowledge */}
       <Route path="/crop-knowledge"     element={<CropKnowledge />} />
