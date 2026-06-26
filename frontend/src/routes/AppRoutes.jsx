@@ -29,7 +29,7 @@ import MandiRates from "../pages/MandiRates";
 import FarmerDashboard from '../pages/dashboard/FarmerDashboard';
 
 import CropRecommendation  from "../pages/recommendations/CropRecommendation";
-import WaterBasedSuggestion from "../pages/recommendations/WaterBasedRecommendation";
+import WaterBasedRecommendation from "../pages/recommendations/WaterBasedRecommendation";
 import SeedRecommendation  from "../pages/recommendations/SeedRecommendation";
 import Calculators         from "../pages/Calculators";
 
@@ -47,7 +47,7 @@ export default function AppRoutes() {
     <Routes>
 
       {/* ── Public routes ── */}
-      <Route path="/"         element={<ComingSoon name="Landing Page" />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/login"    element={<Login/>} />
       <Route path="/register" element={<Register/>} />
 
