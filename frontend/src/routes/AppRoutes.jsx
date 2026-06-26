@@ -29,7 +29,7 @@ import MandiRates from "../pages/MandiRates";
 import FarmerDashboard from '../pages/dashboard/FarmerDashboard';
 
 import CropRecommendation  from "../pages/recommendations/CropRecommendation";
-import WaterBasedSuggestion from "../pages/recommendations/WaterBasedSuggestion";
+import WaterBasedSuggestion from "../pages/recommendations/WaterBasedRecommendation";
 import SeedRecommendation  from "../pages/recommendations/SeedRecommendation";
 import Calculators         from "../pages/Calculators";
 
@@ -69,7 +69,7 @@ export default function AppRoutes() {
       />
 
       <Route path="/recommendations/crop"  element={<CropRecommendation />}   />
-      <Route path="/recommendations/water" element={<WaterBasedSuggestion />} />
+      <Route path="/recommendations/water" element={<WaterBasedRecommendation />} />
       <Route path="/recommendations/seed"  element={<SeedRecommendation />}   />
       <Route path="/calculators"           element={<Calculators />}          />
 
