@@ -32,6 +32,7 @@ import donationRoutes from "./routes/donation.routes.js"
 import  cropListingRouter from "./routes/cropListing.routes.js"
 import weatherRoutes from "./routes/weather.routes.js"
 import mandiRateRoutes from "./routes/mandiRate.routes.js"
+import orderRouter from "./routes/order.routes.js"
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
@@ -43,6 +44,8 @@ app.use("/api/v1/donations", donationRoutes)
 app.use("/api/v1/listing", cropListingRouter)
 app.use("/api/v1/weather", weatherRoutes)
 app.use("/api/v1/mandi", mandiRateRoutes)
+app.use("/api/v1/orders",orderRouter)
+
 app.use(errorHandler); 
 
 
