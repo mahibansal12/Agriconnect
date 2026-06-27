@@ -41,6 +41,11 @@ import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail";
 import Schemes from "../pages/schemes/Schemes";
 import SchemeDetail from "../pages/schemes/SchemeDetail";
+import Donations from "../pages/donations/Donations";
+import DonationDetail from "../pages/donations/DonationDetail";
+import PestLibrary from "../pages/pest-library/PestLibrary";
+import PestDetail from "../pages/pest-library/PestDetail";
+
 
 export default function AppRoutes() {
   return (
@@ -87,6 +92,15 @@ export default function AppRoutes() {
       {/* ── Schemes  ── */}
       <Route path="/schemes" element={<Schemes />} />
       <Route path="/schemes/:id" element={<SchemeDetail />} />  
+
+      {/* ── Donations (roommate) ── */}
+      <Route path="/donations" element={<Donations />} />
+      <Route path="/donations/:id" element={<DonationDetail />} />
+
+      {/* ── Pest library (roommate) ── */}
+      <Route path="/pests" element={<PestLibrary />} />
+      <Route path="/pests/:id" element={<PestDetail />} />
+      
       
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
