@@ -18,7 +18,7 @@ const BuyerDashboard = lazy(() =>
 );
 
 // Order form — buyer places an order
-import OrderForm from '../../pages/order/OrderForm';
+import OrderForm from '../pages/order/OrderForm';
 
 // ── Wrapper ────────────────────────────────────────────────────
 

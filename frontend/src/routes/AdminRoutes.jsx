@@ -2,13 +2,13 @@
 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy }          from 'react';
-import PrivateRoute from '../../components/common/PrivateRoute';
-import RoleRoute    from '../../components/common/RoleRoute';
-import Loader       from '../../components/common/Loader';
+import PrivateRoute from '../components/common/PrivateRoute';
+import RoleRoute    from '../components/common/RoleRoute';
+import Loader       from '../components/common/Loader';
 
 
 const AdminDashboard = lazy(() =>
-  import('../../pages/dashboard/AdminDashboard').catch(() => ({
+  import('../pages/dashboard/AdminDashboard').catch(() => ({
     default: () => (
       <div className="flex items-center justify-center min-h-screen text-gray-400">
         AdminDashboard coming soon…

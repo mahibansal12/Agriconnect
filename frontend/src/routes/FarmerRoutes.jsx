@@ -1,13 +1,13 @@
 // src/routes/FarmerRoutes.jsx
 
 import { Routes, Route, Navigate } from 'react-router-dom';
-import PrivateRoute from '../../components/common/PrivateRoute';
-import RoleRoute    from '../../components/common/RoleRoute';
+import PrivateRoute from '../components/common/PrivateRoute';
+import RoleRoute    from '../components/common/RoleRoute';
 
 // ── Farmer pages ───────────────────────────────────────────────
-import FarmerDashboard  from '../../pages/dashboard/FarmerDashboard';
-import AddListing       from '../../pages/marketplace/AddListing';
-import OrderForm        from '../../pages/order/OrderForm';
+import FarmerDashboard  from '../pages/dashboard/FarmerDashboard';
+import AddListing       from '../pages/marketplace/AddListing';
+import OrderForm        from '../pages/order/OrderForm';
 
 // ── Wrappers ───────────────────────────────────────────────────
 
