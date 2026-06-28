@@ -18,6 +18,7 @@ import Login    from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 
 import Landing         from "../pages/Landing";
+import FarmerDashboard from "../pages/dashboard/FarmerDashboard";
 
 import Marketplace from "../pages/marketplace/Marketplace";
 import CropDetail  from "../pages/marketplace/CropDetail";
@@ -26,12 +27,17 @@ import PrivateRoute from '../components/common/PrivateRoute';
 import RoleRoute    from '../components/common/RoleRoute';
 
 import MandiRates from "../pages/MandiRates";
-import FarmerDashboard from '../pages/dashboard/FarmerDashboard';
 
 import CropRecommendation  from "../pages/recommendations/CropRecommendation";
 import WaterBasedRecommendation from "../pages/recommendations/WaterBasedRecommendation";
 import SeedRecommendation  from "../pages/recommendations/SeedRecommendation";
 import Calculators         from "../pages/Calculators";
+
+import AdminRoutes from './AdminRoutes';
+import FarmerRoutes from './FarmerRoutes';
+import BuyerRoutes from './BuyerRoutes';
+
+import AIAssistant from "../pages/AIAssistant";
 
 
 import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
@@ -78,6 +84,11 @@ export default function AppRoutes() {
       <Route path="/recommendations/seed"  element={<SeedRecommendation />}   />
       <Route path="/calculators"           element={<Calculators />}          />
 
+      <Route path="/admin/*" element={<AdminRoutes />} />
+      <Route path="/farmer/*" element={<FarmerRoutes />} />
+      <Route path="/buyer/*" element={<BuyerRoutes />} />
+
+      <Route path="/ai-assistant" element={<AIAssistant />} />
       {/* ── Crop knowledge */}
       <Route path="/crop-knowledge"     element={<CropKnowledge />} />
       <Route path="/crop-knowledge/:id" element={<CropKnowledgeDetail />} />
