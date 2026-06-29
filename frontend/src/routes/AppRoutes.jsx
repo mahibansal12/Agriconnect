@@ -51,7 +51,9 @@ import Donations from "../pages/donations/Donations";
 import DonationDetail from "../pages/donations/DonationDetail";
 import PestLibrary from "../pages/pest-library/PestLibrary";
 import PestDetail from "../pages/pest-library/PestDetail";
-
+import ShopFinder from "../pages/ShopFinder";
+import Community from "../pages/community/Community";
+import PostDetail from "../pages/community/PostDetail";
 
 export default function AppRoutes() {
   return (
@@ -111,8 +113,14 @@ export default function AppRoutes() {
       {/* ── Pest library (roommate) ── */}
       <Route path="/pests" element={<PestLibrary />} />
       <Route path="/pests/:id" element={<PestDetail />} />
-      
-      
+
+      {/* ── Shop finder ── */}
+      <Route path="/shops" element={<ShopFinder />} />
+
+      {/* ── Community ── */}
+      <Route path="/community" element={<Community />} />
+      <Route path="/community/:id" element={<PostDetail />} />
+
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
 
