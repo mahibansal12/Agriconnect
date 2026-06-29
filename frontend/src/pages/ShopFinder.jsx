@@ -5,7 +5,6 @@ import ShopMap from "../components/shop-finder/ShopMap";
 
 const categories = ["all", "seeds", "fertilizer", "pesticide", "equipment", "general"];
 
-// quick straight-line distance estimate, in km — good enough for a list sort, not for routing
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -25,7 +24,7 @@ function ShopFinder() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-        () => setUserLocation(null) // permission denied or unavailable — map just falls back to Jaipur
+        () => setUserLocation(null)
       );
     }
   }, []);
@@ -55,7 +54,7 @@ function ShopFinder() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 order-2 lg:order-1">
-          <ShopMap shops={filteredShops} userLocation={userLocation} />
+          <ShopMap shops={filteredShops} userLocation={userLocation} selectedShop={activeShop} />
         </div>
 
         <div className="space-y-3 order-1 lg:order-2 max-h-[420px] overflow-y-auto pr-1">
