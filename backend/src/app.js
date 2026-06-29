@@ -35,6 +35,8 @@ import mandiRateRoutes from "./routes/mandiRate.routes.js"
 import orderRouter from "./routes/order.routes.js"
 import recommendationRouter from "./routes/recommendation.routes.js"
 import aiRouter from "./routes/ai.routes.js"
+import communityRoutes from "./routes/community.routes.js"
+
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
@@ -49,6 +51,8 @@ app.use("/api/v1/mandi", mandiRateRoutes)
 app.use("/api/v1/orders",orderRouter)
 app.use("/api/v1/recommend", recommendationRouter)
 app.use("/api/v1/ai",aiRouter)
+app.use("/api/v1/community", communityRoutes)
+
 
 app.use(errorHandler); 
 

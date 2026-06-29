@@ -1,0 +1,48 @@
+// mock shop data, matches shop.model.js — note: coordinates are [lng, lat], GeoJSON order
+
+export const mockShops = [
+  {
+    _id: "1",
+    name: "Krishi Kendra",
+    ownerName: "Suresh Sharma",
+    phone: "+91 98290 11223",
+    address: "Tonk Road, near Bus Stand",
+    state: "Rajasthan",
+    district: "Jaipur",
+    category: "seeds",
+    location: { coordinates: [75.7873, 26.9124] },
+  },
+  {
+    _id: "2",
+    name: "Shree Ram Agro Store",
+    ownerName: "Ram Lal",
+    phone: "+91 99280 33445",
+    address: "Civil Lines, Main Market",
+    state: "Rajasthan",
+    district: "Jaipur",
+    category: "fertilizer",
+    location: { coordinates: [75.8025, 26.9210] },
+  },
+  {
+    _id: "3",
+    name: "Green Field Store",
+    ownerName: "Mahesh Gupta",
+    phone: "+91 97830 55667",
+    address: "Sanganer Road",
+    state: "Rajasthan",
+    district: "Jaipur",
+    category: "pesticide",
+    location: { coordinates: [75.7700, 26.8900] },
+  },
+  {
+    _id: "4",
+    name: "Agri Solutions",
+    ownerName: "Vikram Singh",
+    phone: "+91 98765 22110",
+    address: "Vidhyadhar Nagar",
+    state: "Rajasthan",
+    district: "Jaipur",
+    category: "equipment",
+    location: { coordinates: [75.7950, 26.9450] },
+  },
+];

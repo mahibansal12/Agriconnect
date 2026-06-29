@@ -66,7 +66,7 @@ export default function Navbar() {
               </svg>
             </div>
             <div>
-              <div className="nb-logo-name">Krishi</div>
+              <div className="nb-logo-name">AgriConnect</div>
               <div className="nb-logo-sub">SMART FARMING PLATFORM</div>
             </div>
           </Link>
@@ -195,8 +195,8 @@ export default function Navbar() {
       <style>{`
         /* ── Announce bar ── */
         .nb-announce {
-          background: #1B5E20; color: #fff;
-          font-size: 12px; padding: 5px 24px;
+          background: linear-gradient(90deg, #0F766E, #16A34A 54%, #F59E0B); color: #fff;
+          font-size: 14px; padding: 6px 24px;
           display: flex; align-items: center; justify-content: space-between;
         }
         .nb-lang { display: flex; gap: 14px; opacity: 0.8; }
@@ -205,14 +205,14 @@ export default function Navbar() {
 
         /* ── Navbar ── */
         .nb {
-          background: #fff;
-          border-bottom: 1px solid #E0EAD8;
+          background: rgba(255,255,255,0.94);
+          border-bottom: 1px solid #D8E8C8;
           position: sticky; top: 0; z-index: 100;
           box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .nb-inner {
-          max-width: 1280px; margin: 0 auto;
-          padding: 0 24px;
+          width: 100%; margin: 0;
+          padding: 0 clamp(24px, 6vw, 96px);
           display: flex; align-items: center; gap: 24px; height: 56px;
         }
 
@@ -222,11 +222,11 @@ export default function Navbar() {
           text-decoration: none; flex-shrink: 0;
         }
         .nb-logo-box {
-          width: 34px; height: 34px; background: #1B5E20;
+          width: 34px; height: 34px; background: linear-gradient(135deg, #16A34A, #0EA5E9);
           border-radius: 8px; display: flex; align-items: center; justify-content: center;
         }
-        .nb-logo-name { font-size: 16px; font-weight: 600; color: #1B5E20; line-height: 1.1; }
-        .nb-logo-sub  { font-size: 9px; color: #4CAF50; letter-spacing: 0.07em; }
+        .nb-logo-name { font-size: 18px; font-weight: 600; color: #14532D; line-height: 1.1; }
+        .nb-logo-sub  { font-size: 11px; color: #0EA5E9; letter-spacing: 0.07em; }
 
         /* Desktop links */
         .nb-links {
@@ -235,18 +235,18 @@ export default function Navbar() {
         }
         .nb-link {
           padding: 6px 10px; border-radius: 6px;
-          font-size: 13px; color: #5C6B5A;
+          font-size: 15px; color: #5C6B5A;
           text-decoration: none; white-space: nowrap;
           transition: color 0.15s, background 0.15s;
         }
-        .nb-link:hover     { color: #1B5E20; background: #F0F5EE; }
-        .nb-link--active   { color: #1B5E20; font-weight: 500; background: #EDF5EB; }
+        .nb-link:hover     { color: #B45309; background: #FFF7D6; }
+        .nb-link--active   { color: #0F766E; font-weight: 500; background: #E0F2FE; }
 
         /* Right side */
         .nb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
         .nb-dash-link {
-          font-size: 13px; font-weight: 500; color: #1B5E20;
+          font-size: 15px; font-weight: 500; color: #1B5E20;
           text-decoration: none; padding: 6px 12px;
           border: 1px solid #C5E1A5; border-radius: 6px;
           background: #F1F8E9; white-space: nowrap;
@@ -255,19 +255,19 @@ export default function Navbar() {
         .nb-dash-link:hover { background: #E8F5E9; }
 
         .nb-login-btn {
-          font-size: 13px; font-weight: 500; color: #fff;
-          background: #1B5E20; padding: 8px 16px;
+          font-size: 15px; font-weight: 500; color: #fff;
+          background: linear-gradient(135deg, #F59E0B, #EF4444); padding: 8px 16px;
           border-radius: 6px; text-decoration: none;
           transition: background 0.15s; white-space: nowrap;
         }
-        .nb-login-btn:hover { background: #145218; }
+        .nb-login-btn:hover { filter: brightness(1.05); }
 
         /* Avatar */
         .nb-avatar-wrap { position: relative; }
         .nb-avatar {
           width: 34px; height: 34px; border-radius: 50%;
           background: #1B5E20; color: #fff;
-          font-size: 12px; font-weight: 600;
+          font-size: 14px; font-weight: 600;
           border: none; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           transition: opacity 0.15s;
@@ -286,12 +286,12 @@ export default function Navbar() {
           z-index: 20; overflow: hidden;
         }
         .nb-drop-header { padding: 12px 14px; }
-        .nb-drop-name   { font-size: 13px; font-weight: 600; color: #0A2E0C; }
-        .nb-drop-role   { font-size: 11px; color: #7A8F76; margin-top: 2px; text-transform: capitalize; }
+        .nb-drop-name   { font-size: 15px; font-weight: 600; color: #0A2E0C; }
+        .nb-drop-role   { font-size: 13px; color: #7A8F76; margin-top: 2px; text-transform: capitalize; }
         .nb-drop-divider { height: 1px; background: #E0EAD8; }
         .nb-drop-item {
           display: flex; align-items: center; gap: 10px;
-          padding: 10px 14px; font-size: 13px; color: #3A4D38;
+          padding: 10px 14px; font-size: 15px; color: #3A4D38;
           text-decoration: none; cursor: pointer;
           background: none; border: none; width: 100%;
           text-align: left; font-family: inherit;
@@ -314,14 +314,14 @@ export default function Navbar() {
           background: #fff;
         }
         .nb-mobile-link {
-          padding: 10px 12px; font-size: 14px; color: #3A4D38;
+          padding: 10px 12px; font-size: 16px; color: #3A4D38;
           text-decoration: none; border-radius: 6px;
           transition: background 0.12s;
         }
         .nb-mobile-link:hover { background: #F4F7F2; color: #1B5E20; }
         .nb-mobile-divider    { height: 1px; background: #E0EAD8; margin: 6px 0; }
         .nb-mobile-logout {
-          padding: 10px 12px; font-size: 14px; color: #B91C1C;
+          padding: 10px 12px; font-size: 16px; color: #B91C1C;
           background: none; border: none; cursor: pointer;
           font-family: inherit; text-align: left; border-radius: 6px;
           width: 100%;
@@ -329,7 +329,7 @@ export default function Navbar() {
         .nb-mobile-logout:hover { background: #FEF2F2; }
         .nb-mobile-btn {
           display: block; padding: 10px 12px; margin-top: 6px;
-          background: #1B5E20; color: #fff; font-size: 14px;
+          background: #1B5E20; color: #fff; font-size: 16px;
           font-weight: 500; text-decoration: none;
           border-radius: 8px; text-align: center;
         }
