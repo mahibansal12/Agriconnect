@@ -54,6 +54,8 @@ import PestDetail from "../pages/pest-library/PestDetail";
 import ShopFinder from "../pages/ShopFinder";
 import Community from "../pages/community/Community";
 import PostDetail from "../pages/community/PostDetail";
+import CropCalendarPage from "../pages/CropCalendarPage";
+
 
 export default function AppRoutes() {
   return (
@@ -120,6 +122,10 @@ export default function AppRoutes() {
       {/* ── Community ── */}
       <Route path="/community" element={<Community />} />
       <Route path="/community/:id" element={<PostDetail />} />
+
+      {/* ── Crop Calendar ── */}
+      <Route path="/calendar" element={<CropCalendarPage />} />
+      
 
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
