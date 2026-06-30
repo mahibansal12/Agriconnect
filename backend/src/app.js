@@ -39,6 +39,7 @@ import communityRoutes from "./routes/community.routes.js"
 import adminRouter from "./routes/admin.routes.js"
 
 
+app.use("/api/v1/crop-calendar", cropCalendarRoutes)
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
 app.use("/api/v1/news", newsRoutes)
@@ -54,7 +55,6 @@ app.use("/api/v1/recommend", recommendationRouter)
 app.use("/api/v1/ai",aiRouter)
 app.use("/api/v1/community", communityRoutes)
 app.use("/api/v1/admin", adminRouter)
-
 
 app.use(errorHandler); 
 
