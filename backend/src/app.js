@@ -37,7 +37,7 @@ import recommendationRouter from "./routes/recommendation.routes.js"
 import aiRouter from "./routes/ai.routes.js"
 import communityRoutes from "./routes/community.routes.js"
 import adminRouter from "./routes/admin.routes.js"
-
+import cropCalendarRoutes from "./routes/cropCalendar.routes.js"
 
 app.use("/api/v1/crop-calendar", cropCalendarRoutes)
 app.use("/api/v1/user", userRouter);
