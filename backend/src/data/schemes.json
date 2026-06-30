@@ -1,0 +1,65 @@
+[
+  {
+    "title": "PM Kisan Samman Nidhi",
+    "description": "A central government scheme providing direct income support of Rs 6000 per year to small and marginal farmers across India in three equal installments.",
+    "eligibility": "Small and marginal farmers with cultivable land up to 2 hectares. Farmer must have valid Aadhaar card and bank account.",
+    "benefits": "Rs 6000 per year transferred directly to bank account in three installments of Rs 2000 each every four months.",
+    "applicationLink": "https://pmkisan.gov.in",
+    "lastDate": "2026-12-31",
+    "category": "subsidy"
+  },
+  {
+    "title": "Pradhan Mantri Fasal Bima Yojana",
+    "description": "A crop insurance scheme providing financial support to farmers in case of crop failure due to natural calamities, pests, and diseases.",
+    "eligibility": "All farmers including sharecroppers and tenant farmers growing notified crops in notified areas are eligible.",
+    "benefits": "Coverage for crop loss due to drought, flood, cyclone, hailstorm, pest attack. Premium as low as 1.5% for rabi and 2% for kharif crops.",
+    "applicationLink": "https://pmfby.gov.in",
+    "lastDate": "2026-07-31",
+    "category": "insurance"
+  },
+  {
+    "title": "Kisan Credit Card",
+    "description": "A credit scheme providing farmers with affordable and timely credit for agricultural needs including crop cultivation, post-harvest expenses, and allied activities.",
+    "eligibility": "All farmers, sharecroppers, oral lessees, tenant farmers, and Self Help Groups involved in agriculture and allied activities.",
+    "benefits": "Short-term credit limit based on land holding and crop type, interest rate as low as 4% per annum with government subsidy.",
+    "applicationLink": "https://www.nabard.org/content1.aspx?id=572",
+    "lastDate": "2026-12-31",
+    "category": "loan"
+  },
+  {
+    "title": "Soil Health Card Scheme",
+    "description": "A government initiative to provide farmers with soil health cards containing crop-wise recommendations for nutrients and fertilizers for individual farms.",
+    "eligibility": "All farmers in India are eligible to get their soil tested and receive a soil health card free of cost.",
+    "benefits": "Free soil testing, personalized fertilizer recommendations, reduces input costs, improves soil productivity and crop yield.",
+    "applicationLink": "https://soilhealth.dac.gov.in",
+    "lastDate": "2026-12-31",
+    "category": "other"
+  },
+  {
+    "title": "PM Krishi Sinchai Yojana",
+    "description": "A scheme aimed at expanding cultivable area under irrigation, improving water use efficiency and ensuring water availability to every agricultural field.",
+    "eligibility": "Individual farmers, farmer groups, cooperatives, and NGOs involved in agriculture can apply for irrigation support.",
+    "benefits": "Subsidy up to 55% for small and marginal farmers and 45% for other farmers on drip and sprinkler irrigation systems.",
+    "applicationLink": "https://pmksy.gov.in",
+    "lastDate": "2026-09-30",
+    "category": "subsidy"
+  },
+  {
+    "title": "National Agriculture Market (eNAM)",
+    "description": "A pan-India electronic trading portal networking existing APMC mandis to create a unified national market for agricultural commodities.",
+    "eligibility": "All farmers, traders, and buyers registered with their local APMC mandi can participate in eNAM trading.",
+    "benefits": "Better price discovery, transparent auction, reduced transaction costs, direct payment to farmer bank accounts.",
+    "applicationLink": "https://enam.gov.in",
+    "lastDate": "2026-12-31",
+    "category": "other"
+  },
+  {
+    "title": "Paramparagat Krishi Vikas Yojana",
+    "description": "A scheme to promote organic farming in India by providing financial assistance to farmer groups for adopting organic practices.",
+    "eligibility": "Farmer groups of minimum 50 farmers with at least 50 acres of contiguous land willing to adopt organic farming.",
+    "benefits": "Rs 50000 per hectare over 3 years for organic inputs, certification, and marketing support for organic produce.",
+    "applicationLink": "https://pgsindia-ncof.gov.in",
+    "lastDate": "2026-08-31",
+    "category": "training"
+  }
+]
