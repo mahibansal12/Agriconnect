@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Wheat",
+    "localName": "Gehun",
+    "category": "grain",
+    "season": "rabi",
+    "soilType": "Loamy soil, well-drained",
+    "waterRequirement": "450-650 mm per season",
+    "growingDuration": "120-150 days",
+    "description": "Wheat is one of the most important cereal crops in India, grown mainly in Punjab, Haryana, and Uttar Pradesh during the rabi season."
+  },
+  {
+    "name": "Rice",
+    "localName": "Chawal",
+    "category": "grain",
+    "season": "kharif",
+    "soilType": "Clayey soil, water retentive",
+    "waterRequirement": "1200-2000 mm per season",
+    "growingDuration": "90-150 days",
+    "description": "Rice is the staple food of India grown in flooded fields called paddies, mainly in West Bengal, Punjab, and Andhra Pradesh."
+  },
+  {
+    "name": "Maize",
+    "localName": "Makka",
+    "category": "grain",
+    "season": "kharif",
+    "soilType": "Sandy loam to loamy soil",
+    "waterRequirement": "500-800 mm per season",
+    "growingDuration": "80-110 days",
+    "description": "Maize is a versatile crop used as food, fodder, and raw material for industries. Grown widely in Karnataka, Andhra Pradesh, and Rajasthan."
+  },
+  {
+    "name": "Tomato",
+    "localName": "Tamatar",
+    "category": "vegetable",
+    "season": "rabi",
+    "soilType": "Well-drained sandy loam soil",
+    "waterRequirement": "400-600 mm per season",
+    "growingDuration": "60-90 days",
+    "description": "Tomato is one of the most widely grown vegetable crops in India, rich in vitamins and used extensively in cooking."
+  },
+  {
+    "name": "Potato",
+    "localName": "Aloo",
+    "category": "vegetable",
+    "season": "rabi",
+    "soilType": "Loamy, well-drained soil",
+    "waterRequirement": "500-700 mm per season",
+    "growingDuration": "70-120 days",
+    "description": "Potato is a major vegetable crop grown in Uttar Pradesh, West Bengal, and Bihar. It is a staple food and used in various cuisines."
+  },
+  {
+    "name": "Onion",
+    "localName": "Pyaaz",
+    "category": "vegetable",
+    "season": "rabi",
+    "soilType": "Well-drained loamy soil",
+    "waterRequirement": "350-550 mm per season",
+    "growingDuration": "90-120 days",
+    "description": "Onion is an essential vegetable in Indian cooking, grown mainly in Maharashtra, Karnataka, and Madhya Pradesh."
+  },
+  {
+    "name": "Sugarcane",
+    "localName": "Ganna",
+    "category": "cash crop",
+    "season": "zaid",
+    "soilType": "Deep loamy soil, rich in organic matter",
+    "waterRequirement": "1500-2500 mm per season",
+    "growingDuration": "270-365 days",
+    "description": "Sugarcane is a major cash crop used for sugar production, grown mainly in Uttar Pradesh, Maharashtra, and Karnataka."
+  },
+  {
+    "name": "Cotton",
+    "localName": "Kapas",
+    "category": "cash crop",
+    "season": "kharif",
+    "soilType": "Black cotton soil, deep and fertile",
+    "waterRequirement": "700-1200 mm per season",
+    "growingDuration": "150-180 days",
+    "description": "Cotton is a major cash crop used in textile industry, grown mainly in Gujarat, Maharashtra, and Telangana."
+  },
+  {
+    "name": "Chickpea",
+    "localName": "Chana",
+    "category": "pulse",
+    "season": "rabi",
+    "soilType": "Sandy loam to clay loam soil",
+    "waterRequirement": "300-400 mm per season",
+    "growingDuration": "90-120 days",
+    "description": "Chickpea is the most important pulse crop in India, rich in protein, grown mainly in Madhya Pradesh, Rajasthan, and Maharashtra."
+  },
+  {
+    "name": "Turmeric",
+    "localName": "Haldi",
+    "category": "spice",
+    "season": "kharif",
+    "soilType": "Loamy or clay loam well-drained soil",
+    "waterRequirement": "1500-2250 mm per season",
+    "growingDuration": "210-270 days",
+    "description": "Turmeric is an important spice and medicinal crop grown mainly in Andhra Pradesh, Telangana, and Tamil Nadu."
+  },
+  {
+    "name": "Mango",
+    "localName": "Aam",
+    "category": "fruit",
+    "season": "zaid",
+    "soilType": "Deep well-drained alluvial soil",
+    "waterRequirement": "1200-1500 mm per year",
+    "growingDuration": "90-120 days fruiting season",
+    "description": "Mango is the national fruit of India, grown mainly in Uttar Pradesh, Andhra Pradesh, and Maharashtra. Known as the king of fruits."
+  },
+  {
+    "name": "Mustard",
+    "localName": "Sarson",
+    "category": "cash crop",
+    "season": "rabi",
+    "soilType": "Loamy to sandy loam soil",
+    "waterRequirement": "250-400 mm per season",
+    "growingDuration": "110-140 days",
+    "description": "Mustard is a major oilseed crop grown in Rajasthan, Uttar Pradesh, and Haryana, used for cooking oil and condiments."
+  },
+  {
+    "name": "Lentil",
+    "localName": "Masoor",
+    "category": "pulse",
+    "season": "rabi",
+    "soilType": "Loamy soil with good drainage",
+    "waterRequirement": "250-350 mm per season",
+    "growingDuration": "90-120 days",
+    "description": "Lentil is a highly nutritious pulse crop rich in protein and iron, grown mainly in Madhya Pradesh, Uttar Pradesh, and Bihar."
+  },
+  {
+    "name": "Banana",
+    "localName": "Kela",
+    "category": "fruit",
+    "season": "zaid",
+    "soilType": "Rich loamy soil with good drainage",
+    "waterRequirement": "1200-2200 mm per year",
+    "growingDuration": "270-365 days",
+    "description": "Banana is one of the most widely consumed fruits in India, grown mainly in Tamil Nadu, Maharashtra, and Gujarat."
+  },
+  {
+    "name": "Soybean",
+    "localName": "Soya",
+    "category": "pulse",
+    "season": "kharif",
+    "soilType": "Well-drained loamy soil",
+    "waterRequirement": "450-700 mm per season",
+    "growingDuration": "90-120 days",
+    "description": "Soybean is a protein-rich oilseed crop grown mainly in Madhya Pradesh, Maharashtra, and Rajasthan."
+  }
+]
