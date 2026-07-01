@@ -1,17 +1,13 @@
 function DonationProgress({ raised, goal }) {
   const percent = Math.min(Math.round((raised / goal) * 100), 100);
-
   return (
     <div>
-      <div className="w-full h-2.5 bg-green-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500"
-          style={{ width: `${percent}%` }}
-        />
+      <div style={{ height:"10px", background:"#f0fdf4", borderRadius:"999px", overflow:"hidden", border:"1px solid #bbf7d0" }}>
+        <div style={{ height:"100%", width:`${percent}%`, background:"linear-gradient(90deg,#16a34a,#22c55e)", borderRadius:"999px", transition:"width 0.5s ease" }} />
       </div>
-      <div className="flex justify-between text-sm mt-2">
-        <span className="font-semibold text-green-800">₹{raised.toLocaleString("en-IN")} raised</span>
-        <span className="text-gray-500">of ₹{goal.toLocaleString("en-IN")}</span>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:"8px" }}>
+        <span style={{ fontSize:"13px", fontWeight:800, color:"#166534" }}>₹{raised.toLocaleString("en-IN")} raised</span>
+        <span style={{ fontSize:"13px", color:"#9ca3af" }}>of ₹{goal.toLocaleString("en-IN")}</span>
       </div>
     </div>
   );
