@@ -30,6 +30,22 @@ const getLocalRecommendations = ({ soilType }) => {
   return LOCAL_RECOMMENDATIONS[key] || LOCAL_RECOMMENDATIONS['Alluvial'];
 };
 
+const toCropCards = (payload) => {
+  const recommendations = payload?.recommendations ?? payload;
+  if (!Array.isArray(recommendations)) return [];
+  return recommendations.map((crop) => ({
+    name: crop.name ?? crop.cropName,
+    confidence: crop.confidence ?? 85,
+    season: crop.season,
+    waterNeed: crop.waterNeed ?? crop.waterRequirement,
+    duration: crop.duration,
+    avgYield: crop.avgYield ?? crop.expectedYield,
+    marketPrice: crop.marketPrice ?? crop.estimatedProfit,
+    tips: crop.tips ?? [crop.why, payload?.rotationReason].filter(Boolean),
+    emoji: crop.emoji ?? '🌾',
+  }));
+};
+
 // ─── Page Component ────────────────────────────────────────────
 const CropRecommendation = () => {
   const [results,  setResults]  = useState([]);
@@ -43,8 +59,15 @@ const CropRecommendation = () => {
     setSubmitted(true);
 
     try {
-      const { data } = await axiosInstance.post('/v1/recommendations/crop', formData);
-      setResults(data.data);
+      const payload = {
+        previousCrop: formData.previousCrop || 'wheat',
+        soilType: formData.soilType,
+        season: String(formData.season || '').split(' ')[0],
+        waterAvailability: formData.waterAvailability || 'medium',
+        landSize: formData.landSize || 1,
+      };
+      const { data } = await axiosInstance.post('/v1/recommend/crop', payload);
+      setResults(toCropCards(data.data));
     } catch {
       // Backend not ready → use local logic
       const local = getLocalRecommendations(formData);
