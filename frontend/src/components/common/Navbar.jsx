@@ -8,6 +8,7 @@ import { logoutUser } from "../../redux/slices/authSlice";
 // ── Nav links visible to everyone ──────────────────────────────
 const PUBLIC_LINKS = [
   { to: "/marketplace",         label: "Marketplace" },
+  { to: "/crop-knowledge",      label: "Crop Knowledge" },
   { to: "/mandi",               label: "Mandi Rates" },
   { to: "/recommendations/crop",label: "Crop Advisor" },
   { to: "/schemes",             label: "Schemes" },
@@ -230,17 +231,36 @@ export default function Navbar() {
 
         /* Desktop links */
         .nb-links {
-          display: flex; align-items: center; gap: 2px;
+          display: flex; align-items: center; gap: 6px;
           flex: 1; overflow-x: auto;
         }
         .nb-link {
-          padding: 6px 10px; border-radius: 6px;
-          font-size: 15px; color: #5C6B5A;
+          padding: 8px 12px; border-radius: 8px;
+          font-size: 15px; font-weight: 700; color: #27563A;
           text-decoration: none; white-space: nowrap;
-          transition: color 0.15s, background 0.15s;
+          border: 1px solid transparent;
+          transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
         }
-        .nb-link:hover     { color: #B45309; background: #FFF7D6; }
-        .nb-link--active   { color: #0F766E; font-weight: 500; background: #E0F2FE; }
+        .nb-link:nth-child(1) { color: #0369A1; }
+        .nb-link:nth-child(2) { color: #15803D; }
+        .nb-link:nth-child(3) { color: #B45309; }
+        .nb-link:nth-child(4) { color: #047857; }
+        .nb-link:nth-child(5) { color: #7E22CE; }
+        .nb-link:nth-child(6) { color: #BE123C; }
+        .nb-link:nth-child(7) { color: #C2410C; }
+        .nb-link:nth-child(8) { color: #0F766E; }
+        .nb-link:hover {
+          background: linear-gradient(135deg, #ECFDF5, #FFF7D6);
+          border-color: #BBF7D0;
+          box-shadow: 0 8px 18px rgba(22, 163, 74, 0.14);
+          transform: translateY(-1px);
+        }
+        .nb-link--active {
+          color: #fff !important;
+          background: linear-gradient(135deg, #16A34A, #F59E0B);
+          border-color: rgba(255,255,255,0.35);
+          box-shadow: 0 10px 22px rgba(245, 158, 11, 0.22);
+        }
 
         /* Right side */
         .nb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }

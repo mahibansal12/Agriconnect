@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node --env-file .env src/index.js",
-    "dev": "kill-port 4000 && nodemon --env-file .env src/index.js"
+    "dev": "kill-port 4000 && nodemon --env-file .env src/index.js",
     "seed": "node src/seed/seedData.js"
   },
   "keywords": [],
