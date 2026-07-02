@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        krishi: {
+        agriconnect: {
           50:  "#F2FAF0",
           100: "#DFF2D0",
           200: "#BDE8A0",

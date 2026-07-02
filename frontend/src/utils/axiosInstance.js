@@ -13,7 +13,7 @@ const axiosInstance = axios.create({
 // Automatically attaches JWT token to every request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("krishi_token");
+    const token = localStorage.getItem("agriconnect_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,8 +29,8 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid — clear storage and redirect to login
-      localStorage.removeItem("krishi_token");
-      localStorage.removeItem("krishi_user");
+      localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_user");
       window.location.href = "/login";
     }
     // Pass the error along so individual components can show their own messages

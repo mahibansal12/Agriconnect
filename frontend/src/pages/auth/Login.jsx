@@ -52,7 +52,7 @@ export default function Login() {
           <div className="login-right-inner">
             <div className="login-right-tag">Government recognised platform</div>
             <h2 className="login-right-h">India's most trusted agriculture platform</h2>
-            <p className="login-right-p">Join thousands of farmers, buyers and agri-experts who use Krishi every day to grow smarter and earn better.</p>
+            <p className="login-right-p">Join thousands of farmers, buyers and agri-experts who use AgriConnect every day to grow smarter and earn better.</p>
  
             <div className="login-feats">
               {[
@@ -87,7 +87,7 @@ export default function Login() {
  
       {/* Footer */}
       <div className="login-footer">
-        © 2026 Krishi Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare &nbsp;·&nbsp;
+        © 2026 AgriConnect Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare &nbsp;·&nbsp;
         <Link to="/privacy" className="login-fl">Privacy Policy</Link> &nbsp;·&nbsp;
         <Link to="/terms" className="login-fl">Terms of Use</Link>
       </div>

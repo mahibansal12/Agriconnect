@@ -3,7 +3,7 @@
 export const mockShops = [
   {
     _id: "1",
-    name: "Krishi Kendra",
+    name: "AgriConnect",
     ownerName: "Suresh Sharma",
     phone: "+91 98290 11223",
     address: "Tonk Road, near Bus Stand",

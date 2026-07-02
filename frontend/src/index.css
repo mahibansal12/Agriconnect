@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* ── Krishi Design Tokens ── */
+/* ── AgriConnect Design Tokens ── */
 :root {
   /* Brand greens */
-  --krishi-900: #0F2409;
-  --krishi-800: #1A3D10;
-  --krishi-700: #2D5C1E;
-  --krishi-600: #3D7A2B;
-  --krishi-500: #4E9435;
-  --krishi-400: #63AE48;
-  --krishi-300: #8FCC72;
-  --krishi-200: #BDE8A0;
-  --krishi-100: #DFF2D0;
-  --krishi-50:  #F2FAF0;
+  --agriconnect-900: #0F2409;
+  --agriconnect-800: #1A3D10;
+  --agriconnect-700: #2D5C1E;
+  --agriconnect-600: #3D7A2B;
+  --agriconnect-500: #4E9435;
+  --agriconnect-400: #63AE48;
+  --agriconnect-300: #8FCC72;
+  --agriconnect-200: #BDE8A0;
+  --agriconnect-100: #DFF2D0;
+  --agriconnect-50:  #F2FAF0;
 
   /* Accent amber — harvest / mandi */
   --amber-600: #B45309;
@@ -100,13 +100,13 @@ a {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--gray-100); }
 ::-webkit-scrollbar-thumb {
-  background: var(--krishi-300);
+  background: var(--agriconnect-300);
   border-radius: var(--radius-full);
 }
 
 /* ── Focus visible (accessibility) ── */
 :focus-visible {
-  outline: 2px solid var(--krishi-500);
+  outline: 2px solid var(--agriconnect-500);
   outline-offset: 2px;
 }
 
@@ -120,7 +120,7 @@ a {
 
 .page-bg { background: var(--gray-50); min-height: 100vh; }
 
-.text-krishi   { color: var(--krishi-600); }
+.text-agriconnect   { color: var(--agriconnect-600); }
 .text-muted    { color: var(--gray-500); }
 .text-sm       { font-size: 13px; }
 .text-xs       { font-size: 12px; }
@@ -136,7 +136,7 @@ a {
   font-size: 12px;
   font-weight: 500;
 }
-.badge-green  { background: var(--krishi-100); color: var(--krishi-700); }
+.badge-green  { background: var(--agriconnect-100); color: var(--agriconnect-700); }
 .badge-amber  { background: var(--amber-100);  color: var(--amber-600); }
 .badge-gray   { background: var(--gray-100);   color: var(--gray-700); }
 .badge-red    { background: #FEE2E2;            color: #B91C1C; }
@@ -158,17 +158,17 @@ a {
 .btn:active:not(:disabled) { transform: scale(0.98); }
 
 .btn-primary {
-  background: var(--krishi-600);
+  background: var(--agriconnect-600);
   color: var(--white);
 }
-.btn-primary:hover:not(:disabled) { background: var(--krishi-700); }
+.btn-primary:hover:not(:disabled) { background: var(--agriconnect-700); }
 
 .btn-secondary {
-  background: var(--krishi-50);
-  color: var(--krishi-700);
-  border: 1.5px solid var(--krishi-200);
+  background: var(--agriconnect-50);
+  color: var(--agriconnect-700);
+  border: 1.5px solid var(--agriconnect-200);
 }
-.btn-secondary:hover:not(:disabled) { background: var(--krishi-100); }
+.btn-secondary:hover:not(:disabled) { background: var(--agriconnect-100); }
 
 .btn-ghost {
   background: transparent;
@@ -202,7 +202,7 @@ a {
   width: 20px;
   height: 20px;
   border: 2px solid var(--gray-200);
-  border-top-color: var(--krishi-600);
+  border-top-color: var(--agriconnect-600);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

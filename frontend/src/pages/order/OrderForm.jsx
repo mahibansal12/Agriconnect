@@ -23,7 +23,7 @@ const loadRazorpayScript = () =>
 
 const getStoredUser = () => {
   try {
-    return JSON.parse(localStorage.getItem('krishi_user') || 'null');
+    return JSON.parse(localStorage.getItem('agriconnect_user') || 'null');
   } catch {
     return null;
   }

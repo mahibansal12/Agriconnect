@@ -75,7 +75,7 @@ export default function RegisterForm() {
     <div className="rf-wrap">
       <div className="rf-brand">
         <span className="rf-leaf">🌿</span>
-        <span className="rf-brand-name">Krishi</span>
+        <span className="rf-brand-name">AgriConnect</span>
       </div>
 
       <div className="rf-steps">
@@ -106,7 +106,7 @@ export default function RegisterForm() {
         {step === 1 && (
           <div className="rf-fields">
             <h1 className="rf-heading">Create your account</h1>
-            <p className="rf-sub">Join thousands of farmers on Krishi</p>
+            <p className="rf-sub">Join thousands of farmers on AgriConnect</p>
 
             <RoleSelector
               value={form.role}
