@@ -52,12 +52,16 @@ const registerUser = asyncHandler(async (req, res) => {
         avatarUrl = avatar?.url || "";
     }
 
+    const allowedRoles = ["farmer", "buyer"];
+    if (!allowedRoles.includes(role)) {
+    throw new ApiError(400, "Invalid role");
+    }
     const user = await User.create({
         name,
         email,
         password,
         phone,
-        role: role || "farmer",
+        role: allowedRoles.includes(role) ? role : "farmer",
         avatar: avatarUrl,
     });
 
