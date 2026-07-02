@@ -19,7 +19,7 @@ initSocket(httpServer);
 connectDB()
 .then(()=>{
    httpServer.listen(process.env.PORT || 4000, () => {  // app is replace by httpServer
-    console.log(`Server is running on port ${process.env.PORT || 4000}`);
+    console.log(`Server is running on port ${process.env.PORT || 5000}`);
     })
 })
 .catch((error) =>{
