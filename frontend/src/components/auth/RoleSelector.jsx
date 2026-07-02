@@ -22,18 +22,6 @@ const roles = [
       </svg>
     ),
   },
-  {
-    id: "admin",
-    label: "Admin",
-    desc: "Manage the platform",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="10" r="4" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M6 24c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M20 6l1.5 1.5L24 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
 ];
 
 export default function RoleSelector({ value, onChange }) {
