@@ -21,6 +21,24 @@ const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('krishi_user') || 'null');
+  } catch {
+    return null;
+  }
+};
+
+const getDeliveryParts = (address, crop) => {
+  const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
+  return {
+    state: crop.state || crop.location?.state || parts.at(-2) || parts.at(-1) || 'Unknown',
+    district: crop.district || crop.location?.district || parts.at(-3) || parts[0] || 'Unknown',
+    village: crop.location?.village || parts[0] || '',
+    pincode: crop.location?.pincode || address.match(/\b\d{6}\b/)?.[0] || '',
+  };
+};
+
 // ─── Component ────────────────────────────────────────────────
 
 export default function OrderForm() {
@@ -52,7 +70,8 @@ export default function OrderForm() {
     );
   }
 
-  const totalAmount = qty * (crop.pricePerQtl ?? 0);
+  const unitPrice = crop.pricePerUnit ?? crop.pricePerQtl ?? crop.price ?? 0;
+  const totalAmount = qty * unitPrice;
 
   // ── Payment flow ─────────────────────────────────────────
 
@@ -75,22 +94,25 @@ export default function OrderForm() {
       if (!sdkLoaded) throw new Error('Failed to load payment gateway. Check your internet connection.');
 
       // 2. Create Razorpay order on backend
-      const { data: orderData } = await axiosInstance.post('/v1/orders/create-payment', {
-        cropListingId: crop._id,
+      const user = getStoredUser();
+      const delivery = getDeliveryParts(address, crop);
+      const { data: orderData } = await axiosInstance.post('/v1/orders', {
+        listingId: crop._id,
         quantity: qty,
-        deliveryAddress: address,
+        ...delivery,
+        phone: user?.phone || crop.farmer?.phone || crop.seller?.phone || '0000000000',
       });
 
-      // orderData.data = { razorpayOrderId, amount, currency, keyId }
-      const { razorpayOrderId, amount, currency, keyId } = orderData.data;
+      // orderData.data = { order, razorpayOrderId, amount, currency, key }
+      const { order, razorpayOrderId, amount, currency, key } = orderData.data;
 
       // 3. Open Razorpay checkout modal
       const rzpOptions = {
-        key:      keyId,
+        key,
         amount,                        // paise
         currency: currency ?? 'INR',
         name:     'AgriConnect',
-        description: `Order for ${crop.title}`,
+        description: `Order for ${crop.title || crop.cropName || crop.name}`,
         image:    '/favicon.svg',
         order_id: razorpayOrderId,
 
@@ -101,16 +123,14 @@ export default function OrderForm() {
               razorpayOrderId:   response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
-              cropListingId:     crop._id,
-              quantity:          qty,
-              deliveryAddress:   address,
+              orderId:           order._id,
             });
 
             // Success — go to farmer dashboard / buyer dashboard
-            navigate('/dashboard/farmer', {
+            navigate('/buyer/dashboard', {
               state: { successMessage: 'Order placed successfully! 🎉' },
             });
-          } catch (verifyErr) {
+          } catch {
             setError('Payment received but order verification failed. Please contact support.');
           }
         },
@@ -153,8 +173,8 @@ export default function OrderForm() {
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
           {crop.images?.[0] ? (
             <img
-              src={crop.images[0]}
-              alt={crop.title}
+              src={typeof crop.images[0] === 'string' ? crop.images[0] : crop.images[0]?.url}
+              alt={crop.title || crop.cropName || crop.name}
               className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
             />
           ) : (
@@ -163,12 +183,12 @@ export default function OrderForm() {
             </div>
           )}
           <div>
-            <p className="font-semibold text-gray-800">{crop.title}</p>
+            <p className="font-semibold text-gray-800">{crop.title || crop.cropName || crop.name}</p>
             <p className="text-sm text-gray-500">
-              ₹{crop.pricePerQtl?.toLocaleString('en-IN')} / qtl
+              ₹{unitPrice?.toLocaleString('en-IN')} / qtl
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Seller: {crop.farmer?.fullName ?? 'Farmer'}
+              Seller: {crop.farmer?.name ?? crop.seller?.name ?? 'Farmer'}
             </p>
           </div>
         </div>
@@ -210,7 +230,7 @@ export default function OrderForm() {
           <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600">
               <span>Price per quintal</span>
-              <span>₹{crop.pricePerQtl?.toLocaleString('en-IN')}</span>
+              <span>₹{unitPrice?.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Quantity</span>

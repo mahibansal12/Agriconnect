@@ -28,6 +28,22 @@ const LOCAL_WATER_RECS = {
   ],
 };
 
+const toCropCards = (payload) => {
+  const suggestions = payload?.suggestions ?? payload;
+  if (!Array.isArray(suggestions)) return [];
+  return suggestions.map((crop) => ({
+    name: crop.name ?? crop.cropName,
+    confidence: crop.confidence ?? 85,
+    season: crop.season,
+    waterNeed: crop.waterNeed ?? crop.waterRequirement,
+    duration: crop.duration,
+    avgYield: crop.avgYield ?? crop.yieldPerAcre,
+    marketPrice: crop.marketPrice ?? crop.profitPerAcre,
+    tips: crop.tips ?? [crop.why, payload?.irrigationTip].filter(Boolean),
+    emoji: crop.emoji ?? '🌾',
+  }));
+};
+
 // ─── Page Component ────────────────────────────────────────────
 const WaterBasedSuggestion = () => {
   const [results,   setResults]   = useState([]);
@@ -43,8 +59,13 @@ const WaterBasedSuggestion = () => {
     setInputSummary(formData);
 
     try {
-      const { data } = await axiosInstance.post('/v1/recommendations/water', formData);
-      setResults(data.data);
+      const payload = {
+        waterAvailability: formData.waterAvailability === 'scarce' ? 'low' : formData.waterAvailability,
+        rainfallForecast: formData.rainfallForecast || 'moderate',
+        irrigationType: formData.irrigationType || formData.waterSource || 'rain-fed',
+      };
+      const { data } = await axiosInstance.post('/v1/recommend/water', payload);
+      setResults(toCropCards(data.data));
     } catch {
       // Backend not ready → use local logic
       const key = formData.waterAvailability || 'medium';

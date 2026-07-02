@@ -4,16 +4,26 @@ import axiosInstance from "../../utils/axiosInstance";
 
 // ─── Async Thunks ─────────────────────────────────────────────
 
-// POST /api/auth/register
+const normalizeAuthData = (payload) => payload?.data ?? payload ?? {};
+
+const persistSession = ({ user, accessToken }) => {
+  if (accessToken) localStorage.setItem("krishi_token", accessToken);
+  if (user) localStorage.setItem("krishi_user", JSON.stringify(user));
+};
+
+// POST /api/v1/user/register
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (formData, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post("/auth/register", formData);
-      // Save to localStorage so session persists on page refresh
-      localStorage.setItem("krishi_token", data.token);
-      localStorage.setItem("krishi_user", JSON.stringify(data.user));
-      return data; // { user: { _id, name, email, role, phone, state }, token }
+      await axiosInstance.post("/v1/user/register", formData);
+      const { data } = await axiosInstance.post("/v1/user/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+      const session = normalizeAuthData(data);
+      persistSession(session);
+      return session;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Registration failed. Please try again."
@@ -22,15 +32,15 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// POST /api/auth/login
+// POST /api/v1/user/login
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (formData, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post("/auth/login", formData);
-      localStorage.setItem("krishi_token", data.token);
-      localStorage.setItem("krishi_user", JSON.stringify(data.user));
-      return data; // { user: { _id, name, email, role, phone, state }, token }
+      const { data } = await axiosInstance.post("/v1/user/login", formData);
+      const session = normalizeAuthData(data);
+      persistSession(session);
+      return session;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Invalid email or password."
@@ -98,8 +108,8 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user    = action.payload.user;
-        state.token   = action.payload.token;
+        state.user = action.payload.user;
+        state.token = action.payload.accessToken;
         state.error   = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -115,8 +125,8 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user    = action.payload.user;
-        state.token   = action.payload.token;
+        state.user = action.payload.user;
+        state.token = action.payload.accessToken;
         state.error   = null;
       })
       .addCase(loginUser.rejected, (state, action) => {

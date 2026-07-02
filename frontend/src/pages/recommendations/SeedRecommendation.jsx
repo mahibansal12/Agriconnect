@@ -28,6 +28,21 @@ const LOCAL_SEEDS = {
 
 const getFallbackSeeds = (crop) => LOCAL_SEEDS[crop] || [];
 
+const toSeedCards = (payload) => {
+  const recommendations = payload?.recommendations ?? payload;
+  if (!Array.isArray(recommendations)) return [];
+  return recommendations.map((seed, index) => ({
+    variety: seed.variety ?? seed.seedName,
+    type: seed.type,
+    yield: seed.yield ?? seed.yieldPerAcre,
+    duration: seed.duration,
+    suitability: seed.suitability ?? seed.suitableFor,
+    resistance: seed.resistance ?? seed.features?.join(', '),
+    price: seed.price,
+    recommended: seed.recommended ?? index === 0,
+  }));
+};
+
 // ─── Result Card ───────────────────────────────────────────────
 const SeedCard = ({ seed }) => (
   <div className={`bg-white rounded-2xl border p-4 space-y-3 relative ${
@@ -78,8 +93,14 @@ const SeedRecommendation = () => {
     setCropName(formData.crop);
 
     try {
-      const { data } = await axiosInstance.post('/v1/recommendations/seed', formData);
-      setSeeds(data.data);
+      const payload = {
+        rainfallForecast: formData.rainfallForecast || 'moderate',
+        soilType: formData.soilType || 'loam',
+        waterAvailability: formData.irrigated === 'rainfed' ? 'low' : 'medium',
+        region: formData.state,
+      };
+      const { data } = await axiosInstance.post('/v1/recommend/seed', payload);
+      setSeeds(toSeedCards(data.data));
     } catch {
       // Backend not ready → use local logic
       setSeeds(getFallbackSeeds(formData.crop));

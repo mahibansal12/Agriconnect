@@ -2,57 +2,65 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../utils/axiosInstance';
 
-// ─── Async Thunks ─────────────────────────────────────────────
+const normalizeRate = (rate) => ({
+  ...rate,
+  crop: rate.crop ?? rate.cropName,
+  market: rate.market ?? rate.mandiName,
+  price: Number(rate.price ?? rate.modalPrice ?? 0),
+  minPrice: rate.minPrice != null ? Number(rate.minPrice) : rate.minPrice,
+  maxPrice: rate.maxPrice != null ? Number(rate.maxPrice) : rate.maxPrice,
+});
 
-// GET /api/v1/mandi  (with optional filters: crop, state, market)
 export const fetchMandiRates = createAsyncThunk(
   'mandi/fetchRates',
   async (filters = {}, { rejectWithValue }) => {
     try {
       const params = new URLSearchParams();
-      if (filters.crop)   params.append('crop', filters.crop);
-      if (filters.state)  params.append('state', filters.state);
-      if (filters.market) params.append('market', filters.market);
+      if (filters.crop && filters.crop !== 'All') params.append('commodity', filters.crop);
+      if (filters.state && filters.state !== 'All') params.append('state', filters.state);
 
-      const { data } = await axiosInstance.get(`/v1/mandi?${params.toString()}`);
-      return data.data; // ApiResponse wrapper → .data
+      const { data } = await axiosInstance.get(`/v1/mandi/live?${params.toString()}`);
+      return (data.data ?? []).map(normalizeRate);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch mandi rates');
     }
   }
 );
 
-// GET /api/v1/mandi/history/:crop  (price history for chart)
 export const fetchPriceHistory = createAsyncThunk(
   'mandi/fetchPriceHistory',
   async (crop, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.get(`/v1/mandi/history/${crop}`);
-      return { crop, history: data.data };
+      const params = new URLSearchParams();
+      if (crop) params.append('cropName', crop);
+
+      const { data } = await axiosInstance.get(`/v1/mandi/saved?${params.toString()}`);
+      const history = (data.data ?? []).map(normalizeRate).map((rate) => ({
+        date: rate.date,
+        price: rate.price,
+      }));
+      return { crop, history };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch price history');
     }
   }
 );
 
-// ─── Slice ────────────────────────────────────────────────────
 const mandiSlice = createSlice({
   name: 'mandi',
   initialState: {
-    rates: [],             // array of mandi rate objects
-    priceHistory: {},      // { cropName: [ { date, price }, ... ] }
-    liveRates: {},         // { cropName: price } — updated via socket
+    rates: [],
+    priceHistory: {},
+    liveRates: {},
     loading: false,
     historyLoading: false,
     error: null,
   },
   reducers: {
-    // Called by socket.io when a live price update arrives
     updateLiveRate(state, action) {
       const { crop, price, market } = action.payload;
       state.liveRates[`${crop}_${market}`] = price;
 
-      // Also update matching entry in rates array
       const idx = state.rates.findIndex(
         (r) => r.crop === crop && r.market === market
       );
@@ -65,8 +73,6 @@ const mandiSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-
-    // ── fetchMandiRates ─────────────────────────────────────
     builder
       .addCase(fetchMandiRates.pending, (state) => {
         state.loading = true;
@@ -81,7 +87,6 @@ const mandiSlice = createSlice({
         state.error = action.payload;
       });
 
-    // ── fetchPriceHistory ───────────────────────────────────
     builder
       .addCase(fetchPriceHistory.pending, (state) => {
         state.historyLoading = true;
