@@ -50,7 +50,7 @@ export default function Register() {
             {[
               ["01", "Create account", "Enter your name, email and mobile number"],
               ["02", "Set your location", "We personalise content for your region"],
-              ["03", "Start using Krishi", "Marketplace, mandi rates, AI advisor and more"],
+              ["03", "Start using AgriConnect", "Marketplace, mandi rates, AI advisor and more"],
             ].map(([num, title, desc]) => (
               <div className="reg-step-item" key={num}>
                 <div className="reg-step-num">{num}</div>
@@ -77,7 +77,7 @@ export default function Register() {
       </div>
  
       <div className="reg-footer">
-        © 2026 Krishi Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare
+        © 2026 AgriConnect Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare
       </div>
  
       <style>{`

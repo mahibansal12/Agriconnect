@@ -12,7 +12,7 @@ export default function AIAssistant() {
       <div className="bg-green-700 px-5 py-3 flex items-center gap-3 flex-shrink-0">
         <span className="text-2xl">🤖</span>
         <div>
-          <h1 className="text-white font-bold text-base leading-tight">AI Krishi Assistant</h1>
+          <h1 className="text-white font-bold text-base leading-tight">AI AgriConnect Assistant</h1>
           <p className="text-green-200 text-xs">Powered by AgriConnect AI</p>
         </div>
       </div>

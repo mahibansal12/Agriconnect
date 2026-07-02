@@ -30,7 +30,7 @@ export default function LoginForm() {
     <div className="lf-wrap">
       <div className="lf-brand">
         <span className="lf-leaf">🌿</span>
-        <span className="lf-brand-name">Krishi</span>
+        <span className="lf-brand-name">AgriConnect</span>
       </div>
 
       <h1 className="lf-heading">Welcome back</h1>

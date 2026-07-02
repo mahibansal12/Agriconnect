@@ -7,8 +7,8 @@ import axiosInstance from "../../utils/axiosInstance";
 const normalizeAuthData = (payload) => payload?.data ?? payload ?? {};
 
 const persistSession = ({ user, accessToken }) => {
-  if (accessToken) localStorage.setItem("krishi_token", accessToken);
-  if (user) localStorage.setItem("krishi_user", JSON.stringify(user));
+  if (accessToken) localStorage.setItem("agriconnect_token", accessToken);
+  if (user) localStorage.setItem("agriconnect_user", JSON.stringify(user));
 };
 
 // POST /api/v1/user/register
@@ -54,8 +54,8 @@ export const loadUserFromStorage = createAsyncThunk(
   "auth/loadUserFromStorage",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("krishi_token");
-      const user  = localStorage.getItem("krishi_user");
+      const token = localStorage.getItem("agriconnect_token");
+      const user  = localStorage.getItem("agriconnect_user");
       if (!token || !user) return rejectWithValue("No session found");
       return { token, user: JSON.parse(user) };
     } catch {
@@ -80,8 +80,8 @@ const authSlice = createSlice({
       state.token   = null;
       state.error   = null;
       state.loading = false;
-      localStorage.removeItem("krishi_token");
-      localStorage.removeItem("krishi_user");
+      localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_user");
     },
 
     // Clear error when user starts retyping in form
@@ -93,7 +93,7 @@ const authSlice = createSlice({
     updateUserInfo(state, action) {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
-        localStorage.setItem("krishi_user", JSON.stringify(state.user));
+        localStorage.setItem("agriconnect_user", JSON.stringify(state.user));
       }
     },
   },

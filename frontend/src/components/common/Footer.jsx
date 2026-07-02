@@ -23,7 +23,7 @@ const LINKS = {
     { to: "/community",      label: "Community Forum" },
   ],
   Company: [
-    { to: "/about",    label: "About Krishi" },
+  { to: "/about",    label: "About AgriConnect" },
     { to: "/contact",  label: "Contact Us" },
     { to: "/privacy",  label: "Privacy Policy" },
     { to: "/terms",    label: "Terms of Use" },
@@ -46,7 +46,7 @@ export default function Footer() {
               </svg>
             </div>
             <div>
-              <div className="ft-logo-name">Krishi</div>
+              <div className="ft-logo-name">AgriConnect</div>
               <div className="ft-logo-sub">SMART FARMING PLATFORM</div>
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function Footer() {
           </div>
           <div className="ft-helpline" style={{ marginTop: 4 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-            support@krishi.gov.in
+            support@agriconnect.gov.in
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="ft-bar">
-        <span>© 2026 Krishi Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare, Government of India</span>
+        <span>© 2026 AgriConnect Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare, Government of India</span>
         <div className="ft-bar-links">
           <Link to="/privacy" className="ft-bar-link">Privacy</Link>
           <Link to="/terms"   className="ft-bar-link">Terms</Link>
