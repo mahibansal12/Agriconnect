@@ -11,7 +11,7 @@ export const registerUser = createAsyncThunk(
     try {
       const { data } = await axiosInstance.post("/auth/register", formData);
       // Save to localStorage so session persists on page refresh
-      localStorage.setItem("krishi_token", data.token);
+     localStorage.setItem("krishi_token", data.accessToken);
       localStorage.setItem("krishi_user", JSON.stringify(data.user));
       return data; // { user: { _id, name, email, role, phone, state }, token }
     } catch (error) {
@@ -28,8 +28,8 @@ export const loginUser = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const { data } = await axiosInstance.post("/auth/login", formData);
-      localStorage.setItem("krishi_token", data.token);
-      localStorage.setItem("krishi_user", JSON.stringify(data.user));
+     localStorage.setItem("krishi_token", data.data.accessToken);
+    localStorage.setItem("krishi_user", JSON.stringify(data.data.user));
       return data; // { user: { _id, name, email, role, phone, state }, token }
     } catch (error) {
       return rejectWithValue(
@@ -98,8 +98,8 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user    = action.payload.user;
-        state.token   = action.payload.token;
+      state.user = action.payload.data?.user;
+        state.token = action.payload.data?.accessToken;
         state.error   = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -115,8 +115,8 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user    = action.payload.user;
-        state.token   = action.payload.token;
+        state.user = action.payload.data?.user;
+        state.token = action.payload.data?.accessToken;
         state.error   = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
