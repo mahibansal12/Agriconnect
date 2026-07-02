@@ -22,7 +22,7 @@ export const updateOrderStatus = createAsyncThunk(
   'cart/updateOrderStatus',
   async ({ orderId, status }, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.patch(`/v1/orders/${orderId}/status`, { status });
+      const { data } = await axiosInstance.patch(`/v1/orders/${orderId}/status`, { orderStatus: status });
       return data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to update order');
