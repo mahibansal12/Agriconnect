@@ -130,7 +130,7 @@ export default function OrderForm() {
             navigate('/buyer/dashboard', {
               state: { successMessage: 'Order placed successfully! 🎉' },
             });
-          } catch (verifyErr) {
+          } catch {
             setError('Payment received but order verification failed. Please contact support.');
           }
         },
