@@ -3,6 +3,7 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fs from "fs";
+import dns from "dns";
 import { DB_NAME } from "../constants.js";
 
 import { CropKnowledge } from "../models/cropKnowledge.model.js";
@@ -11,6 +12,7 @@ import { Scheme } from "../models/scheme.model.js";
 
 dotenv.config();
 
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 const crops = JSON.parse(fs.readFileSync("./src/data/crops.json", "utf-8"));
 const pests = JSON.parse(fs.readFileSync("./src/data/pests.json", "utf-8"));
@@ -19,7 +21,12 @@ const schemes = JSON.parse(fs.readFileSync("./src/data/schemes.json", "utf-8"));
 const seedDatabase = async () => {
     try {
         
-        await mongoose.connect(`${process.env.MONGO_URI}/${DB_NAME}`);
+        console.log("MONGO_URI =", process.env.MONGO_URI);
+        console.log("DB_NAME =", DB_NAME);
+        await mongoose.connect(process.env.MONGO_URI, {
+            dbName: DB_NAME,
+            serverSelectionTimeoutMS: 30000,
+        });
         console.log("MongoDB connected for seeding...");
 
        
