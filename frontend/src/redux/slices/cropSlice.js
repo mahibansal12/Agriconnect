@@ -97,9 +97,10 @@ export const addCrop = createAsyncThunk(
   'crops/add',
   async (cropFormData, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post('/v1/listing', toListingFormData(cropFormData), {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const { data } = await axiosInstance.post('/v1/listing', toListingFormData(cropFormData));
+      // {
+      //   headers: { 'Content-Type': 'multipart/form-data' },
+      // });
       return normalizeListing(data.data);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to add crop listing');

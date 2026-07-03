@@ -93,9 +93,9 @@
     const [error, setError] = useState(null);
 
   
-    useEffect(() => {
-      fetchAllData();
-    }, []);
+    // useEffect(() => {
+    //   fetchAllData();
+    // }, []);
 
     const fetchAllData = async () => {
       try {
@@ -103,18 +103,18 @@
         setError(null);
 
         const [usersRes, listingsRes, donationsRes, newsRes, ordersRes] = await Promise.all([
-          axiosInstance.get("/v1/user"),
-          axiosInstance.get("/v1/listing"),
-          axiosInstance.get("/v1/donations"),
+          axiosInstance.get("/v1/admin/users"),
+          axiosInstance.get("/v1/admin/listings?status=pending"),
+          axiosInstance.get("/v1/admin/donations"),
           axiosInstance.get("/v1/news"),
-          axiosInstance.get("/v1/orders"),
+          axiosInstance.get("/v1/admin/orders"),
         ]);
 
-        setUsers(usersRes.data.data || []);
-        setListings(listingsRes.data.data || []);
+        setUsers(usersRes.data.data?.users || []);
+        setListings(listingsRes.data.data?.listings || []);
         setDonations(donationsRes.data.data || []);
         setNews(newsRes.data.data || []);
-        setOrders(ordersRes.data.data || []);
+        setOrders(ordersRes.data.data?.orders || []);
 
       } catch (err) {
         console.error("Error fetching admin data:", err);
@@ -123,6 +123,30 @@
         setLoading(false);
       }
     };
+
+    useEffect(() => {
+      fetchAllData();
+    }, []);
+
+    const approveListing = async (id) => {
+  try {
+    await axiosInstance.patch(`/v1/admin/listings/${id}/approve`);
+    fetchAllData(); // refresh table
+  } catch (err) {
+    console.error(err);
+    alert("Failed to approve listing");
+  }
+};
+
+  const rejectListing = async (id) => {
+    try {
+      await axiosInstance.patch(`/v1/admin/listings/${id}/reject`);
+      fetchAllData(); // refresh table
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reject listing");
+    }
+  };
 
 
     const navItems = [
@@ -311,13 +335,15 @@
                           <tr key={listing._id}>
                             <td className="adm-td-strong">{listing.cropName}</td>
                             <td className="adm-td-muted">{listing.quantity} quintal</td>
-                            <td className="adm-td-muted">{listing.farmer}</td>
+                            <td className="adm-td-muted">{listing.farmer?.name || "-"}</td>
                             <td>
                               <div className="adm-action-row">
-                                <button className="adm-btn adm-btn--approve">
+                                <button className="adm-btn adm-btn--approve"
+                                  onClick={() => approveListing(listing._id)}>
                                   <Icon.check width={14} height={14} /> Approve
                                 </button>
-                                <button className="adm-btn adm-btn--reject">
+                                <button className="adm-btn adm-btn--reject"
+                                  onClick={() => rejectListing(listing._id)}>
                                   <Icon.x width={14} height={14} /> Reject
                                 </button>
                               </div>
