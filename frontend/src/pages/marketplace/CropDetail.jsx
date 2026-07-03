@@ -22,6 +22,29 @@ const CropDetail = () => {
     return () => dispatch(clearSelectedCrop());
   }, [id, dispatch]);
 
+  // ── Track recently viewed in localStorage (frontend-only, no backend) ──
+  useEffect(() => {
+    if (!crop) return;
+    try {
+      const KEY = "agriconnect_recent_viewed";
+      const existing = JSON.parse(localStorage.getItem(KEY) || "[]");
+      // Save a compact snapshot using the normalized field names from cropSlice
+      const snapshot = {
+        _id:          crop._id,
+        cropName:     crop.name  || crop.cropName,
+        pricePerUnit: crop.price || crop.pricePerUnit,
+        quantity:     crop.quantity,
+        unit:         crop.unit || "quintal",
+        farmer:       crop.seller || crop.farmer,   // may be object {name, …} or string
+        images:       Array.isArray(crop.images) ? crop.images.slice(0, 1) : [],
+        viewedAt:     new Date().toISOString(),
+      };
+      // Remove duplicate then prepend, keep last 5
+      const updated = [snapshot, ...existing.filter(c => c._id !== crop._id)].slice(0, 5);
+      localStorage.setItem(KEY, JSON.stringify(updated));
+    } catch (_) { /* silently ignore storage errors */ }
+  }, [crop?._id]);
+
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
     setDeleteLoading(true);
