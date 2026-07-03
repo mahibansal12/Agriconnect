@@ -1,5 +1,5 @@
 // src/pages/auth/Register.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import RegisterForm from "../../components/auth/RegisterForm";
@@ -7,6 +7,7 @@ import RegisterForm from "../../components/auth/RegisterForm";
 export default function Register() {
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
+  const [accountType, setAccountType] = useState("farmer");
  
   useEffect(() => {
     if (user) {
@@ -39,36 +40,44 @@ export default function Register() {
  
       <div className="reg-body">
         <div className="reg-left">
-          <RegisterForm />
+          <RegisterForm
+            initialRole={accountType}
+            onRoleChange={setAccountType}
+          />
         </div>
         <div className="reg-right">
-          <div className="reg-right-tag">Free forever for farmers</div>
-          <h2 className="reg-right-h">Start your smart farming journey today</h2>
-          <p className="reg-right-p">Set up your account in under 2 minutes and get instant access to mandi rates, crop advice, and government schemes.</p>
- 
-          <div className="reg-steps-guide">
-            {[
-              ["01", "Create account", "Enter your name, email and mobile number"],
-              ["02", "Set your location", "We personalise content for your region"],
-              ["03", "Start using AgriConnect", "Marketplace, mandi rates, AI advisor and more"],
-            ].map(([num, title, desc]) => (
-              <div className="reg-step-item" key={num}>
-                <div className="reg-step-num">{num}</div>
-                <div>
-                  <div className="reg-step-title">{title}</div>
-                  <div className="reg-step-desc">{desc}</div>
-                </div>
-              </div>
-            ))}
+          <div className="reg-right-tag">
+            {accountType === "buyer" ? "Free forever for buyers" : "Free forever for farmers"}
           </div>
- 
-          <div className="reg-trust">
-            <div className="reg-trust-label">Trusted by farmers across India</div>
-            <div className="reg-trust-row">
-              {[["12,400+","Farmers"],["18","States"],["500+","Mandis"]].map(([v,l]) => (
-                <div className="reg-trust-stat" key={l}>
-                  <div className="reg-trust-val">{v}</div>
-                  <div className="reg-trust-lbl">{l}</div>
+          <h2 className="reg-right-h">
+            {accountType === "buyer"
+              ? "Start your smart buying journey today"
+              : "Start your smart farming journey today"
+            }
+          </h2>
+          <p className="reg-right-p">
+            {accountType === "buyer"
+              ? "Join buyers, farmers and agri-experts who use AgriConnect every day to source quality crops and connect directly."
+              : "Join thousands of farmers, buyers and agri-experts who use AgriConnect every day to grow smarter and earn better."
+            }
+          </p>
+
+          <div className="reg-right-inner">
+            <div className="reg-panel-title">Core AgriConnect capabilities</div>
+            <div className="reg-feats">
+              {[
+                "Crop marketplace for direct buying and selling",
+                "Crop knowledge center with growing guides and care tips",
+                "Live mandi prices to inform selling decisions",
+                "Smart crop calendar for planning farm activities",
+                "AI assistant for crop and seed recommendations",
+                "Nearby shop finder for seeds, fertiliser, and equipment",
+                "Farmer community for questions, tips, and local support",
+                "Government schemes, subsidies, and eligibility guidance",
+              ].map((text) => (
+                <div className="reg-feat" key={text}>
+                  <span className="reg-feat-icon">✓</span>
+                  <span>{text}</span>
                 </div>
               ))}
             </div>
@@ -134,24 +143,38 @@ export default function Register() {
     .reg-right-h { font-size: 22px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
     .reg-right-p { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.8; margin-bottom: 28px; }
 
-    .reg-steps-guide { display: flex; flex-direction: column; gap: 18px; margin-bottom: 32px; }
-    .reg-step-item   { display: flex; align-items: flex-start; gap: 14px; }
-    .reg-step-num {
-      width: 32px; height: 32px; min-width: 32px;
-      background: rgba(255,255,255,0.12); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #F2C879; letter-spacing: 0.05em;
+    .reg-panel-title {
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 18px;
     }
-    .reg-step-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-    .reg-step-desc  { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; }
-
-    .reg-trust { border-top: 1px solid rgba(255,255,255,0.15); padding-top: 20px; }
-    .reg-trust-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 12px; }
-    .reg-trust-row   { display: flex; gap: 0; }
-    .reg-trust-stat  { flex: 1; }
-    .reg-trust-stat + .reg-trust-stat { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 18px; }
-    .reg-trust-val   { font-size: 20px; font-weight: 600; color: #F2C879; }
-    .reg-trust-lbl   { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .reg-feats {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .reg-feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.92);
+      line-height: 1.6;
+    }
+    .reg-feat-icon {
+      width: 26px;
+      min-width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      color: #fff;
+      background: rgba(255,255,255,0.16);
+      border-radius: 50%;
+      margin-top: 2px;
+    }
 
     .reg-footer {
       text-align: center; font-size: 12px; color: #3E4A3C;
