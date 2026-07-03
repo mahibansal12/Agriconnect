@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { mockNews } from "../../mockdata/newsMock";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
 import NewsCard from "../../components/news/NewsCard";
 import Navbar from "../../components/common/Navbar";
 
@@ -16,11 +16,33 @@ const categoryMeta = {
 
 function News() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [news, setNews]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
+  // ── Fetch all news from backend ─────────────────────────────────────────
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/news  — public route, no auth needed
+      const res = await axiosInstance.get("/v1/news");
+      setNews(res.data.data || []);
+    } catch (err) {
+      console.error("News fetch error:", err);
+      setError("Failed to load news. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchNews(); }, []);
+
+  // ── Client-side category filter ─────────────────────────────────────────
   const filteredNews =
     activeCategory === "all"
-      ? mockNews
-      : mockNews.filter((a) => a.category === activeCategory);
+      ? news
+      : news.filter((a) => a.category === activeCategory);
 
   return (
     <div style={{
@@ -50,15 +72,16 @@ function News() {
             background:"rgba(255,255,255,0.10)", border:"1.5px solid rgba(134,239,172,0.3)",
             borderRadius:"16px", padding:"14px 24px", backdropFilter:"blur(6px)", textAlign:"center",
           }}>
-            <div style={{ color:"#fff", fontSize:"22px", fontWeight:800 }}>{mockNews.length}</div>
+            <div style={{ color:"#fff", fontSize:"22px", fontWeight:800 }}>{loading ? "—" : news.length}</div>
             <div style={{ color:"#6ee7b7", fontSize:"11px", fontWeight:500 }}>Articles</div>
           </div>
         </div>
+        {/* Stats ribbon */}
         <div style={{ background:"rgba(0,0,0,0.15)", borderTop:"1px solid rgba(134,239,172,0.12)" }}>
           <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"10px 48px", display:"flex", gap:"36px" }}>
-            {[{ val: mockNews.length, label:"Total Articles" }, { val: filteredNews.length, label:"Showing" }, { val: categories.length - 1, label:"Categories" }].map(s => (
+            {[{ val: news.length, label:"Total Articles" }, { val: filteredNews.length, label:"Showing" }, { val: categories.length - 1, label:"Categories" }].map(s => (
               <div key={s.label} style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-                <span style={{ color:"#fff", fontWeight:800, fontSize:"15px" }}>{s.val}</span>
+                <span style={{ color:"#fff", fontWeight:800, fontSize:"15px" }}>{loading ? "—" : s.val}</span>
                 <span style={{ color:"#6ee7b7", fontSize:"11px", fontWeight:500 }}>{s.label}</span>
               </div>
             ))}
@@ -68,6 +91,16 @@ function News() {
 
       {/* Body */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"28px 48px 56px" }}>
+
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"20px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+            <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
+            <button onClick={fetchNews} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Category pills */}
         <div style={{ display:"flex", gap:"10px", marginBottom:"28px", overflowX:"auto", flexWrap:"wrap" }}>
@@ -91,29 +124,50 @@ function News() {
             );
           })}
           <span style={{ marginLeft:"auto", background:"#dcfce7", color:"#166534", border:"1.5px solid #86efac", padding:"7px 16px", borderRadius:"999px", fontSize:"12px", fontWeight:700 }}>
-            📄 {filteredNews.length} article{filteredNews.length !== 1 ? "s" : ""}
+            📄 {loading ? "..." : filteredNews.length} article{filteredNews.length !== 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* Featured (first article large) */}
-        {filteredNews.length > 0 && (
-          <div style={{ marginBottom:"28px" }}>
-            <NewsCard article={filteredNews[0]} featured />
+        {/* Loading skeleton */}
+        {loading ? (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {[1,2,3,4,5,6].map(n => (
+              <div key={n} style={{ borderRadius:"20px", overflow:"hidden", background:"#fff", border:"1.5px solid #d1fae5", boxShadow:"0 2px 12px rgba(22,101,52,0.06)" }}>
+                <div style={{ height:"200px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+                <div style={{ padding:"18px" }}>
+                  <div style={{ height:"16px", borderRadius:"8px", background:"#f0fdf4", marginBottom:"10px" }} />
+                  <div style={{ height:"12px", borderRadius:"8px", background:"#f0fdf4", width:"60%" }} />
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-
-        {/* Grid */}
-        {filteredNews.length === 0 ? (
+        ) : filteredNews.length === 0 ? (
           <div style={{ textAlign:"center", padding:"80px 20px" }}>
             <div style={{ fontSize:"52px", marginBottom:"12px" }}>📭</div>
             <p style={{ color:"#6b7280", fontWeight:600 }}>No articles in this category yet.</p>
+            {news.length === 0 && (
+              <p style={{ color:"#9ca3af", fontSize:"13px", marginTop:"6px" }}>
+                No news available. Make sure the admin has added news articles to the database.
+              </p>
+            )}
           </div>
         ) : (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
-            {filteredNews.slice(1).map((article) => <NewsCard key={article._id} article={article} />)}
-          </div>
+          <>
+            {/* Featured (first article large) */}
+            <div style={{ marginBottom:"28px" }}>
+              <NewsCard article={filteredNews[0]} featured />
+            </div>
+            {/* Grid */}
+            {filteredNews.length > 1 && (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+                {filteredNews.slice(1).map((article) => <NewsCard key={article._id} article={article} />)}
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
     </div>
   );
 }

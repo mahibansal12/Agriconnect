@@ -1,25 +1,50 @@
-import { useState } from "react";
-import { mockCampaigns } from "../../mockdata/donationsMock";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
 import DonationCard from "../../components/donations/DonationCard";
 import Navbar from "../../components/common/Navbar";
 
 const tabs = ["all", "education", "healthcare", "disaster relief", "equipment"];
 
 const tabMeta = {
-  all:             { icon:"💚", label:"All",            color:"#166534", bg:"#dcfce7", border:"#86efac" },
-  education:       { icon:"🎓", label:"Education",      color:"#1d4ed8", bg:"#dbeafe", border:"#93c5fd" },
-  healthcare:      { icon:"🏥", label:"Healthcare",     color:"#991b1b", bg:"#fee2e2", border:"#fca5a5" },
+  all:              { icon:"💚", label:"All",            color:"#166534", bg:"#dcfce7", border:"#86efac" },
+  education:        { icon:"🎓", label:"Education",      color:"#1d4ed8", bg:"#dbeafe", border:"#93c5fd" },
+  healthcare:       { icon:"🏥", label:"Healthcare",     color:"#991b1b", bg:"#fee2e2", border:"#fca5a5" },
   "disaster relief":{ icon:"🌊", label:"Disaster Relief",color:"#0c4a6e", bg:"#e0f2fe", border:"#7dd3fc" },
-  equipment:       { icon:"🚜", label:"Equipment",      color:"#92400e", bg:"#fef3c7", border:"#fcd34d" },
+  equipment:        { icon:"🚜", label:"Equipment",      color:"#92400e", bg:"#fef3c7", border:"#fcd34d" },
 };
 
 function Donations() {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab]   = useState("all");
+  const [donations, setDonations]   = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
-  const filtered = activeTab === "all" ? mockCampaigns : mockCampaigns.filter((c) => c.cause === activeTab);
-  const totalRaised = mockCampaigns.reduce((sum, c) => sum + c.raised, 0);
-  const totalGoal   = mockCampaigns.reduce((sum, c) => sum + c.goal, 0);
-  const overallPct  = Math.round((totalRaised / totalGoal) * 100);
+  // ── Fetch all donations from backend ────────────────────────────────────
+  const fetchDonations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/donations  — public route, no auth needed
+      const res = await axiosInstance.get("/v1/donations");
+      setDonations(res.data.data || []);
+    } catch (err) {
+      console.error("Donations fetch error:", err);
+      setError("Failed to load donations. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchDonations(); }, []);
+
+  // ── Client-side filter by cause ─────────────────────────────────────────
+  const filtered = activeTab === "all"
+    ? donations
+    : donations.filter((d) => d.cause === activeTab);
+
+  // ── Summary stats ────────────────────────────────────────────────────────
+  const totalRaised  = donations.filter(d => d.status === "completed").reduce((s, d) => s + (d.amount || 0), 0);
+  const completedCount = donations.filter(d => d.status === "completed").length;
 
   return (
     <div style={{
@@ -42,7 +67,11 @@ function Donations() {
             </div>
           </div>
           <div style={{ display:"flex", gap:"20px" }}>
-            {[{ val: `${mockCampaigns.length}+`, label:"Campaigns" }, { val:`₹${(totalRaised/100000).toFixed(1)}L`, label:"Raised" }, { val:`${overallPct}%`, label:"Goal Reached" }].map(s => (
+            {[
+              { val: loading ? "—" : `${donations.length}+`, label:"Total Donations" },
+              { val: loading ? "—" : `₹${(totalRaised/100000).toFixed(1)}L`, label:"Raised" },
+              { val: loading ? "—" : `${completedCount}`, label:"Completed" },
+            ].map(s => (
               <div key={s.label} style={{ background:"rgba(255,255,255,0.10)", border:"1.5px solid rgba(134,239,172,0.3)", borderRadius:"14px", padding:"12px 20px", backdropFilter:"blur(6px)", textAlign:"center" }}>
                 <div style={{ color:"#fff", fontSize:"20px", fontWeight:800 }}>{s.val}</div>
                 <div style={{ color:"#6ee7b7", fontSize:"11px", fontWeight:500 }}>{s.label}</div>
@@ -55,6 +84,16 @@ function Donations() {
       {/* Body */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"32px 48px 56px" }}>
 
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"24px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+            <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
+            <button onClick={fetchDonations} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Impact summary card */}
         <div style={{
           background:"#fff", borderRadius:"20px",
@@ -64,10 +103,10 @@ function Donations() {
           display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"20px",
         }}>
           {[
-            { icon:"📋", label:"Active Campaigns", val: mockCampaigns.length },
-            { icon:"💰", label:"Total Raised",     val: `₹${totalRaised.toLocaleString("en-IN")}` },
-            { icon:"🎯", label:"Total Goal",        val: `₹${totalGoal.toLocaleString("en-IN")}` },
-            { icon:"📊", label:"Overall Progress",  val: `${overallPct}%` },
+            { icon:"📋", label:"Total Records",     val: loading ? "—" : donations.length },
+            { icon:"✅", label:"Completed",         val: loading ? "—" : completedCount },
+            { icon:"💰", label:"Total Raised",      val: loading ? "—" : `₹${totalRaised.toLocaleString("en-IN")}` },
+            { icon:"📊", label:"Showing",           val: loading ? "—" : filtered.length },
           ].map((item) => (
             <div key={item.label} style={{ textAlign:"center", padding:"10px" }}>
               <div style={{ fontSize:"24px", marginBottom:"6px" }}>{item.icon}</div>
@@ -99,15 +138,42 @@ function Donations() {
             );
           })}
           <span style={{ marginLeft:"auto", background:"#dcfce7", color:"#166534", border:"1.5px solid #86efac", padding:"7px 16px", borderRadius:"999px", fontSize:"12px", fontWeight:700 }}>
-            💚 {filtered.length} campaign{filtered.length !== 1 ? "s" : ""}
+            💚 {loading ? "..." : filtered.length} donation{filtered.length !== 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* Grid */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
-          {filtered.map((campaign) => <DonationCard key={campaign._id} campaign={campaign} />)}
-        </div>
+        {/* Loading skeleton */}
+        {loading ? (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {[1,2,3,4,5,6].map(n => (
+              <div key={n} style={{ borderRadius:"20px", overflow:"hidden", background:"#fff", border:"1.5px solid #d1fae5", boxShadow:"0 2px 12px rgba(22,101,52,0.06)" }}>
+                <div style={{ height:"160px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+                <div style={{ padding:"18px" }}>
+                  <div style={{ height:"16px", borderRadius:"8px", background:"#f0fdf4", marginBottom:"10px" }} />
+                  <div style={{ height:"12px", borderRadius:"8px", background:"#f0fdf4", width:"60%" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"80px 20px" }}>
+            <div style={{ fontSize:"52px", marginBottom:"12px" }}>💚</div>
+            <p style={{ color:"#6b7280", fontWeight:600 }}>No donations in this category yet.</p>
+            {donations.length === 0 && (
+              <p style={{ color:"#9ca3af", fontSize:"13px", marginTop:"6px" }}>
+                No donation records found. Be the first to contribute!
+              </p>
+            )}
+          </div>
+        ) : (
+          /* Grid */
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {filtered.map((donation) => <DonationCard key={donation._id} campaign={donation} />)}
+          </div>
+        )}
       </div>
+
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
     </div>
   );
 }

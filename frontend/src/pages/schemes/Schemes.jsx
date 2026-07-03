@@ -1,9 +1,32 @@
-import { mockSchemes } from "../../mockdata/schemesMock";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
 import SchemeCard from "../../components/schemes/SchemeCard";
 import EligibilityChecker from "../../components/schemes/EligibilityChecker";
 import Navbar from "../../components/common/Navbar";
 
 function Schemes() {
+  const [schemes, setSchemes]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  // ── Fetch schemes from backend ─────────────────────────────────────────
+  const fetchSchemes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/schemes  — public route, no auth needed
+      const res = await axiosInstance.get("/v1/schemes");
+      setSchemes(res.data.data || []);
+    } catch (err) {
+      console.error("Schemes fetch error:", err);
+      setError("Failed to load schemes. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchSchemes(); }, []);
+
   return (
     <div style={{
       minHeight:"100vh",
@@ -25,7 +48,7 @@ function Schemes() {
             </div>
           </div>
           <div style={{ display:"flex", gap:"20px" }}>
-            {[{ val: mockSchemes.length, label:"Active Schemes" }, { val:"Free", label:"To Apply" }].map(s => (
+            {[{ val: loading ? "—" : schemes.length, label:"Active Schemes" }, { val:"Free", label:"To Apply" }].map(s => (
               <div key={s.label} style={{ background:"rgba(255,255,255,0.10)", border:"1.5px solid rgba(134,239,172,0.3)", borderRadius:"14px", padding:"12px 20px", backdropFilter:"blur(6px)", textAlign:"center" }}>
                 <div style={{ color:"#fff", fontSize:"20px", fontWeight:800 }}>{s.val}</div>
                 <div style={{ color:"#6ee7b7", fontSize:"11px", fontWeight:500 }}>{s.label}</div>
@@ -38,24 +61,59 @@ function Schemes() {
       {/* Body */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"32px 48px 56px" }}>
 
-        {/* Eligibility Checker */}
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"24px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+            <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
+            <button onClick={fetchSchemes} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Eligibility Checker — receives live schemes list */}
         <div style={{ marginBottom:"36px" }}>
           <h2 style={{ margin:"0 0 14px", fontSize:"18px", fontWeight:800, color:"#14532d" }}>🔍 Check Your Eligibility</h2>
-          <EligibilityChecker />
+          <EligibilityChecker schemes={schemes} />
         </div>
 
         {/* Schemes heading */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px" }}>
           <h2 style={{ margin:0, fontSize:"18px", fontWeight:800, color:"#14532d" }}>📋 All Schemes</h2>
           <span style={{ background:"#dcfce7", color:"#166534", border:"1.5px solid #86efac", padding:"6px 16px", borderRadius:"999px", fontSize:"12px", fontWeight:700 }}>
-            {mockSchemes.length} schemes
+            {loading ? "..." : schemes.length} schemes
           </span>
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
-          {mockSchemes.map((scheme) => <SchemeCard key={scheme._id} scheme={scheme} />)}
-        </div>
+        {/* Loading skeleton */}
+        {loading ? (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {[1,2,3,4,5,6].map(n => (
+              <div key={n} style={{ borderRadius:"20px", overflow:"hidden", background:"#fff", border:"1.5px solid #d1fae5", boxShadow:"0 2px 12px rgba(22,101,52,0.06)" }}>
+                <div style={{ height:"160px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+                <div style={{ padding:"18px" }}>
+                  <div style={{ height:"16px", borderRadius:"8px", background:"#f0fdf4", marginBottom:"10px" }} />
+                  <div style={{ height:"12px", borderRadius:"8px", background:"#f0fdf4", width:"60%" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : schemes.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"80px 20px" }}>
+            <div style={{ fontSize:"52px", marginBottom:"12px" }}>🏛️</div>
+            <p style={{ color:"#6b7280", fontWeight:600 }}>No schemes available right now.</p>
+            <p style={{ color:"#9ca3af", fontSize:"13px", marginTop:"6px" }}>
+              No scheme data found. Make sure the admin has added schemes to the database.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {schemes.map((scheme) => <SchemeCard key={scheme._id} scheme={scheme} />)}
+          </div>
+        )}
       </div>
+
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
     </div>
   );
 }
