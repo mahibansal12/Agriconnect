@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { mockShops } from "../mockdata/shopFinderMock";
 import ShopCard from "../components/shop-finder/ShopCard";
 import ShopMap from "../components/shop-finder/ShopMap";
+import Navbar from "../components/common/Navbar";
 
 const categories = ["all", "seeds", "fertilizer", "pesticide", "equipment", "general"];
 
@@ -63,6 +64,8 @@ function ShopFinder() {
       background: "linear-gradient(160deg, #f0fdf4 0%, #f7fef9 40%, #ecfdf5 70%, #f0fdfa 100%)",
       fontFamily: "'Segoe UI', system-ui, sans-serif",
     }}>
+
+      <Navbar />
 
       {/* ── Hero Banner ── */}
       <div style={{

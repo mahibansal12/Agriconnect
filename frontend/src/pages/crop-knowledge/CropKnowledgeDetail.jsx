@@ -1,5 +1,7 @@
 import { useParams, Link } from "react-router-dom";
-import { mockCrops } from "../../mockdata/cropKnowledgeMock";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
+import Navbar from "../../components/common/Navbar";
 import GrowingGuide from "../../components/crop-knowledge/GrowingGuide";
 import FertilizerGuide from "../../components/crop-knowledge/FertilizerGuide";
 import IrrigationGuide from "../../components/crop-knowledge/IrrigationGuide";
@@ -23,12 +25,46 @@ const seasonStyle = {
 
 function CropKnowledgeDetail() {
   const { id } = useParams();
-  const crop = mockCrops.find((c) => c._id === id);
+  const [crop, setCrop] = useState(null);              
+  const [loading, setLoading] = useState(true);        
+  const [error, setError] = useState(null);           
 
-  if (!crop) {
+  useEffect(() => {                                    
+    const fetchCrop = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await axiosInstance.get(`/v1/crop-knowledge/${id}`);
+        setCrop(response.data.data);
+      } catch (err) {
+        console.error("Error fetching crop:", err);
+        setError(err.response?.data?.message || "Crop not found");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCrop();
+  }, [id]);                                           
+
+if (loading) {
     return (
-      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f0fdf4" }}>
-        <p style={{ color:"#6b7280", fontSize:"16px" }}>Crop not found.</p>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0fdf4" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "14px" }}>🌾</div>
+          <p style={{ color: "#16a34a", fontWeight: 600 }}>Loading crop details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !crop) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0fdf4" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "14px" }}>❌</div>
+          <p style={{ color: "#dc2626", fontWeight: 600 }}>{error || "Crop not found"}</p>
+        </div>
       </div>
     );
   }
@@ -42,6 +78,8 @@ function CropKnowledgeDetail() {
       background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 40%,#ecfdf5 80%,#f0fdfa 100%)",
       fontFamily:"'Segoe UI',system-ui,sans-serif",
     }}>
+      <Navbar />
+
       <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"32px 40px 56px" }}>
 
         {/* Back link */}

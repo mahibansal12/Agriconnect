@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { mockNews } from "../../mockdata/newsMock";
 import NewsCard from "../../components/news/NewsCard";
+import Navbar from "../../components/common/Navbar";
 
 const categories = ["all", "government", "market", "weather", "technology", "general"];
 
@@ -27,6 +28,8 @@ function News() {
       background: "linear-gradient(160deg,#f0fdf4 0%,#f7fef9 40%,#ecfdf5 80%,#f0fdfa 100%)",
       fontFamily: "'Segoe UI',system-ui,sans-serif",
     }}>
+
+      <Navbar />
 
       {/* Hero */}
       <div style={{

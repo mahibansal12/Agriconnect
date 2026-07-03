@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { mockNews } from "../../mockdata/newsMock";
 import { formatDate } from "../../utils/formatters";
+import Navbar from "../../components/common/Navbar";
 
 const categoryStyle = {
   government: { bg:"#dbeafe", text:"#1d4ed8", border:"#93c5fd", icon:"🏛️" },
@@ -24,6 +25,8 @@ function NewsDetail() {
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+
+      <Navbar />
 
       {/* Hero */}
       <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 40%,#166534 70%,#065f46 100%)", position:"relative", overflow:"hidden" }}>

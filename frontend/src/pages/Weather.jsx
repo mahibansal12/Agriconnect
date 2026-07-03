@@ -2,6 +2,7 @@ import { useWeather } from "../hooks/useWeather";
 import WeatherCard from "../components/weather/WeatherCard";
 import ForecastCard from "../components/weather/ForecastCard";
 import WeatherStats from "../components/weather/WeatherStats";
+import Navbar from "../components/common/Navbar";
 
 function Weather() {
   const { weather, loading, error } = useWeather("Jaipur, Rajasthan");
@@ -26,6 +27,8 @@ function Weather() {
       background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 40%,#ecfdf5 80%,#e0f2fe 100%)",
       fontFamily:"'Segoe UI',system-ui,sans-serif",
     }}>
+      <Navbar />
+
       {/* Hero */}
       <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 35%,#166534 65%,#065f46 100%)", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"-50px", right:"150px", width:"200px", height:"200px", borderRadius:"50%", background:"rgba(134,239,172,0.07)", pointerEvents:"none" }} />
