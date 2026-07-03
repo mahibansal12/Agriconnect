@@ -54,30 +54,21 @@ export default function Login() {
             <h2 className="login-right-h">India's most trusted agriculture platform</h2>
             <p className="login-right-p">Join thousands of farmers, buyers and agri-experts who use AgriConnect every day to grow smarter and earn better.</p>
  
+            <div className="login-panel-title">Core AgriConnect capabilities</div>
             <div className="login-feats">
               {[
-                ["Verified farmer profiles and crop listings"],
-                ["Real-time mandi rates from 500+ markets"],
-                ["AI-powered crop and seed recommendations"],
-                ["Direct access to all government schemes"],
-                ["Nearby shop finder with maps & ratings"],
-              ].map(([t]) => (
-                <div className="login-feat" key={t}>
-                  <span className="login-feat-check">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </span>
-                  <span>{t}</span>
-                </div>
-              ))}
-            </div>
- 
-            <div className="login-stats">
-              {[["12,400+","Farmers registered"],["3,200+","Active buyers"],["₹2.8Cr+","Crops traded"]].map(([v,l]) => (
-                <div className="login-stat" key={l}>
-                  <div className="login-stat-val">{v}</div>
-                  <div className="login-stat-lbl">{l}</div>
+                "Crop marketplace for direct buying and selling",
+                "Crop knowledge center with growing guides and care tips",
+                "Live mandi prices to inform selling decisions",
+                "Smart crop calendar for planning farm activities",
+                "AI assistant for crop and seed recommendations",
+                "Nearby shop finder for seeds, fertiliser, and equipment",
+                "Farmer community for questions, tips, and local support",
+                "Government schemes, subsidies, and eligibility guidance",
+              ].map((text) => (
+                <div className="login-feat" key={text}>
+                  <span className="login-feat-icon">✓</span>
+                  <span>{text}</span>
                 </div>
               ))}
             </div>
@@ -156,22 +147,39 @@ export default function Login() {
   line-height: 1.8; margin-bottom: 28px;
 }
 
-.login-feats { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-.login-feat  { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.85); }
-.login-feat-check {
-  width: 22px; height: 22px; min-width: 22px;
-  background: rgba(255,255,255,0.15); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+.login-panel-title {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 18px;
 }
-
-.login-stats {
-  display: flex; gap: 0;
-  border-top: 1px solid rgba(255,255,255,0.15); padding-top: 20px;
+.login-feats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 0;
 }
-.login-stat { flex: 1; }
-.login-stat + .login-stat { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 20px; }
-.login-stat-val { font-size: 20px; font-weight: 600; color: #A5D6A7; }
-.login-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.login-feat {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.6;
+}
+.login-feat-icon {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255,255,255,0.16);
+  border-radius: 50%;
+  margin-top: 2px;
+}
 
 .login-footer {
   text-align: center; font-size: 12px; color: #3E4A3C;

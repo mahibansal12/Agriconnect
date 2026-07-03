@@ -11,7 +11,7 @@ const STATES = [
   "Uttar Pradesh","Uttarakhand","West Bengal",
 ];
 
-export default function RegisterForm() {
+export default function RegisterForm({ initialRole = "farmer", onRoleChange = () => {} }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
@@ -24,7 +24,7 @@ export default function RegisterForm() {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "farmer",
+    role: initialRole,
     state: "",
     district: "",
   });
@@ -110,7 +110,10 @@ export default function RegisterForm() {
 
             <RoleSelector
               value={form.role}
-              onChange={(role) => setForm((p) => ({ ...p, role }))}
+              onChange={(role) => {
+                setForm((p) => ({ ...p, role }));
+                onRoleChange(role);
+              }}
             />
 
             <Field
