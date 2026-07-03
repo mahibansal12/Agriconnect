@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { mockPests } from "../../mockdata/pestLibraryMock";
 import TreatmentGuide from "../../components/pest-library/TreatmentGuide";
 import Navbar from "../../components/common/Navbar";
+import axiosInstance from "../../utils/axiosInstance";
 
 const typeStyle = {
   insect:   { bg:"#ffedd5", text:"#c2410c", border:"#fdba74", topBar:"#f97316", icon:"🐛" },
@@ -13,11 +14,60 @@ const typeStyle = {
 
 function PestDetail() {
   const { id } = useParams();
-  const pest = mockPests.find((p) => p._id === id);
+  const [pest, setPest]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-  if (!pest) return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f0fdf4" }}>
-      <p style={{ color:"#6b7280" }}>Pest not found.</p>
+  // ── Fetch single pest from backend ──────────────────────────────────────
+  useEffect(() => {
+    const fetchPest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // GET /api/v1/pests/:id — public route, no auth needed
+        const res = await axiosInstance.get(`/v1/pests/${id}`);
+        setPest(res.data.data);
+      } catch (err) {
+        console.error("Pest detail fetch error:", err);
+        setError(err.response?.status === 404 ? "Pest not found." : "Failed to load pest details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchPest();
+  }, [id]);
+
+  // ── Loading state ────────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+      <Navbar />
+      <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 40%,#166534 70%,#065f46 100%)", padding:"40px 48px", minHeight:"120px" }}>
+        <div style={{ width:"160px", height:"16px", borderRadius:"8px", background:"rgba(255,255,255,0.15)", marginBottom:"12px" }} />
+        <div style={{ width:"260px", height:"28px", borderRadius:"8px", background:"rgba(255,255,255,0.2)" }} />
+      </div>
+      <div style={{ maxWidth:"1100px", margin:"40px auto", padding:"0 40px", display:"grid", gridTemplateColumns:"1fr 300px", gap:"28px" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+          <div style={{ height:"280px", borderRadius:"20px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+          <div style={{ height:"120px", borderRadius:"20px", background:"#f0fdf4" }} />
+        </div>
+        <div style={{ height:"220px", borderRadius:"18px", background:"#f0fdf4" }} />
+      </div>
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+    </div>
+  );
+
+  // ── Error / Not found state ──────────────────────────────────────────────
+  if (error || !pest) return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+      <Navbar />
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"100px 20px" }}>
+        <div style={{ fontSize:"56px", marginBottom:"16px" }}>🐛</div>
+        <p style={{ color:"#374151", fontWeight:700, fontSize:"16px", marginBottom:"8px" }}>{error || "Pest not found."}</p>
+        <Link to="/pests" style={{ marginTop:"12px", display:"inline-flex", alignItems:"center", gap:"6px", color:"#166534", fontWeight:700, padding:"10px 20px", borderRadius:"12px", background:"#dcfce7", border:"1.5px solid #86efac", textDecoration:"none", fontSize:"13px" }}>
+          ← Back to Pest Library
+        </Link>
+      </div>
     </div>
   );
 
@@ -53,16 +103,22 @@ function PestDetail() {
       <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"32px 40px 56px" }}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:"28px", alignItems:"start" }}>
 
-          {/* Left */}
+          {/* Left column */}
           <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
 
-            {/* Image + symptoms */}
+            {/* Image + Symptoms */}
             <div style={{ background:"#fff", borderRadius:"20px", overflow:"hidden", border:`2px solid ${sty.border}`, boxShadow:`0 6px 24px ${sty.border}44` }}>
               <div style={{ position:"relative", height:"260px" }}>
-                <img src={pest.image} alt={pest.name} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                {pest.image ? (
+                  <img src={pest.image} alt={pest.name} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                ) : (
+                  <div style={{ width:"100%", height:"100%", background:`linear-gradient(135deg,${sty.bg},${sty.border})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"72px" }}>
+                    {sty.icon}
+                  </div>
+                )}
                 <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.3),transparent)" }} />
                 <div style={{ position:"absolute", bottom:"14px", left:"16px", display:"flex", flexWrap:"wrap", gap:"6px" }}>
-                  {pest.affectedCrops.map((crop) => (
+                  {(pest.affectedCrops || []).map((crop) => (
                     <span key={crop} style={{ background:"rgba(255,255,255,0.92)", color:sty.text, border:`1.5px solid ${sty.border}`, borderRadius:"999px", padding:"3px 12px", fontSize:"10px", fontWeight:700 }}>{crop}</span>
                   ))}
                 </div>
@@ -86,7 +142,7 @@ function PestDetail() {
                 <h3 style={{ margin:"0 0 14px", fontSize:"14px", fontWeight:800, color:"#14532d" }}>📋 Quick Facts</h3>
                 {[
                   { label:"Type",           val: pest.type, icon: sty.icon },
-                  { label:"Affected Crops", val: `${pest.affectedCrops.length} crops`, icon:"🌾" },
+                  { label:"Affected Crops", val: `${(pest.affectedCrops || []).length} Crops`, icon:"🌾" },
                 ].map(item => (
                   <div key={item.label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 0", borderBottom:"1px solid #f3f4f6" }}>
                     <span style={{ fontSize:"12px", color:"#9ca3af", display:"flex", alignItems:"center", gap:"6px" }}><span>{item.icon}</span>{item.label}</span>
@@ -98,7 +154,7 @@ function PestDetail() {
                 <div style={{ marginTop:"14px" }}>
                   <p style={{ margin:"0 0 8px", fontSize:"11px", color:"#9ca3af", fontWeight:600 }}>AFFECTED CROPS</p>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"6px" }}>
-                    {pest.affectedCrops.map(crop => (
+                    {(pest.affectedCrops || []).map(crop => (
                       <span key={crop} style={{ background:sty.bg, color:sty.text, border:`1px solid ${sty.border}`, borderRadius:"999px", padding:"3px 10px", fontSize:"10px", fontWeight:600 }}>{crop}</span>
                     ))}
                   </div>
@@ -110,6 +166,7 @@ function PestDetail() {
               ← Back to Library
             </Link>
           </div>
+
         </div>
       </div>
     </div>
