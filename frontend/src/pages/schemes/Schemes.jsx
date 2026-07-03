@@ -1,6 +1,7 @@
 import { mockSchemes } from "../../mockdata/schemesMock";
 import SchemeCard from "../../components/schemes/SchemeCard";
 import EligibilityChecker from "../../components/schemes/EligibilityChecker";
+import Navbar from "../../components/common/Navbar";
 
 function Schemes() {
   return (
@@ -9,6 +10,8 @@ function Schemes() {
       background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 40%,#ecfdf5 80%,#f0fdfa 100%)",
       fontFamily:"'Segoe UI',system-ui,sans-serif",
     }}>
+      <Navbar />
+
       {/* Hero */}
       <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 35%,#166534 65%,#065f46 100%)", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"-40px", right:"180px", width:"180px", height:"180px", borderRadius:"50%", background:"rgba(134,239,172,0.07)", pointerEvents:"none" }} />

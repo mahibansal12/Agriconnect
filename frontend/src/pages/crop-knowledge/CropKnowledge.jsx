@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { mockCrops } from "../../mockdata/cropKnowledgeMock";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
+import Navbar from "../../components/common/Navbar";
 import CropInfoCard from "../../components/crop-knowledge/CropInfoCard";
 
 const categories = ["all", "grain", "pulse", "fruit", "vegetable", "spice", "cash crop"];
@@ -17,12 +18,55 @@ const categoryMeta = {
 function CropKnowledge() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [crops, setCrops] = useState([]);           
+  const [loading, setLoading] = useState(true);    
+  const [error, setError] = useState(null);        
 
-  const filteredCrops = mockCrops.filter((crop) => {
+    useEffect(() => {
+    const fetchCrops = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await axiosInstance.get("/v1/crop-knowledge");
+        setCrops(response.data.data);  // ⚠️ IMPORTANT: .data.data
+      } catch (err) {
+        console.error("Error fetching crops:", err);
+        setError(err.response?.data?.message || "Failed to load crops");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCrops();
+  }, []);
+
+  const filteredCrops = crops.filter((crop) => {
     const matchesSearch = crop.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === "all" || crop.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+    if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0fdf4", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "14px" }}>🌾</div>
+          <p style={{ color: "#16a34a", fontWeight: 600, fontSize: "16px" }}>Loading crops...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0fdf4", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "14px" }}>❌</div>
+          <p style={{ color: "#dc2626", fontWeight: 600, fontSize: "16px" }}>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -30,6 +74,8 @@ function CropKnowledge() {
       background: "linear-gradient(160deg, #f0fdf4 0%, #f7fef9 40%, #ecfdf5 80%, #f0fdfa 100%)",
       fontFamily: "'Segoe UI', system-ui, sans-serif",
     }}>
+
+      <Navbar />
 
       {/* ── Hero Header ── */}
       <div style={{
@@ -89,7 +135,7 @@ function CropKnowledge() {
         <div style={{ background:"rgba(0,0,0,0.15)", borderTop:"1px solid rgba(134,239,172,0.12)" }}>
           <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"11px 48px", display:"flex", gap:"36px", alignItems:"center" }}>
             {[
-              { val: mockCrops.length, label: "Total Crops" },
+              { val: crops.length, label: "Total Crops" },
               { val: filteredCrops.length, label: "Showing" },
               { val: categories.length - 1, label: "Categories" },
               { val: "Free", label: "Access" },
