@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { mockPests } from "../../mockdata/pestLibraryMock";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import PestCard from "../../components/pest-library/PestCard";
 import Navbar from "../../components/common/Navbar";
+import axiosInstance from "../../utils/axiosInstance";
 
 const types = ["all", "insect", "fungus", "bacteria", "virus", "weed"];
 
@@ -15,13 +16,38 @@ const typeMeta = {
 };
 
 function PestLibrary() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch]         = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [pests, setPests]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
-  const filteredPests = mockPests.filter((pest) => {
+  // ── Fetch pests from backend ────────────────────────────────────────────
+  const fetchPests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/pests  — public route, no auth needed
+      const res = await axiosInstance.get("/v1/pests");
+      setPests(res.data.data || []);
+    } catch (err) {
+      console.error("Pest library fetch error:", err);
+      setError("Failed to load pest library. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPests();
+  }, []);
+
+  // ── Client-side filter (search + type) — same logic as before ──────────
+  const filteredPests = pests.filter((pest) => {
     const matchesSearch =
       pest.name.toLowerCase().includes(search.toLowerCase()) ||
-      pest.affectedCrops.some((c) => c.toLowerCase().includes(search.toLowerCase()));
+      (Array.isArray(pest.affectedCrops) &&
+        pest.affectedCrops.some((c) => c.toLowerCase().includes(search.toLowerCase())));
     const matchesType = typeFilter === "all" || pest.type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -42,7 +68,7 @@ function PestLibrary() {
             <div style={{ width:"64px", height:"64px", background:"rgba(255,255,255,0.12)", border:"2px solid rgba(134,239,172,0.4)", borderRadius:"18px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"30px", backdropFilter:"blur(6px)" }}>🐛</div>
             <div>
               <div style={{ color:"#86efac", fontSize:"11px", fontWeight:700, letterSpacing:"2px", textTransform:"uppercase", marginBottom:"5px" }}>AgriConnect • Pest Library</div>
-              <h1 style={{ margin:0, color:"#fff", fontSize:"30px", fontWeight:900 }}>Pest & Disease Library</h1>
+              <h1 style={{ margin:0, color:"#fff", fontSize:"30px", fontWeight:900 }}>Pest &amp; Disease Library</h1>
               <p style={{ margin:"7px 0 0", color:"#a7f3d0", fontSize:"14px" }}>Identify pests and diseases and find the right treatment fast.</p>
             </div>
           </div>
@@ -66,11 +92,17 @@ function PestLibrary() {
             />
           </div>
         </div>
+
+        {/* Stats ribbon */}
         <div style={{ background:"rgba(0,0,0,0.15)", borderTop:"1px solid rgba(134,239,172,0.12)" }}>
           <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"10px 48px", display:"flex", gap:"36px" }}>
-            {[{ val: mockPests.length, label:"Total Entries" }, { val: filteredPests.length, label:"Showing" }, { val: types.length - 1, label:"Types" }].map(s => (
+            {[
+              { val: pests.length,         label:"Total Entries" },
+              { val: filteredPests.length, label:"Showing" },
+              { val: types.length - 1,     label:"Types" },
+            ].map(s => (
               <div key={s.label} style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-                <span style={{ color:"#fff", fontWeight:800, fontSize:"15px" }}>{s.val}</span>
+                <span style={{ color:"#fff", fontWeight:800, fontSize:"15px" }}>{loading ? "—" : s.val}</span>
                 <span style={{ color:"#6ee7b7", fontSize:"11px", fontWeight:500 }}>{s.label}</span>
               </div>
             ))}
@@ -80,6 +112,16 @@ function PestLibrary() {
 
       {/* Body */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"28px 48px 56px" }}>
+
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"20px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+            <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
+            <button onClick={fetchPests} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Type filter pills */}
         <div style={{ display:"flex", gap:"10px", marginBottom:"28px", flexWrap:"wrap" }}>
@@ -103,22 +145,43 @@ function PestLibrary() {
             );
           })}
           <span style={{ marginLeft:"auto", background:"#dcfce7", color:"#166534", border:"1.5px solid #86efac", padding:"7px 16px", borderRadius:"999px", fontSize:"12px", fontWeight:700 }}>
-            🐛 {filteredPests.length} found
+            🐛 {loading ? "..." : filteredPests.length} found
           </span>
         </div>
 
-        {/* Grid */}
-        {filteredPests.length === 0 ? (
+        {/* Loading skeleton */}
+        {loading ? (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
+            {[1,2,3,4,5,6].map(n => (
+              <div key={n} style={{ borderRadius:"20px", overflow:"hidden", background:"#fff", border:"1.5px solid #d1fae5", boxShadow:"0 2px 12px rgba(22,101,52,0.06)" }}>
+                <div style={{ height:"200px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
+                <div style={{ padding:"18px" }}>
+                  <div style={{ height:"16px", borderRadius:"8px", background:"#f0fdf4", marginBottom:"10px" }} />
+                  <div style={{ height:"12px", borderRadius:"8px", background:"#f0fdf4", width:"60%" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredPests.length === 0 ? (
           <div style={{ textAlign:"center", padding:"80px 20px" }}>
             <div style={{ fontSize:"52px", marginBottom:"12px" }}>🔍</div>
             <p style={{ color:"#6b7280", fontWeight:600 }}>No pests match your search.</p>
+            {pests.length === 0 && (
+              <p style={{ color:"#9ca3af", fontSize:"13px", marginTop:"6px" }}>
+                No pest data available. Make sure the admin has added pests to the database.
+              </p>
+            )}
           </div>
         ) : (
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"22px" }}>
             {filteredPests.map((pest) => <PestCard key={pest._id} pest={pest} />)}
           </div>
         )}
+
       </div>
+
+      {/* Shimmer keyframe */}
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
     </div>
   );
 }
