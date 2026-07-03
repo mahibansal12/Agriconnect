@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { mockSchemes } from "../../mockdata/schemesMock";
 import { Link } from "react-router-dom";
 
 const categories = [
@@ -18,11 +17,12 @@ const categoryStyle = {
   other:     { bg:"#f3f4f6", text:"#374151", border:"#d1d5db", icon:"📋" },
 };
 
-function EligibilityChecker() {
+// schemes prop is the live array fetched from the backend by the parent Schemes.jsx
+function EligibilityChecker({ schemes = [] }) {
   const [needType, setNeedType] = useState("");
   const [checked, setChecked]   = useState(false);
 
-  const matchingSchemes = mockSchemes.filter((s) => s.category === needType);
+  const matchingSchemes = schemes.filter((s) => s.category === needType);
 
   const handleCheck = (e) => {
     e.preventDefault();

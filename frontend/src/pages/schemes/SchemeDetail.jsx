@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { mockSchemes } from "../../mockdata/schemesMock";
+import axiosInstance from "../../utils/axiosInstance";
 import Navbar from "../../components/common/Navbar";
 
 const categoryStyle = {
@@ -12,16 +13,65 @@ const categoryStyle = {
 
 function SchemeDetail() {
   const { id } = useParams();
-  const scheme = mockSchemes.find((s) => s._id === id);
+  const [scheme, setScheme]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-  if (!scheme) return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f0fdf4" }}>
-      <p style={{ color:"#6b7280" }}>Scheme not found.</p>
+  // ── Fetch single scheme from backend ────────────────────────────────────
+  useEffect(() => {
+    const fetchScheme = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // GET /api/v1/schemes/:id  — public route
+        const res = await axiosInstance.get(`/v1/schemes/${id}`);
+        setScheme(res.data.data);
+      } catch (err) {
+        console.error("SchemeDetail fetch error:", err);
+        setError(err.response?.status === 404 ? "Scheme not found." : "Failed to load scheme details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchScheme();
+  }, [id]);
+
+  // ── Loading state ────────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+      <Navbar />
+      <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 40%,#166534 70%,#065f46 100%)", padding:"40px 48px", minHeight:"120px" }}>
+        <div style={{ width:"160px", height:"14px", borderRadius:"8px", background:"rgba(255,255,255,0.15)", marginBottom:"14px" }} />
+        <div style={{ width:"300px", height:"28px", borderRadius:"8px", background:"rgba(255,255,255,0.2)" }} />
+      </div>
+      <div style={{ maxWidth:"1100px", margin:"40px auto", padding:"0 40px", display:"grid", gridTemplateColumns:"1fr 300px", gap:"28px" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+          {[160,120,140].map(h => <div key={h} style={{ height:`${h}px`, borderRadius:"20px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />)}
+        </div>
+        <div style={{ height:"220px", borderRadius:"18px", background:"#f0fdf4" }} />
+      </div>
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+    </div>
+  );
+
+  // ── Error / Not found state ──────────────────────────────────────────────
+  if (error || !scheme) return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
+      <Navbar />
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"100px 20px" }}>
+        <div style={{ fontSize:"56px", marginBottom:"16px" }}>🏛️</div>
+        <p style={{ color:"#374151", fontWeight:700, fontSize:"16px", marginBottom:"8px" }}>{error || "Scheme not found."}</p>
+        <Link to="/schemes" style={{ marginTop:"12px", display:"inline-flex", alignItems:"center", gap:"6px", color:"#166534", fontWeight:700, padding:"10px 20px", borderRadius:"12px", background:"#dcfce7", border:"1.5px solid #86efac", textDecoration:"none", fontSize:"13px" }}>
+          ← All Schemes
+        </Link>
+      </div>
     </div>
   );
 
   const cat = categoryStyle[scheme.category] || categoryStyle.other;
-  const lastDate = scheme.lastDate ? new Date(scheme.lastDate).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" }) : null;
+  const lastDate = scheme.lastDate
+    ? new Date(scheme.lastDate).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" })
+    : null;
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
@@ -75,15 +125,17 @@ function SchemeDetail() {
             </div>
 
             {/* Benefits */}
-            <div style={{ background:cat.bg, borderRadius:"20px", border:`2px solid ${cat.border}`, boxShadow:`0 4px 16px ${cat.border}44`, padding:"24px 28px" }}>
-              <h2 style={{ margin:"0 0 12px", fontSize:"15px", fontWeight:800, color:cat.text, display:"flex", alignItems:"center", gap:"8px" }}>🎁 Benefits</h2>
-              {scheme.benefits.split(",").map((b, i) => (
-                <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:"10px", marginBottom:"8px" }}>
-                  <span style={{ color:cat.text, fontWeight:700, marginTop:"1px" }}>•</span>
-                  <span style={{ fontSize:"14px", color:"#1f2937", lineHeight:1.7 }}>{b.trim()}</span>
-                </div>
-              ))}
-            </div>
+            {scheme.benefits && (
+              <div style={{ background:cat.bg, borderRadius:"20px", border:`2px solid ${cat.border}`, boxShadow:`0 4px 16px ${cat.border}44`, padding:"24px 28px" }}>
+                <h2 style={{ margin:"0 0 12px", fontSize:"15px", fontWeight:800, color:cat.text, display:"flex", alignItems:"center", gap:"8px" }}>🎁 Benefits</h2>
+                {scheme.benefits.split(",").map((b, i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:"10px", marginBottom:"8px" }}>
+                    <span style={{ color:cat.text, fontWeight:700, marginTop:"1px" }}>•</span>
+                    <span style={{ fontSize:"14px", color:"#1f2937", lineHeight:1.7 }}>{b.trim()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
