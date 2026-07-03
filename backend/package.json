@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node --env-file .env src/index.js",
     "dev": "kill-port 5000 && nodemon --env-file .env src/index.js",
-    "seed": "node src/seed/seedData.js"
+    "seed": "node --env-file .env src/seed/seedData.js"
   },
   "keywords": [],
   "author": "Hemant",
