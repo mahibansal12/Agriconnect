@@ -1,4 +1,4 @@
-// Matches the exact output of backend controllers /api/v1/weather/current and /api/v1/weather/forecast
+// Matches the exact backend payload from OpenWeather API (temperature in C, windSpeed in m/s)
 export const mockCurrentWeatherResponse = {
   city: "Jaipur",
   country: "IN",
@@ -7,8 +7,8 @@ export const mockCurrentWeatherResponse = {
   humidity: 42,
   description: "clear sky",
   icon: "https://openweathermap.org/img/wn/01d@2x.png",
-  windSpeed: 18,
-  visibility: 10000, // in meters
+  windSpeed: 5, // 5 m/s = 18 km/h
+  visibility: 10000,
 };
 
 export const mockForecastWeatherResponse = [
@@ -18,7 +18,7 @@ export const mockForecastWeatherResponse = [
     humidity: 44,
     description: "partly cloudy",
     icon: "https://openweathermap.org/img/wn/02d@2x.png",
-    windSpeed: 16
+    windSpeed: 4.4 // m/s = ~16 km/h
   },
   {
     date: "2026-07-05",
@@ -26,7 +26,7 @@ export const mockForecastWeatherResponse = [
     humidity: 40,
     description: "clear sky",
     icon: "https://openweathermap.org/img/wn/01d@2x.png",
-    windSpeed: 12
+    windSpeed: 3.3 // m/s = ~12 km/h
   },
   {
     date: "2026-07-06",
@@ -34,7 +34,7 @@ export const mockForecastWeatherResponse = [
     humidity: 41,
     description: "clear sky",
     icon: "https://openweathermap.org/img/wn/01d@2x.png",
-    windSpeed: 10
+    windSpeed: 2.8 // m/s = ~10 km/h
   },
   {
     date: "2026-07-07",
@@ -42,7 +42,7 @@ export const mockForecastWeatherResponse = [
     humidity: 55,
     description: "light rain",
     icon: "https://openweathermap.org/img/wn/10d@2x.png",
-    windSpeed: 22
+    windSpeed: 6.1 // m/s = ~22 km/h
   },
   {
     date: "2026-07-08",
@@ -50,7 +50,7 @@ export const mockForecastWeatherResponse = [
     humidity: 62,
     description: "heavy intensity rain",
     icon: "https://openweathermap.org/img/wn/09d@2x.png",
-    windSpeed: 25
+    windSpeed: 6.9 // m/s = ~25 km/h
   },
   {
     date: "2026-07-09",
@@ -58,7 +58,7 @@ export const mockForecastWeatherResponse = [
     humidity: 48,
     description: "partly cloudy",
     icon: "https://openweathermap.org/img/wn/02d@2x.png",
-    windSpeed: 15
+    windSpeed: 4.2 // m/s = ~15 km/h
   },
   {
     date: "2026-07-10",
@@ -66,6 +66,6 @@ export const mockForecastWeatherResponse = [
     humidity: 45,
     description: "clear sky",
     icon: "https://openweathermap.org/img/wn/01d@2x.png",
-    windSpeed: 14
+    windSpeed: 3.9 // m/s = ~14 km/h
   }
 ];

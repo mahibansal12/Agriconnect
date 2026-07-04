@@ -1,6 +1,11 @@
 function WeatherCard({ current, location }) {
   const isDescriptionUrl = current.icon?.startsWith("http");
 
+  // Convert wind speed from m/s to km/h (1 m/s = 3.6 km/h)
+  const windSpeedKmh = current.windSpeed 
+    ? (current.windSpeed * 3.6).toFixed(1) 
+    : "0.0";
+
   return (
     <div style={{
       background:"linear-gradient(135deg,#14532d,#166534,#065f46)",
@@ -29,7 +34,7 @@ function WeatherCard({ current, location }) {
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"12px", borderTop:"1px solid rgba(134,239,172,0.25)", paddingTop:"20px" }}>
           {[
             { label:"Humidity", val:`${current.humidity}%`, icon:"💧" },
-            { label:"Wind",     val:`${current.windSpeed} km/h`, icon:"💨" },
+            { label:"Wind",     val:`${windSpeedKmh} km/h`, icon:"💨" },
             { label:"Feels Like", val:`${current.feelsLike}°C`, icon:"🌡️" },
           ].map(item => (
             <div key={item.label} style={{ background:"rgba(255,255,255,0.08)", borderRadius:"12px", padding:"12px", textAlign:"center" }}>

@@ -1,20 +1,55 @@
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axiosInstance from "../../utils/axiosInstance";
 import CalendarEvent from "./CalendarEvent";
-import { mockCalendarEvents } from "../../mockdata/calendarEventsMock";
 
 function CropCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [activeStartDate, setActiveStartDate] = useState(new Date());
+  const [events, setEvents]             = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
 
-  // Filter activities scheduled for the selected month (1-12)
-  const getEventsForMonth = (date) => {
-    const selectedMonth = date.getMonth() + 1; // getMonth() is 0-indexed
-    return mockCalendarEvents.filter((e) => e.month === selectedMonth);
+  // ── Fetch calendar entries from backend ──────────────────────────────────
+  const fetchCalendar = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/crop-calendar
+      const res = await axiosInstance.get("/v1/crop-calendar");
+      setEvents(res.data.data || []);
+    } catch (err) {
+      console.error("Crop calendar fetch error:", err);
+      setError("Failed to load crop activities.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const eventsOnSelectedMonth = getEventsForMonth(selectedDate);
-  const monthName = selectedDate.toLocaleDateString("en-IN", { month: "long" });
+  useEffect(() => {
+    fetchCalendar();
+  }, []);
+
+  // Filter activities scheduled for the active viewed month (1-12)
+  const getEventsForMonth = (date) => {
+    const selectedMonth = date.getMonth() + 1; // getMonth() is 0-indexed
+    return events.filter((e) => e.month === selectedMonth);
+  };
+
+  const eventsOnSelectedMonth = getEventsForMonth(activeStartDate);
+  const monthName = activeStartDate.toLocaleDateString("en-IN", { month: "long" });
+
+  const handleActiveStartDateChange = ({ activeStartDate: nextStartDate }) => {
+    if (nextStartDate) {
+      setActiveStartDate(nextStartDate);
+    }
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setActiveStartDate(date);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -42,7 +77,11 @@ function CropCalendar() {
             color: inherit;
           }
         `}</style>
-        <Calendar value={selectedDate} onChange={setSelectedDate} />
+        <Calendar 
+          value={selectedDate} 
+          onChange={handleDateChange} 
+          onActiveStartDateChange={handleActiveStartDateChange}
+        />
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-green-100 h-fit">
@@ -50,10 +89,26 @@ function CropCalendar() {
           📅 {monthName} Activities
         </h3>
         <p className="text-xs text-gray-400 mb-4">
-          Activities scheduled for this month (Month {selectedDate.getMonth() + 1})
+          Activities scheduled for this month (Month {activeStartDate.getMonth() + 1})
         </p>
+
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"14px", padding:"10px 14px", borderRadius:"10px", background:"#fee2e2", border:"1px solid #fca5a5", color:"#dc2626", fontSize:"12px" }}>
+            <span>⚠️ {error}</span>
+          </div>
+        )}
         
-        {eventsOnSelectedMonth.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2].map(n => (
+              <div key={n} className="p-4 rounded-xl border border-gray-100 bg-gray-50 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : eventsOnSelectedMonth.length === 0 ? (
           <div className="text-center py-6">
             <span className="text-3xl block mb-2">🌾</span>
             <p className="text-sm text-gray-400">No activities scheduled for this month.</p>

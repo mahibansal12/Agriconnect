@@ -4,9 +4,14 @@ function WeatherStats({ stats }) {
     ? `${(stats.visibility / 1000).toFixed(0)} km`
     : "10 km";
 
+  // Convert wind speed from m/s to km/h (1 m/s = 3.6 km/h)
+  const windSpeedKmh = stats.windSpeed 
+    ? `${(stats.windSpeed * 3.6).toFixed(1)} km/h`
+    : "0.0 km/h";
+
   const items = [
     { label:"Visibility", val: visibilityKm,               icon:"👁️",  color:"#93c5fd", bg:"#dbeafe" },
-    { label:"Wind Speed", val: `${stats.windSpeed} km/h`,  icon:"💨",  color:"#fcd34d", bg:"#fef3c7" },
+    { label:"Wind Speed", val: windSpeedKmh,                icon:"💨",  color:"#fcd34d", bg:"#fef3c7" },
     { label:"Humidity",   val: `${stats.humidity}%`,        icon:"💧",  color:"#c4b5fd", bg:"#ede9fe" },
   ];
 
