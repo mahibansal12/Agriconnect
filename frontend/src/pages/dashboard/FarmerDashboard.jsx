@@ -274,6 +274,9 @@ const FarmerDashboard = () => {
                             <button onClick={() => navigate(`/marketplace/${crop._id}`)} className="fd-btn fd-btn--neutral">
                               View
                             </button>
+                            <button onClick={() => navigate(`/marketplace/edit/${crop._id}`)} className="fd-btn fd-btn--update">
+                              Update
+                            </button>
                             <button
                               onClick={() => handleDelete(crop._id)}
                               disabled={deletingId === crop._id}
@@ -660,6 +663,8 @@ const FarmerDashboard = () => {
         .fd-btn:disabled { opacity: 0.55; cursor: not-allowed; }
         .fd-btn--neutral { background: rgba(0,0,0,0.05); color: #57534E; }
         .fd-btn--neutral:hover { background: rgba(0,0,0,0.09); }
+        .fd-btn--update { background: rgba(14,165,233,0.14); color: #0369A1; }
+        .fd-btn--update:hover { background: rgba(14,165,233,0.24); }
         .fd-btn--danger { background: rgba(239,68,68,0.12); color: #DC2626; }
         .fd-btn--danger:hover { background: rgba(239,68,68,0.2); }
         .fd-btn--progress { background: rgba(101,163,13,0.14); color: #4D7C0F; }

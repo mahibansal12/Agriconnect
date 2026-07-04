@@ -40,7 +40,7 @@ const CropImageUpload = ({ images, setImages }) => {
           {images.map((img, i) => (
             <div key={i} className="aiu-thumb">
               <img
-                src={URL.createObjectURL(img)}
+                src={typeof img === 'string' ? img : URL.createObjectURL(img)}
                 alt={`preview-${i}`}
                 className="aiu-thumb-img"
               />

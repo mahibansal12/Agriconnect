@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { addCrop, clearCropMessages } from '../../redux/slices/cropSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  addCrop,
+  updateCrop,
+  fetchCropById,
+  clearCropMessages,
+  clearSelectedCrop,
+} from '../../redux/slices/cropSlice';
 import CropImageUpload from '../../components/marketplace/CropImageUpload';
 
 const CROP_TYPES = ['Grain', 'Vegetable', 'Fruit', 'Spice', 'Oilseed'];
+const UNITS = ['quintal', 'kg', 'ton'];
 
 const STATES = [
   'Uttar Pradesh',
@@ -27,6 +34,7 @@ const INITIAL_FORM = {
   type: '',
   price: '',
   quantity: '',
+  unit: 'quintal',
   state: '',
   district: '',
   description: '',
@@ -60,11 +68,43 @@ const Icon = {
 const AddListing = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, successMessage } = useSelector((state) => state.crops);
+  const { id } = useParams(); // present only on /marketplace/edit/:id
+  const isEditMode = Boolean(id);
+
+  const { loading, error, successMessage, selectedCrop } = useSelector((state) => state.crops);
 
   const [form, setForm] = useState(INITIAL_FORM);
   const [images, setImages] = useState([]);
   const [formError, setFormError] = useState('');
+  const [prefilled, setPrefilled] = useState(!isEditMode); // guards against re-filling on every re-render
+
+  // ── Edit mode: fetch the existing listing, then prefill the form ──
+  useEffect(() => {
+    if (isEditMode) {
+      dispatch(fetchCropById(id));
+    }
+    return () => {
+      dispatch(clearSelectedCrop());
+      dispatch(clearCropMessages());
+    };
+  }, [isEditMode, id, dispatch]);
+
+  useEffect(() => {
+    if (isEditMode && !prefilled && selectedCrop && selectedCrop._id === id) {
+      setForm({
+        name: selectedCrop.name || '',
+        type: selectedCrop.type || '',
+        price: selectedCrop.price ?? '',
+        quantity: selectedCrop.quantity ?? '',
+        unit: selectedCrop.unit || 'quintal',
+        state: selectedCrop.state || '',
+        district: selectedCrop.district || '',
+        description: selectedCrop.description || '',
+      });
+      setImages(Array.isArray(selectedCrop.images) ? selectedCrop.images : []);
+      setPrefilled(true);
+    }
+  }, [isEditMode, prefilled, selectedCrop, id]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -94,14 +134,27 @@ const AddListing = () => {
     Object.entries(form).forEach(([k, v]) => {
       if (v) formData.append(k, v);
     });
-    images.forEach((img) => formData.append('images', img));
+    // Only File objects are new uploads — pre-existing images arrive as URL
+    // strings (see CropImageUpload) and are left untouched server-side when
+    // no new files are appended, matching the backend's replace-on-upload behavior.
+    images.filter((img) => img instanceof File).forEach((img) => formData.append('images', img));
 
-    const result = await dispatch(addCrop(formData));
-    if (addCrop.fulfilled.match(result)) {
-      setTimeout(() => {
-        dispatch(clearCropMessages());
-        navigate('/marketplace');
-      }, 1500);
+    if (isEditMode) {
+      const result = await dispatch(updateCrop({ id, formData }));
+      if (updateCrop.fulfilled.match(result)) {
+        setTimeout(() => {
+          dispatch(clearCropMessages());
+          navigate('/dashboard/farmer');
+        }, 1500);
+      }
+    } else {
+      const result = await dispatch(addCrop(formData));
+      if (addCrop.fulfilled.match(result)) {
+        setTimeout(() => {
+          dispatch(clearCropMessages());
+          navigate('/marketplace');
+        }, 1500);
+      }
     }
   };
 
@@ -114,11 +167,18 @@ const AddListing = () => {
             <Icon.back width={16} height={16} />
             Back
           </button>
-          <h1 className="al-title">List Your Crop</h1>
-          <p className="al-subtitle">Fill in the details below to publish your crop to the marketplace.</p>
+          <h1 className="al-title">{isEditMode ? 'Update Your Crop Listing' : 'List Your Crop'}</h1>
+          <p className="al-subtitle">
+            {isEditMode
+              ? 'Edit the details below and save to update your listing.'
+              : 'Fill in the details below to publish your crop to the marketplace.'}
+          </p>
         </div>
 
         {/* ── Glass Card ── */}
+        {isEditMode && !prefilled ? (
+          <div className="al-card al-loading">Loading listing details…</div>
+        ) : (
         <form onSubmit={handleSubmit} className="al-card">
           {/* Row 1: Crop Name + Crop Type */}
           <div className="al-row">
@@ -151,7 +211,7 @@ const AddListing = () => {
           {/* Row 2: Price + Quantity */}
           <div className="al-row">
             <div className="al-field">
-              <label className="al-label">Price (₹/qtl) <span className="al-req">*</span></label>
+              <label className="al-label">Price (₹ per unit) <span className="al-req">*</span></label>
               <input
                 name="price"
                 type="number"
@@ -163,7 +223,7 @@ const AddListing = () => {
               />
             </div>
             <div className="al-field">
-              <label className="al-label">Quantity (qtl) <span className="al-req">*</span></label>
+              <label className="al-label">Quantity <span className="al-req">*</span></label>
               <input
                 name="quantity"
                 type="number"
@@ -173,6 +233,23 @@ const AddListing = () => {
                 placeholder="e.g. 10"
                 className="al-input"
               />
+            </div>
+          </div>
+
+          {/* Row 2b: Unit */}
+          <div className="al-row">
+            <div className="al-field">
+              <label className="al-label">Unit</label>
+              <select
+                name="unit"
+                value={form.unit}
+                onChange={handleChange}
+                className="al-input al-select"
+              >
+                {UNITS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -243,9 +320,12 @@ const AddListing = () => {
           {/* Submit */}
           <button type="submit" disabled={loading || !!successMessage} className="al-submit">
             <Icon.upload width={17} height={17} />
-            {loading ? 'Submitting...' : 'Publish Listing'}
+            {loading
+              ? (isEditMode ? 'Updating...' : 'Submitting...')
+              : (isEditMode ? 'Update Listing' : 'Publish Listing')}
           </button>
         </form>
+        )}
       </div>
 
       {/* ─────────────────────────────────────────────────────────
@@ -292,6 +372,12 @@ const AddListing = () => {
           backdrop-filter: blur(14px);
           box-shadow: 0 20px 50px -18px rgba(120,90,10,0.24), 0 2px 10px rgba(0,0,0,0.06);
           display: flex; flex-direction: column; gap: 24px;
+        }
+
+        /* ── Edit-mode loading placeholder ── */
+        .al-loading {
+          display: flex; align-items: center; justify-content: center;
+          padding: 60px 20px; font-size: 15px; color: #57534E;
         }
 
         /* ── Rows / fields ── */
