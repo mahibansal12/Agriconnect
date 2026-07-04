@@ -9,6 +9,7 @@ const categoryColors = {
 };
 
 function getInitials(name) {
+  if (!name) return "👤";
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
@@ -20,7 +21,13 @@ function timeAgo(dateString) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function PostCard({ post, commentCount = 0 }) {
+function PostCard({ post }) {
+  const authorName = post.author?.name || "Anonymous";
+  const likeCount  = Array.isArray(post.likes) ? post.likes.length : Number(post.likes || 0);
+
+  // If backend returns populated comments count
+  const commentCount = post.commentCount || (Array.isArray(post.comments) ? post.comments.length : 0);
+
   return (
     <Link
       to={`/community/${post._id}`}
@@ -28,14 +35,14 @@ function PostCard({ post, commentCount = 0 }) {
     >
       <div className="flex items-center gap-3 mb-3">
         <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold">
-          {getInitials(post.author.name)}
+          {getInitials(authorName)}
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-800">{post.author.name}</p>
+          <p className="text-sm font-medium text-gray-800">{authorName}</p>
           <p className="text-xs text-gray-400">{timeAgo(post.createdAt)}</p>
         </div>
-        <span className={`ml-auto text-xs px-2 py-1 rounded-full capitalize ${categoryColors[post.category]}`}>
-          {post.category.replace("-", " ")}
+        <span className={`ml-auto text-xs px-2 py-1 rounded-full capitalize ${categoryColors[post.category] || "bg-gray-100"}`}>
+          {(post.category || "general").replace("-", " ")}
         </span>
       </div>
 
@@ -43,8 +50,8 @@ function PostCard({ post, commentCount = 0 }) {
       <p className="text-sm text-gray-600 line-clamp-2 mb-3">{post.content}</p>
 
       <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span>❤️ {post.likes}</span>
-        <span>💬 {commentCount}</span>
+        <span>❤️ {likeCount}</span>
+        {commentCount > 0 && <span>💬 {commentCount}</span>}
       </div>
     </Link>
   );

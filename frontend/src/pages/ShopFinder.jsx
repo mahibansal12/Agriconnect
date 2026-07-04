@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockShops } from "../mockdata/shopFinderMock";
+import axiosInstance from "../utils/axiosInstance";
 import ShopCard from "../components/shop-finder/ShopCard";
 import ShopMap from "../components/shop-finder/ShopMap";
 import Navbar from "../components/common/Navbar";
@@ -16,9 +16,10 @@ const categoryMeta = {
 };
 
 const howItWorks = [
-  { icon: "📍", title: "1. Pick a category",  desc: "Filter by Seeds, Fertilizer, Pesticide, Equipment or General to narrow down what you're looking for." },
-  { icon: "🗺️", title: "2. View on the map",  desc: "Shops near you are plotted using OpenStreetMap data, so you can see exactly where they are." },
-  { icon: "📇", title: "3. Get contact info",  desc: "Each card lists the shop's address and phone number — reach out directly to confirm stock and pricing." },
+  { icon: "🛡️", title: "Verified Shops", desc: "Every shop is verified before listing." },
+  { icon: "🌱", title: "Wide Range",    desc: "Seeds, fertilizers, pesticides & equipment." },
+  { icon: "💰", title: "Best Prices",   desc: "Compare prices and get the best deals." },
+  { icon: "⚡", title: "Save Time",     desc: "Find everything in one place, fast." },
 ];
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -38,6 +39,29 @@ function ShopFinder() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [activeShop, setActiveShop]         = useState(null);
   const [search, setSearch]                 = useState("");
+  const [shops, setShops]                   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState(null);
+
+  // ── Fetch shops from database ───────────────────────────────────────────
+  const fetchShops = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // GET /api/v1/shops — public route
+      const res = await axiosInstance.get("/v1/shops");
+      setShops(res.data.data || []);
+    } catch (err) {
+      console.error("Shops fetch error:", err);
+      setError("Failed to load shop directory. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShops();
+  }, []);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -48,7 +72,7 @@ function ShopFinder() {
     }
   }, []);
 
-  const filteredShops = mockShops.filter((shop) => {
+  const filteredShops = shops.filter((shop) => {
     const matchCat = categoryFilter === "all" || shop.category === categoryFilter;
     const matchSearch =
       !search ||
@@ -136,7 +160,7 @@ function ShopFinder() {
         }}>
           <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"10px 48px", display:"flex", gap:"36px", alignItems:"center" }}>
             {[
-              { val: mockShops.length, label: "Listed Shops" },
+              { val: loading ? "—" : shops.length, label: "Listed Shops" },
               { val: "5", label: "Categories" },
               { val: "Jaipur", label: "Serving" },
               { val: "Free", label: "Directory Access" },
@@ -152,6 +176,16 @@ function ShopFinder() {
 
       {/* ── Body ── */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"28px 48px 48px" }}>
+
+        {/* Error banner */}
+        {error && (
+          <div style={{ marginBottom:"24px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+            <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
+            <button onClick={fetchShops} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* ── Category Filter ── */}
         <div style={{
@@ -196,7 +230,7 @@ function ShopFinder() {
               padding:"6px 16px", borderRadius:"999px",
               fontSize:"12px", fontWeight:700,
             }}>
-              📍 {filteredShops.length} shop{filteredShops.length !== 1 ? "s" : ""} found
+              📍 {loading ? "..." : filteredShops.length} shop{filteredShops.length !== 1 ? "s" : ""} found
             </span>
           </div>
         </div>
@@ -243,7 +277,7 @@ function ShopFinder() {
                 padding:"4px 12px", borderRadius:"999px",
                 boxShadow:"0 1px 4px rgba(0,0,0,0.05)",
               }}>
-                {filteredShops.length} pins
+                {loading ? "..." : filteredShops.length} pins
               </span>
             </div>
 
@@ -301,7 +335,7 @@ function ShopFinder() {
                 padding:"4px 12px", borderRadius:"999px",
                 boxShadow:"0 2px 8px rgba(22,163,74,0.35)",
               }}>
-                {filteredShops.length}
+                {loading ? "..." : filteredShops.length}
               </div>
             </div>
 
@@ -311,7 +345,15 @@ function ShopFinder() {
               padding:"16px", display:"flex", flexDirection:"column", gap:"14px",
               scrollbarWidth:"thin", scrollbarColor:"#86efac #f0fdf4",
             }}>
-              {filteredShops.length === 0 ? (
+              {loading ? (
+                [1, 2, 3].map(n => (
+                  <div key={n} style={{ background: "#fff", borderRadius: "18px", padding: "20px", border: "1.5px solid #d1fae5" }} className="animate-pulse">
+                    <div style={{ height: "16px", background: "#f0fdf4", width: "60%", marginBottom: "10px", borderRadius: "8px" }} />
+                    <div style={{ height: "12px", background: "#f0fdf4", width: "80%", marginBottom: "6px", borderRadius: "8px" }} />
+                    <div style={{ height: "12px", background: "#f0fdf4", width: "40%", borderRadius: "8px" }} />
+                  </div>
+                ))
+              ) : filteredShops.length === 0 ? (
                 <div style={{ textAlign:"center", padding:"60px 20px", color:"#9ca3af" }}>
                   <div style={{ fontSize:"48px", marginBottom:"10px" }}>🔍</div>
                   <p style={{ fontSize:"14px", fontWeight:600, color:"#6b7280" }}>No shops found</p>
@@ -352,56 +394,38 @@ function ShopFinder() {
           </div>
         </div>
 
-        {/* ── How It Works ── */}
+        {/* ── Info Features Grid ── */}
         <div style={{
           marginTop:"36px",
-          background:"#fff",
-          borderRadius:"22px",
-          border:"2px solid #d1fae5",
-          boxShadow:"0 4px 24px rgba(22,163,74,0.08)",
-          padding:"28px 32px",
+          display:"grid",
+          gridTemplateColumns:"repeat(4,1fr)",
+          gap:"20px",
         }}>
-          <div style={{ marginBottom:"22px" }}>
-            <h2 style={{ margin:0, fontSize:"18px", fontWeight:800, color:"#14532d" }}>
-              How this directory works
-            </h2>
-            <p style={{ margin:"6px 0 0", fontSize:"13px", color:"#6b7280", lineHeight:1.6, maxWidth:"640px" }}>
-              This is a location directory, not a verified marketplace — shop locations come from
-              OpenStreetMap data. Always confirm stock, pricing, and availability directly with the
-              shop before visiting.
-            </p>
-          </div>
-
-          <div style={{
-            display:"grid",
-            gridTemplateColumns:"repeat(3,1fr)",
-            gap:"20px",
-          }}>
-            {howItWorks.map((step) => (
-              <div
-                key={step.title}
-                style={{
-                  background:"#f0fdf4",
-                  borderRadius:"16px",
-                  border:"1.5px solid #bbf7d0",
-                  padding:"18px 18px 20px",
-                }}
-              >
-                <div style={{
-                  width:"40px", height:"40px",
-                  background:"#fff",
-                  border:"1.5px solid #86efac",
-                  borderRadius:"12px",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:"18px", marginBottom:"12px",
-                }}>
-                  {step.icon}
-                </div>
-                <p style={{ margin:0, fontWeight:700, color:"#14532d", fontSize:"13.5px" }}>{step.title}</p>
-                <p style={{ margin:"6px 0 0", color:"#4b7a5c", fontSize:"12px", lineHeight:1.6 }}>{step.desc}</p>
+          {howItWorks.map((step) => (
+            <div
+              key={step.title}
+              style={{
+                background:"#fff",
+                borderRadius:"16px",
+                border:"2px solid #d1fae5",
+                boxShadow:"0 4px 16px rgba(22,163,74,0.06)",
+                padding:"18px 18px 20px",
+              }}
+            >
+              <div style={{
+                width:"40px", height:"40px",
+                background:"#f0fdf4",
+                border:"1.5px solid #86efac",
+                borderRadius:"12px",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:"18px", marginBottom:"12px",
+              }}>
+                {step.icon}
               </div>
-            ))}
-          </div>
+              <p style={{ margin:0, fontWeight:700, color:"#14532d", fontSize:"13.5px" }}>{step.title}</p>
+              <p style={{ margin:"6px 0 0", color:"#4b7a5c", fontSize:"12px", lineHeight:1.6 }}>{step.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
