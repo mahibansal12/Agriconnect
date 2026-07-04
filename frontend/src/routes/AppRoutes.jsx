@@ -70,6 +70,7 @@ export default function AppRoutes() {
       <Route path="/marketplace"        element={<Marketplace />} />
       <Route path="/marketplace/:id"    element={<CropDetail />} />
       <Route path="/marketplace/add"    element={<AddListing />} />
+      <Route path="/marketplace/edit/:id" element={<AddListing />} />
 
       <Route path="/mandi" element={<MandiRates />} />
       <Route

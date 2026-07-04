@@ -108,6 +108,18 @@ export const addCrop = createAsyncThunk(
   }
 );
 
+export const updateCrop = createAsyncThunk(
+  'crops/update',
+  async ({ id, formData: cropFormData }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.put(`/v1/listing/${id}`, toListingFormData(cropFormData));
+      return normalizeListing(data.data);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update crop listing');
+    }
+  }
+);
+
 export const deleteCrop = createAsyncThunk(
   'crops/delete',
   async (id, { rejectWithValue }) => {
@@ -178,6 +190,22 @@ const cropSlice = createSlice({
         state.successMessage = 'Crop listed successfully!';
       })
       .addCase(addCrop.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(updateCrop.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateCrop.fulfilled, (state, action) => {
+        state.loading = false;
+        state.list = state.list.map((c) => (c._id === action.payload._id ? action.payload : c));
+        state.selectedCrop = action.payload;
+        state.successMessage = 'Crop listing updated successfully!';
+      })
+      .addCase(updateCrop.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
