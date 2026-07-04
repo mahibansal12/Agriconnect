@@ -5,7 +5,7 @@ import WeatherStats from "../components/weather/WeatherStats";
 import Navbar from "../components/common/Navbar";
 
 function Weather() {
-  const { weather, loading, error } = useWeather("Jaipur, Rajasthan");
+  const { current, forecast, loading, error } = useWeather("Jaipur, Rajasthan");
 
   if (loading) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(135deg,#f0fdf4,#dcfce7)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
@@ -15,9 +15,9 @@ function Weather() {
       </div>
     </div>
   );
-  if (error) return (
+  if (error || !current) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f0fdf4" }}>
-      <p style={{ color:"#dc2626" }}>{error}</p>
+      <p style={{ color:"#dc2626" }}>{error || "Failed to load weather data."}</p>
     </div>
   );
 
@@ -47,8 +47,8 @@ function Weather() {
 
         {/* Current + Stats */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:"24px", marginBottom:"28px" }}>
-          <WeatherCard current={weather.current} location={weather.location} />
-          <WeatherStats stats={weather.stats} />
+          <WeatherCard current={current} location={`${current.city}, ${current.country}`} />
+          <WeatherStats stats={current} />
         </div>
 
         {/* 7-Day Forecast */}
@@ -62,7 +62,7 @@ function Weather() {
             📅 7-Day Forecast
           </h2>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"12px" }}>
-            {weather.forecast.map((day, i) => <ForecastCard key={i} day={day} />)}
+            {forecast.map((day, i) => <ForecastCard key={i} day={day} />)}
           </div>
         </div>
 

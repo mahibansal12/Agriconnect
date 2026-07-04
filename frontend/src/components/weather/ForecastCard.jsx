@@ -1,4 +1,16 @@
+const getDayName = (dateStr) => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-IN", { weekday: "short" });
+  } catch {
+    return dateStr;
+  }
+};
+
 function ForecastCard({ day }) {
+  const dayName = getDayName(day.date);
+  const isDescriptionUrl = day.icon?.startsWith("http");
+
   return (
     <div style={{
       background:"#fff", borderRadius:"14px", padding:"14px 10px",
@@ -10,11 +22,22 @@ function ForecastCard({ day }) {
       onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 8px 20px rgba(22,163,74,0.18)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 2px 10px rgba(22,163,74,0.08)"; }}
     >
-      <p style={{ margin:"0 0 8px", color:"#16a34a", fontSize:"11px", fontWeight:700 }}>{day.day}</p>
-      <p style={{ margin:"0 0 8px", fontSize:"28px", lineHeight:1 }}>{day.icon}</p>
-      <p style={{ margin:0, fontSize:"13px" }}>
-        <span style={{ fontWeight:800, color:"#1f2937" }}>{day.high}°</span>
-        <span style={{ color:"#9ca3af" }}>/{day.low}°</span>
+      <p style={{ margin:"0 0 4px", color:"#16a34a", fontSize:"11px", fontWeight:700 }}>{dayName}</p>
+      
+      <div style={{ display:"flex", justifyContent:"center", marginBottom:"6px" }}>
+        {isDescriptionUrl ? (
+          <img src={day.icon} alt={day.description} style={{ width:"45px", height:"45px" }} />
+        ) : (
+          <span style={{ fontSize:"24px", lineHeight:1 }}>🌤️</span>
+        )}
+      </div>
+
+      <p style={{ margin:"0 0 4px", fontSize:"13px", fontWeight:800, color:"#1f2937" }}>
+        {day.temperature}°C
+      </p>
+      
+      <p style={{ margin:0, fontSize:"9px", color:"#9ca3af", textTransform:"capitalize", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+        {day.description}
       </p>
     </div>
   );

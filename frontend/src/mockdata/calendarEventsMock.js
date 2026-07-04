@@ -1,25 +1,26 @@
-// mock calendar events for crop activities — matches typical farming calendar
-
+// Matches the exact backend schema CropCalendar: (cropName, activity, month, notes)
 export const mockCalendarEvents = [
-  { _id: "1", crop: "Wheat", activity: "Sowing", date: "2026-10-15", stage: "sow" },
-  { _id: "2", crop: "Wheat", activity: "First Irrigation", date: "2026-11-05", stage: "irrigate" },
-  { _id: "3", crop: "Wheat", activity: "Fertilizer Application", date: "2026-11-20", stage: "fertilize" },
-  { _id: "4", crop: "Wheat", activity: "Harvest", date: "2026-03-15", stage: "harvest" },
-  { _id: "5", crop: "Paddy", activity: "Nursery Preparation", date: "2026-05-01", stage: "sow" },
-  { _id: "6", crop: "Paddy", activity: "Transplanting", date: "2026-06-15", stage: "irrigate" },
-  { _id: "7", crop: "Paddy", activity: "Harvest", date: "2026-10-01", stage: "harvest" },
+  { _id: "1", cropName: "Wheat", activity: "sowing", month: 10, notes: "Sow wheat seeds at a depth of 5cm." },
+  { _id: "2", cropName: "Wheat", activity: "irrigation", month: 11, notes: "First irrigation 20-25 days after sowing (CRI stage)." },
+  { _id: "3", cropName: "Wheat", activity: "fertilizing", month: 11, notes: "Apply first dose of nitrogen fertilizer after irrigation." },
+  { _id: "4", cropName: "Wheat", activity: "harvesting", month: 3, notes: "Harvest when spikes turn golden and dry." },
+  { _id: "5", cropName: "Paddy", activity: "sowing", month: 5, notes: "Prepare nursery beds for sowing paddy seeds." },
+  { _id: "6", cropName: "Paddy", activity: "irrigation", month: 6, notes: "Transplant seedlings from nursery to main field with standing water." },
+  { _id: "7", cropName: "Paddy", activity: "harvesting", month: 10, notes: "Harvest when grains turn golden-yellow." },
 ];
 
 export const eventColors = {
-  sow: "bg-green-100 text-green-700",
-  irrigate: "bg-blue-100 text-blue-700",
-  fertilize: "bg-yellow-100 text-yellow-700",
-  harvest: "bg-amber-100 text-amber-700",
+  sowing: "bg-green-100 text-green-700",
+  irrigation: "bg-blue-100 text-blue-700",
+  fertilizing: "bg-yellow-100 text-yellow-700",
+  harvesting: "bg-amber-100 text-amber-700",
+  spraying: "bg-purple-100 text-purple-700",
 };
 
 export const eventIcons = {
-  sow: "🌱",
-  irrigate: "💧",
-  fertilize: "🧪",
-  harvest: "🌾",
+  sowing: "🌱",
+  irrigation: "💧",
+  fertilizing: "🧪",
+  harvesting: "🌾",
+  spraying: "💨",
 };

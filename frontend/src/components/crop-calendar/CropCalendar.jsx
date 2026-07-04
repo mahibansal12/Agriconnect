@@ -7,12 +7,14 @@ import { mockCalendarEvents } from "../../mockdata/calendarEventsMock";
 function CropCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().split("T")[0];
-    return mockCalendarEvents.filter((e) => e.date === dateStr);
+  // Filter activities scheduled for the selected month (1-12)
+  const getEventsForMonth = (date) => {
+    const selectedMonth = date.getMonth() + 1; // getMonth() is 0-indexed
+    return mockCalendarEvents.filter((e) => e.month === selectedMonth);
   };
 
-  const eventsOnSelected = getEventsForDate(selectedDate);
+  const eventsOnSelectedMonth = getEventsForMonth(selectedDate);
+  const monthName = selectedDate.toLocaleDateString("en-IN", { month: "long" });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -44,14 +46,21 @@ function CropCalendar() {
       </div>
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-green-100 h-fit">
-        <h3 className="text-lg font-semibold text-green-800 mb-3">
-          {selectedDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+        <h3 className="text-lg font-bold text-green-800 mb-1">
+          📅 {monthName} Activities
         </h3>
-        {eventsOnSelected.length === 0 ? (
-          <p className="text-sm text-gray-400">No activities scheduled for this date.</p>
+        <p className="text-xs text-gray-400 mb-4">
+          Activities scheduled for this month (Month {selectedDate.getMonth() + 1})
+        </p>
+        
+        {eventsOnSelectedMonth.length === 0 ? (
+          <div className="text-center py-6">
+            <span className="text-3xl block mb-2">🌾</span>
+            <p className="text-sm text-gray-400">No activities scheduled for this month.</p>
+          </div>
         ) : (
           <div className="space-y-2">
-            {eventsOnSelected.map((e) => (
+            {eventsOnSelectedMonth.map((e) => (
               <CalendarEvent key={e._id} event={e} />
             ))}
           </div>
