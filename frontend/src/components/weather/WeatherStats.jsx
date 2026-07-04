@@ -1,9 +1,15 @@
 function WeatherStats({ stats }) {
+  // visibility comes in meters from OpenWeatherMap (e.g. 10000m = 10 km)
+  const visibilityKm = stats.visibility 
+    ? `${(stats.visibility / 1000).toFixed(0)} km`
+    : "10 km";
+
   const items = [
-    { label:"UV Index",   val: stats.uvIndex,    icon:"☀️",  color:"#fcd34d", bg:"#fef3c7" },
-    { label:"Visibility", val: stats.visibility, icon:"👁️",  color:"#93c5fd", bg:"#dbeafe" },
-    { label:"Pressure",   val: stats.pressure,   icon:"🌀",  color:"#c4b5fd", bg:"#ede9fe" },
+    { label:"Visibility", val: visibilityKm,               icon:"👁️",  color:"#93c5fd", bg:"#dbeafe" },
+    { label:"Wind Speed", val: `${stats.windSpeed} km/h`,  icon:"💨",  color:"#fcd34d", bg:"#fef3c7" },
+    { label:"Humidity",   val: `${stats.humidity}%`,        icon:"💧",  color:"#c4b5fd", bg:"#ede9fe" },
   ];
+
   return (
     <div style={{
       background:"#fff", borderRadius:"20px",
