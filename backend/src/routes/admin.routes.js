@@ -11,10 +11,11 @@ import {
     deleteListing,
     getAllOrders,
     getAllDonations,
+    getPendingPayouts,
+    markPayoutPaid
 } from "../controllers/admin.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
-
 const router = Router();
 
 // all admin routes need both middlewares
@@ -39,5 +40,8 @@ router.route("/orders").get(getAllOrders);
 
 //  Donations 
 router.route("/donations").get(getAllDonations);
+
+router.route("/payouts").get(getPendingPayouts);
+router.route("/payouts/:farmerId/mark-paid").patch(markPayoutPaid);
 
 export default router;

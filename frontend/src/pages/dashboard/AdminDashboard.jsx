@@ -91,6 +91,7 @@
     
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [payouts, setPayouts] = useState([]);
 
   
     // useEffect(() => {
@@ -102,12 +103,13 @@
         setLoading(true);
         setError(null);
 
-        const [usersRes, listingsRes, donationsRes, newsRes, ordersRes] = await Promise.all([
+        const [usersRes, listingsRes, donationsRes, newsRes, ordersRes, payoutsRes] = await Promise.all([
           axiosInstance.get("/v1/admin/users"),
           axiosInstance.get("/v1/admin/listings?status=pending"),
           axiosInstance.get("/v1/admin/donations"),
           axiosInstance.get("/v1/news"),
           axiosInstance.get("/v1/admin/orders"),
+          axiosInstance.get("/v1/admin/payouts"),
         ]);
 
         setUsers(usersRes.data.data?.users || []);
@@ -115,6 +117,7 @@
         setDonations(donationsRes.data.data || []);
         setNews(newsRes.data.data || []);
         setOrders(ordersRes.data.data?.orders || []);
+        setPayouts(payoutsRes.data.data || []);
 
       } catch (err) {
         console.error("Error fetching admin data:", err);
@@ -128,14 +131,14 @@
       fetchAllData();
     }, []);
 
-    const approveListing = async (id) => {
-  try {
-    await axiosInstance.patch(`/v1/admin/listings/${id}/approve`);
-    fetchAllData(); // refresh table
-  } catch (err) {
-    console.error(err);
-    alert("Failed to approve listing");
-  }
+  const approveListing = async (id) => {
+    try {
+      await axiosInstance.patch(`/v1/admin/listings/${id}/approve`);
+      fetchAllData(); // refresh table
+    } catch (err) {
+      console.error(err);
+      alert("Failed to approve listing");
+    }
 };
 
   const rejectListing = async (id) => {
@@ -148,6 +151,17 @@
     }
   };
 
+  const markPayoutPaid = async (farmerId) => {
+    if (!window.confirm("Confirm you've actually sent this money?")) return;
+    try {
+      await axiosInstance.patch(`/v1/admin/payouts/${farmerId}/mark-paid`);
+      fetchAllData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to mark payout as paid");
+    }
+  };
+
 
     const navItems = [
       { key: "overview", label: "Overview", icon: Icon.overview },
@@ -155,6 +169,7 @@
       { key: "listings", label: "Listings", icon: Icon.listings },
       { key: "donations", label: "Donations", icon: Icon.donations },
       { key: "news", label: "News", icon: Icon.news },
+      { key: "payouts", label: "Payouts", icon: Icon.donations },
     ];
 
     const farmerCount = users.filter((u) => u.role === "farmer").length;
@@ -386,6 +401,34 @@
                             </tr>
                           );
                         })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "payouts" && (
+                <>
+                  <SectionHeader title="Farmer payouts" subtitle="Amounts owed for delivered, paid orders" />
+                  <div className="adm-table-wrap">
+                    <table className="adm-table">
+                      <thead>
+                        <tr><th>Farmer</th><th>UPI ID</th><th>Orders</th><th>Amount owed</th><th>Action</th></tr>
+                      </thead>
+                      <tbody>
+                        {payouts.map((p) => (
+                          <tr key={p.farmerId}>
+                            <td className="adm-td-strong">{p.farmerName}</td>
+                            <td className="adm-td-muted">{p.payoutDetails?.upiId || "Not set"}</td>
+                            <td className="adm-td-muted">{p.orderCount}</td>
+                            <td className="adm-td-strong">₹{p.totalOwed.toLocaleString("en-IN")}</td>
+                            <td>
+                              <button className="adm-btn adm-btn--approve" onClick={() => markPayoutPaid(p.farmerId)}>
+                                Mark as paid
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

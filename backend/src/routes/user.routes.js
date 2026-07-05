@@ -8,10 +8,11 @@ import {
     changeCurrentPassword,
     updateAccountDetails,
     updateUserAvatar,
+    updatePayoutDetails,
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
-
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 const router = Router();
 
 // public routes
@@ -25,5 +26,6 @@ router.route("/me").get(verifyJWT, getCurrentUser);
 router.route("/change-password").patch(verifyJWT, changeCurrentPassword);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
+router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updatePayoutDetails);
 
 export default router;

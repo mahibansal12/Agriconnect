@@ -233,6 +233,31 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
+const updatePayoutDetails = asyncHandler(async (req, res) => {
+    const { upiId, bankAccountNumber, ifscCode, accountHolderName } = req.body;
+
+    if (!upiId && !bankAccountNumber) {
+        throw new ApiError(400, "Provide at least a UPI ID or bank account number");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                "payoutDetails.upiId": upiId,
+                "payoutDetails.bankAccountNumber": bankAccountNumber,
+                "payoutDetails.ifscCode": ifscCode,
+                "payoutDetails.accountHolderName": accountHolderName,
+            },
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Payout details updated successfully"));
+});
+
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const avatarLocalPath = req.file?.path;
 
@@ -266,4 +291,5 @@ export {
     changeCurrentPassword,
     updateAccountDetails,
     updateUserAvatar,
+    updatePayoutDetails,
 };
