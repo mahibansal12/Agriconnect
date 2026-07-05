@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+
 const getAllCrops = asyncHandler(async (req, res) => {
     const { category, season } = req.query;
 
@@ -38,19 +39,22 @@ const createCrop = asyncHandler(async (req, res) => {
     const {
         name,
         localName,
+        scientificName,
         category,
         season,
-        soilType,
-        waterRequirement,
-        growingDuration,
         description,
+        growingGuide,
+        fertilizerGuide,
+        irrigationGuide,
+        diseaseManagement,
+        harvestInfo,
     } = req.body;
 
     if (!name || !category || !season) {
         throw new ApiError(400, "Name, category and season are required");
     }
 
-    
+    // upload image if provided
     let imageUrl = "";
     const imageLocalPath = req.file?.path;
     if (imageLocalPath) {
@@ -61,19 +65,44 @@ const createCrop = asyncHandler(async (req, res) => {
     const crop = await CropKnowledge.create({
         name,
         localName,
+        scientificName,
         category,
         season,
-        soilType,
-        waterRequirement,
-        growingDuration,
         description,
         image: imageUrl,
+       
+        growingGuide: growingGuide
+            ? typeof growingGuide === "string"
+                ? JSON.parse(growingGuide)
+                : growingGuide
+            : {},
+        fertilizerGuide: fertilizerGuide
+            ? typeof fertilizerGuide === "string"
+                ? JSON.parse(fertilizerGuide)
+                : fertilizerGuide
+            : [],
+        irrigationGuide: irrigationGuide
+            ? typeof irrigationGuide === "string"
+                ? JSON.parse(irrigationGuide)
+                : irrigationGuide
+            : {},
+        diseaseManagement: diseaseManagement
+            ? typeof diseaseManagement === "string"
+                ? JSON.parse(diseaseManagement)
+                : diseaseManagement
+            : [],
+        harvestInfo: harvestInfo
+            ? typeof harvestInfo === "string"
+                ? JSON.parse(harvestInfo)
+                : harvestInfo
+            : {},
     });
 
     return res
         .status(201)
         .json(new ApiResponse(201, crop, "Crop created successfully"));
 });
+
 
 const updateCrop = asyncHandler(async (req, res) => {
     const crop = await CropKnowledge.findById(req.params.id);
@@ -82,9 +111,24 @@ const updateCrop = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Crop not found");
     }
 
+    
+    const updateData = { ...req.body };
+    const nestedFields = [
+        "growingGuide",
+        "fertilizerGuide",
+        "irrigationGuide",
+        "diseaseManagement",
+        "harvestInfo",
+    ];
+    nestedFields.forEach((field) => {
+        if (updateData[field] && typeof updateData[field] === "string") {
+            updateData[field] = JSON.parse(updateData[field]);
+        }
+    });
+
     const updated = await CropKnowledge.findByIdAndUpdate(
         req.params.id,
-        { $set: req.body },
+        { $set: updateData },
         { new: true }
     );
 
