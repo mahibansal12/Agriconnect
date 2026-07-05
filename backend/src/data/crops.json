@@ -2,151 +2,529 @@
   {
     "name": "Wheat",
     "localName": "Gehun",
+    "scientificName": "Triticum aestivum",
     "category": "grain",
     "season": "rabi",
-    "soilType": "Loamy soil, well-drained",
-    "waterRequirement": "450-650 mm per season",
-    "growingDuration": "120-150 days",
-    "description": "Wheat is one of the most important cereal crops in India, grown mainly in Punjab, Haryana, and Uttar Pradesh during the rabi season."
+    "image":"https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&auto=format",
+    "description": "Wheat is a staple cereal crop grown widely across North India during the rabi season.",
+    "growingGuide": {
+      "soilType": "Loamy, well-drained",
+      "phRange": "6.5 - 7.5",
+      "temperature": "20°C - 25°C",
+      "rainfall": "75-100 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "100 kg/acre", "timing": "At sowing + 25 days after" },
+      { "name": "DAP", "quantity": "50 kg/acre", "timing": "At sowing" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 5,
+      "intervalDays": 20,
+      "criticalStages": "Crown root initiation, flowering, grain filling"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Rust",
+        "prevention": "Use resistant varieties, avoid excess nitrogen",
+        "treatment": "Spray Propiconazole 25% EC"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "March - April, when crop turns golden yellow",
+      "yieldEstimate": "40-50 quintals/hectare"
+    }
   },
   {
     "name": "Rice",
     "localName": "Chawal",
+    "scientificName": "Oryza sativa",
     "category": "grain",
     "season": "kharif",
-    "soilType": "Clayey soil, water retentive",
-    "waterRequirement": "1200-2000 mm per season",
-    "growingDuration": "90-150 days",
-    "description": "Rice is the staple food of India grown in flooded fields called paddies, mainly in West Bengal, Punjab, and Andhra Pradesh."
+    "image": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=600&auto=format",
+    "description": "Rice is the staple food of India grown in flooded fields called paddies, mainly in West Bengal, Punjab, and Andhra Pradesh.",
+    "growingGuide": {
+      "soilType": "Clayey soil, water retentive",
+      "phRange": "5.5 - 6.5",
+      "temperature": "25°C - 35°C",
+      "rainfall": "150-200 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "120 kg/acre", "timing": "Split in 3 doses" },
+      { "name": "DAP", "quantity": "60 kg/acre", "timing": "At transplanting" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 8,
+      "intervalDays": 10,
+      "criticalStages": "Tillering, panicle initiation, grain filling"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Blast",
+        "prevention": "Use resistant varieties, balanced fertilization",
+        "treatment": "Spray Tricyclazole 75 WP at 0.6g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "October - November, when 80% grains turn golden",
+      "yieldEstimate": "50-60 quintals/hectare"
+    }
   },
   {
     "name": "Maize",
     "localName": "Makka",
+    "scientificName": "Zea mays",
     "category": "grain",
     "season": "kharif",
-    "soilType": "Sandy loam to loamy soil",
-    "waterRequirement": "500-800 mm per season",
-    "growingDuration": "80-110 days",
-    "description": "Maize is a versatile crop used as food, fodder, and raw material for industries. Grown widely in Karnataka, Andhra Pradesh, and Rajasthan."
+    "image": "https://images.unsplash.com/photo-1634467524884-897d0af5e104?w=600&auto=format"
+,
+    "description": "Maize is a versatile crop used as food, fodder, and raw material for industries. Grown widely in Karnataka, Andhra Pradesh, and Rajasthan.",
+    "growingGuide": {
+      "soilType": "Sandy loam to loamy soil",
+      "phRange": "6.0 - 7.5",
+      "temperature": "21°C - 30°C",
+      "rainfall": "50-80 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "130 kg/acre", "timing": "At sowing + 30 days after" },
+      { "name": "DAP", "quantity": "55 kg/acre", "timing": "At sowing" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 4,
+      "intervalDays": 15,
+      "criticalStages": "Knee high stage, tasseling, silking"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Blight",
+        "prevention": "Use certified seeds, crop rotation",
+        "treatment": "Spray Mancozeb 75 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "September - October, when husk turns brown",
+      "yieldEstimate": "35-45 quintals/hectare"
+    }
   },
   {
     "name": "Tomato",
     "localName": "Tamatar",
+    "scientificName": "Solanum lycopersicum",
     "category": "vegetable",
     "season": "rabi",
-    "soilType": "Well-drained sandy loam soil",
-    "waterRequirement": "400-600 mm per season",
-    "growingDuration": "60-90 days",
-    "description": "Tomato is one of the most widely grown vegetable crops in India, rich in vitamins and used extensively in cooking."
+    "image": "https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=600&auto=format",
+    "description": "Tomato is one of the most widely grown vegetable crops in India, rich in vitamins and used extensively in cooking.",
+    "growingGuide": {
+      "soilType": "Well-drained sandy loam soil",
+      "phRange": "6.0 - 7.0",
+      "temperature": "21°C - 27°C",
+      "rainfall": "40-60 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "80 kg/acre", "timing": "In 2 splits after transplanting" },
+      { "name": "DAP", "quantity": "50 kg/acre", "timing": "At transplanting" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 10,
+      "intervalDays": 7,
+      "criticalStages": "Flowering, fruit setting, fruit development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Early Blight",
+        "prevention": "Avoid overhead irrigation, use resistant varieties",
+        "treatment": "Spray Chlorothalonil 75 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "December - February, pick when fruits turn red",
+      "yieldEstimate": "200-250 quintals/hectare"
+    }
   },
   {
     "name": "Potato",
     "localName": "Aloo",
+    "scientificName": "Solanum tuberosum",
     "category": "vegetable",
     "season": "rabi",
-    "soilType": "Loamy, well-drained soil",
-    "waterRequirement": "500-700 mm per season",
-    "growingDuration": "70-120 days",
-    "description": "Potato is a major vegetable crop grown in Uttar Pradesh, West Bengal, and Bihar. It is a staple food and used in various cuisines."
+    "image": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&auto=format"
+  ,
+    "description": "Potato is a major vegetable crop grown in Uttar Pradesh, West Bengal, and Bihar. It is a staple food and used in various cuisines.",
+    "growingGuide": {
+      "soilType": "Loamy, well-drained soil",
+      "phRange": "5.2 - 6.4",
+      "temperature": "15°C - 25°C",
+      "rainfall": "50-70 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "100 kg/acre", "timing": "At planting + earthing up" },
+      { "name": "MOP", "quantity": "60 kg/acre", "timing": "At planting" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 6,
+      "intervalDays": 12,
+      "criticalStages": "Tuber initiation, tuber bulking"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Late Blight",
+        "prevention": "Use certified seed tubers, avoid waterlogging",
+        "treatment": "Spray Metalaxyl MZ 72 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "February - March, when foliage starts drying",
+      "yieldEstimate": "200-300 quintals/hectare"
+    }
   },
   {
     "name": "Onion",
     "localName": "Pyaaz",
+    "scientificName": "Allium cepa",
     "category": "vegetable",
     "season": "rabi",
-    "soilType": "Well-drained loamy soil",
-    "waterRequirement": "350-550 mm per season",
-    "growingDuration": "90-120 days",
-    "description": "Onion is an essential vegetable in Indian cooking, grown mainly in Maharashtra, Karnataka, and Madhya Pradesh."
+    "image": "https://images.unsplash.com/photo-1580201092675-a0a6a6cafbb1?w=600&auto=format",
+    "description": "Onion is an essential vegetable in Indian cooking, grown mainly in Maharashtra, Karnataka, and Madhya Pradesh.",
+    "growingGuide": {
+      "soilType": "Well-drained loamy soil",
+      "phRange": "6.0 - 7.0",
+      "temperature": "13°C - 24°C",
+      "rainfall": "35-55 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "60 kg/acre", "timing": "In 2 splits" },
+      { "name": "SSP", "quantity": "80 kg/acre", "timing": "At transplanting" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 8,
+      "intervalDays": 10,
+      "criticalStages": "Bulb formation, bulb development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Purple Blotch",
+        "prevention": "Avoid dense planting, crop rotation",
+        "treatment": "Spray Iprodione 50 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "March - April, when tops fall over naturally",
+      "yieldEstimate": "150-200 quintals/hectare"
+    }
   },
   {
     "name": "Sugarcane",
     "localName": "Ganna",
+    "scientificName": "Saccharum officinarum",
     "category": "cash crop",
     "season": "zaid",
-    "soilType": "Deep loamy soil, rich in organic matter",
-    "waterRequirement": "1500-2500 mm per season",
-    "growingDuration": "270-365 days",
-    "description": "Sugarcane is a major cash crop used for sugar production, grown mainly in Uttar Pradesh, Maharashtra, and Karnataka."
+    "image": "/images/Sugarcane-.webp",
+    "description": "Sugarcane is a major cash crop used for sugar production, grown mainly in Uttar Pradesh, Maharashtra, and Karnataka.",
+    "growingGuide": {
+      "soilType": "Deep loamy soil, rich in organic matter",
+      "phRange": "6.5 - 7.5",
+      "temperature": "27°C - 38°C",
+      "rainfall": "150-250 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "200 kg/acre", "timing": "In 3 splits over the season" },
+      { "name": "DAP", "quantity": "80 kg/acre", "timing": "At planting" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 15,
+      "intervalDays": 20,
+      "criticalStages": "Germination, tillering, grand growth period"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Red Rot",
+        "prevention": "Use disease-free setts, hot water treatment",
+        "treatment": "Remove and destroy infected clumps, no chemical cure"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "October - March, 12 months after planting",
+      "yieldEstimate": "700-900 quintals/hectare"
+    }
   },
   {
     "name": "Cotton",
     "localName": "Kapas",
+    "scientificName": "Gossypium hirsutum",
     "category": "cash crop",
     "season": "kharif",
-    "soilType": "Black cotton soil, deep and fertile",
-    "waterRequirement": "700-1200 mm per season",
-    "growingDuration": "150-180 days",
-    "description": "Cotton is a major cash crop used in textile industry, grown mainly in Gujarat, Maharashtra, and Telangana."
+    "image": "https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=600&auto=format"
+  ,
+    "description": "Cotton is a major cash crop used in textile industry, grown mainly in Gujarat, Maharashtra, and Telangana.",
+    "growingGuide": {
+      "soilType": "Black cotton soil, deep and fertile",
+      "phRange": "6.0 - 8.0",
+      "temperature": "21°C - 35°C",
+      "rainfall": "70-120 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "80 kg/acre", "timing": "At sowing + 45 days after" },
+      { "name": "DAP", "quantity": "50 kg/acre", "timing": "At sowing" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 5,
+      "intervalDays": 20,
+      "criticalStages": "Squaring, flowering, boll development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Bollworm",
+        "prevention": "Use Bt cotton, install pheromone traps",
+        "treatment": "Spray Emamectin Benzoate 5 SG at 0.4g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "October - December, pick when bolls open fully",
+      "yieldEstimate": "15-20 quintals/hectare"
+    }
   },
   {
     "name": "Chickpea",
     "localName": "Chana",
+    "scientificName": "Cicer arietinum",
     "category": "pulse",
     "season": "rabi",
-    "soilType": "Sandy loam to clay loam soil",
-    "waterRequirement": "300-400 mm per season",
-    "growingDuration": "90-120 days",
-    "description": "Chickpea is the most important pulse crop in India, rich in protein, grown mainly in Madhya Pradesh, Rajasthan, and Maharashtra."
+    "image": "https://images.unsplash.com/photo-1515543904379-3d757afe72e4?w=600&auto=format",
+    "description": "Chickpea is the most important pulse crop in India, rich in protein, grown mainly in Madhya Pradesh, Rajasthan, and Maharashtra.",
+    "growingGuide": {
+      "soilType": "Sandy loam to clay loam soil",
+      "phRange": "6.0 - 7.0",
+      "temperature": "15°C - 25°C",
+      "rainfall": "30-40 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "DAP", "quantity": "40 kg/acre", "timing": "At sowing" },
+      { "name": "Rhizobium culture", "quantity": "500g per 15kg seed", "timing": "Seed treatment before sowing" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 2,
+      "intervalDays": 30,
+      "criticalStages": "Pre-flowering, pod filling"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Wilt",
+        "prevention": "Use resistant varieties, crop rotation",
+        "treatment": "Seed treatment with Thiram + Carbendazim"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "March - April, when leaves turn yellow and pods dry",
+      "yieldEstimate": "12-18 quintals/hectare"
+    }
   },
   {
     "name": "Turmeric",
     "localName": "Haldi",
+    "scientificName": "Curcuma longa",
     "category": "spice",
     "season": "kharif",
-    "soilType": "Loamy or clay loam well-drained soil",
-    "waterRequirement": "1500-2250 mm per season",
-    "growingDuration": "210-270 days",
-    "description": "Turmeric is an important spice and medicinal crop grown mainly in Andhra Pradesh, Telangana, and Tamil Nadu."
+    "image": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=600&auto=format",
+    "description": "Turmeric is an important spice and medicinal crop grown mainly in Andhra Pradesh, Telangana, and Tamil Nadu.",
+    "growingGuide": {
+      "soilType": "Loamy or clay loam well-drained soil",
+      "phRange": "5.5 - 7.0",
+      "temperature": "20°C - 30°C",
+      "rainfall": "150-225 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "FYM", "quantity": "10 tonnes/acre", "timing": "At land preparation" },
+      { "name": "Urea", "quantity": "60 kg/acre", "timing": "In 2 splits at 60 and 120 days" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 20,
+      "intervalDays": 7,
+      "criticalStages": "Rhizome development, tillering"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Rhizome Rot",
+        "prevention": "Use healthy rhizomes, proper drainage",
+        "treatment": "Drench with Metalaxyl MZ 72 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "January - March, when leaves turn yellow and dry",
+      "yieldEstimate": "150-200 quintals/hectare"
+    }
   },
   {
     "name": "Mango",
     "localName": "Aam",
+    "scientificName": "Mangifera indica",
     "category": "fruit",
     "season": "zaid",
-    "soilType": "Deep well-drained alluvial soil",
-    "waterRequirement": "1200-1500 mm per year",
-    "growingDuration": "90-120 days fruiting season",
-    "description": "Mango is the national fruit of India, grown mainly in Uttar Pradesh, Andhra Pradesh, and Maharashtra. Known as the king of fruits."
+    "image": "https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&auto=format",
+    "description": "Mango is the national fruit of India, grown mainly in Uttar Pradesh, Andhra Pradesh, and Maharashtra. Known as the king of fruits.",
+    "growingGuide": {
+      "soilType": "Deep well-drained alluvial soil",
+      "phRange": "5.5 - 7.5",
+      "temperature": "24°C - 30°C",
+      "rainfall": "75-250 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "FYM", "quantity": "50 kg per tree", "timing": "Before monsoon" },
+      { "name": "Urea", "quantity": "1 kg per tree", "timing": "After harvest" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 6,
+      "intervalDays": 15,
+      "criticalStages": "Flowering, fruit set, fruit development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Powdery Mildew",
+        "prevention": "Prune for air circulation, avoid excess humidity",
+        "treatment": "Spray Wettable Sulfur 80 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "May - July, when fruit attains full size and colour",
+      "yieldEstimate": "100-200 quintals/hectare"
+    }
   },
   {
     "name": "Mustard",
     "localName": "Sarson",
+    "scientificName": "Brassica juncea",
     "category": "cash crop",
     "season": "rabi",
-    "soilType": "Loamy to sandy loam soil",
-    "waterRequirement": "250-400 mm per season",
-    "growingDuration": "110-140 days",
-    "description": "Mustard is a major oilseed crop grown in Rajasthan, Uttar Pradesh, and Haryana, used for cooking oil and condiments."
+    "image": "/images/mustard.jpg",
+    "description": "Mustard is a major oilseed crop grown in Rajasthan, Uttar Pradesh, and Haryana, used for cooking oil and condiments.",
+    "growingGuide": {
+      "soilType": "Loamy to sandy loam soil",
+      "phRange": "6.0 - 7.5",
+      "temperature": "10°C - 25°C",
+      "rainfall": "25-40 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "60 kg/acre", "timing": "Half at sowing, half at first irrigation" },
+      { "name": "SSP", "quantity": "50 kg/acre", "timing": "At sowing" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 2,
+      "intervalDays": 35,
+      "criticalStages": "Flowering, pod formation"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Alternaria Blight",
+        "prevention": "Use disease-free seeds, crop rotation",
+        "treatment": "Spray Mancozeb 75 WP at 2.5g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "February - March, when pods turn yellowish brown",
+      "yieldEstimate": "8-12 quintals/hectare"
+    }
   },
   {
     "name": "Lentil",
     "localName": "Masoor",
+    "scientificName": "Lens culinaris",
     "category": "pulse",
     "season": "rabi",
-    "soilType": "Loamy soil with good drainage",
-    "waterRequirement": "250-350 mm per season",
-    "growingDuration": "90-120 days",
-    "description": "Lentil is a highly nutritious pulse crop rich in protein and iron, grown mainly in Madhya Pradesh, Uttar Pradesh, and Bihar."
+    "image":"/images/lentils.webp",
+    "description": "Lentil is a highly nutritious pulse crop rich in protein and iron, grown mainly in Madhya Pradesh, Uttar Pradesh, and Bihar.",
+    "growingGuide": {
+      "soilType": "Loamy soil with good drainage",
+      "phRange": "6.0 - 8.0",
+      "temperature": "18°C - 30°C",
+      "rainfall": "25-35 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "DAP", "quantity": "35 kg/acre", "timing": "At sowing" },
+      { "name": "Rhizobium culture", "quantity": "500g per 15kg seed", "timing": "Seed treatment" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 2,
+      "intervalDays": 30,
+      "criticalStages": "Flowering, pod filling"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Rust",
+        "prevention": "Use resistant varieties, early sowing",
+        "treatment": "Spray Mancozeb 75 WP at 2g per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "March - April, when pods turn light brown",
+      "yieldEstimate": "8-12 quintals/hectare"
+    }
   },
   {
     "name": "Banana",
     "localName": "Kela",
+    "scientificName": "Musa acuminata",
     "category": "fruit",
     "season": "zaid",
-    "soilType": "Rich loamy soil with good drainage",
-    "waterRequirement": "1200-2200 mm per year",
-    "growingDuration": "270-365 days",
-    "description": "Banana is one of the most widely consumed fruits in India, grown mainly in Tamil Nadu, Maharashtra, and Gujarat."
+    "image":"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600&auto=format",
+    "description": "Banana is one of the most widely consumed fruits in India, grown mainly in Tamil Nadu, Maharashtra, and Gujarat.",
+    "growingGuide": {
+      "soilType": "Rich loamy soil with good drainage",
+      "phRange": "6.0 - 7.5",
+      "temperature": "26°C - 30°C",
+      "rainfall": "120-220 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "Urea", "quantity": "200g per plant", "timing": "Every 2 months" },
+      { "name": "MOP", "quantity": "300g per plant", "timing": "Every 2 months" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 30,
+      "intervalDays": 5,
+      "criticalStages": "Shooting, bunch development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Panama Wilt",
+        "prevention": "Use resistant varieties, clean planting material",
+        "treatment": "No effective chemical cure, remove and destroy infected plants"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "11-15 months after planting, when fingers are plump",
+      "yieldEstimate": "300-400 quintals/hectare"
+    }
   },
   {
     "name": "Soybean",
     "localName": "Soya",
+    "scientificName": "Glycine max",
     "category": "pulse",
     "season": "kharif",
-    "soilType": "Well-drained loamy soil",
-    "waterRequirement": "450-700 mm per season",
-    "growingDuration": "90-120 days",
-    "description": "Soybean is a protein-rich oilseed crop grown mainly in Madhya Pradesh, Maharashtra, and Rajasthan."
+    "image":  "/images/soybean.webp",
+    "description": "Soybean is a protein-rich oilseed crop grown mainly in Madhya Pradesh, Maharashtra, and Rajasthan.",
+    "growingGuide": {
+      "soilType": "Well-drained loamy soil",
+      "phRange": "6.0 - 7.5",
+      "temperature": "20°C - 30°C",
+      "rainfall": "45-70 cm annually"
+    },
+    "fertilizerGuide": [
+      { "name": "DAP", "quantity": "50 kg/acre", "timing": "At sowing" },
+      { "name": "Rhizobium culture", "quantity": "500g per 15kg seed", "timing": "Seed treatment" }
+    ],
+    "irrigationGuide": {
+      "numberOfIrrigations": 3,
+      "intervalDays": 20,
+      "criticalStages": "Flowering, pod filling, seed development"
+    },
+    "diseaseManagement": [
+      {
+        "disease": "Yellow Mosaic",
+        "prevention": "Control whitefly vectors, use resistant varieties",
+        "treatment": "Spray Imidacloprid 17.8 SL at 0.5ml per litre"
+      }
+    ],
+    "harvestInfo": {
+      "harvestTime": "October - November, when pods turn brown and rattle",
+      "yieldEstimate": "15-20 quintals/hectare"
+    }
   }
 ]

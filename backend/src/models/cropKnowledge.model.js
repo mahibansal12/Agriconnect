@@ -13,6 +13,10 @@ const cropKnowledgeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    scientificName: {
+      type: String,
+      trim: true,
+    },
     category: {
       type: String,
       enum: ["vegetable", "fruit", "grain", "pulse", "spice", "cash crop"],
@@ -23,20 +27,40 @@ const cropKnowledgeSchema = new mongoose.Schema(
       enum: ["kharif", "rabi", "zaid"],
       required: true,
     },
-    soilType: {
-      type: String,
-    },
-    waterRequirement: {
-      type: String,
-    },
-    growingDuration: {
-      type: String, // e.g. "90-120 days"
+    image: {
+      type: String, // cloudinary URL or direct URL
     },
     description: {
       type: String,
     },
-    image: {
-      type: String, // cloudinary URL
+    growingGuide: {
+      soilType: { type: String },
+      phRange: { type: String },
+      temperature: { type: String },
+      rainfall: { type: String },
+    },
+    fertilizerGuide: [
+      {
+        name: { type: String },
+        quantity: { type: String },
+        timing: { type: String },
+      },
+    ],
+    irrigationGuide: {
+      numberOfIrrigations: { type: Number },
+      intervalDays: { type: Number },
+      criticalStages: { type: String },
+    },
+    diseaseManagement: [
+      {
+        disease: { type: String },
+        prevention: { type: String },
+        treatment: { type: String },
+      },
+    ],
+    harvestInfo: {
+      harvestTime: { type: String },
+      yieldEstimate: { type: String },
     },
   },
   { timestamps: true }
