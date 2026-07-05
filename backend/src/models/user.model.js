@@ -32,6 +32,13 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String, // cloudinary URL
     },
+
+    payoutDetails: {
+    upiId:             { type: String, trim: true },
+    bankAccountNumber: { type: String, trim: true },
+    ifscCode:          { type: String, trim: true },
+    accountHolderName: { type: String, trim: true },
+    },
     refreshToken: {
       type: String,
     },

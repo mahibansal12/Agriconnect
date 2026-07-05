@@ -7,6 +7,7 @@ import {
     createRazorpayOrder,
     verifyPaymentSignature,
 } from "../services/payment.service.js";
+import { PLATFORM_COMMISSION_PERCENT } from "../constants.js";
 
 //  Create Order 
 // POST /api/v1/orders
@@ -43,6 +44,8 @@ const createOrder = asyncHandler(async (req, res) => {
     }
 
     const totalPrice = listing.pricePerUnit * quantity;
+    const platformCommission = Math.round(totalPrice * (PLATFORM_COMMISSION_PERCENT / 100));
+    const farmerPayoutAmount = totalPrice - platformCommission;
 
     // create Razorpay order — amount in paise handled in service
     const razorpayOrder = await createRazorpayOrder(totalPrice);
@@ -57,6 +60,8 @@ const createOrder = asyncHandler(async (req, res) => {
         unit: listing.unit,            // snapshot
         pricePerUnit: listing.pricePerUnit, // snapshot
         totalPrice,
+        platformCommission,
+        farmerPayoutAmount,
         razorpayOrderId: razorpayOrder.id,
         deliveryAddress: { state, district, village, pincode, phone },
     });

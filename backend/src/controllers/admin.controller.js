@@ -261,6 +261,37 @@ const getAllDonations = asyncHandler(async (req, res) => {
     )
 })
 
+// GET /admin/payouts — how much you owe each farmer right now
+const getPendingPayouts = asyncHandler(async (req, res) => {
+  const payouts = await Order.aggregate([
+    { $match: { paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" } },
+    { $group: {
+        _id: "$farmer",
+        totalOwed: { $sum: "$farmerPayoutAmount" },
+        orderCount: { $sum: 1 },
+    }},
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "farmer" } },
+    { $unwind: "$farmer" },
+    { $project: {
+        farmerId: "$_id",
+        farmerName: "$farmer.name",
+        payoutDetails: "$farmer.payoutDetails",
+        totalOwed: 1,
+        orderCount: 1,
+    }},
+  ]);
+  return res.status(200).json(new ApiResponse(200, payouts, "Pending payouts fetched"));
+});
+
+// PATCH /admin/payouts/:farmerId/mark-paid — you paid them manually, record it
+const markPayoutPaid = asyncHandler(async (req, res) => {
+  const result = await Order.updateMany(
+    { farmer: req.params.farmerId, paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" },
+    { payoutStatus: "paid", payoutDate: new Date() }
+  );
+  return res.status(200).json(new ApiResponse(200, { modifiedCount: result.modifiedCount }, "Payout marked as paid"));
+});
+
 export {
     getDashboardStats,
     getAllUsers,
@@ -273,4 +304,6 @@ export {
     deleteListing,
     getAllOrders,
     getAllDonations,
+    getPendingPayouts,
+    markPayoutPaid,
 }
