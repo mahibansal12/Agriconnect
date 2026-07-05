@@ -23,13 +23,29 @@ const getChatResponse = async (message, history = []) => {
     });
 
     // Gemini uses "model" instead of "assistant" for AI role
-    const formattedHistory = history.map((h) => ({
+    let formattedHistory = history.map((h) => ({
         role: h.role === "assistant" ? "model" : "user",
         parts: [{ text: h.content }],
     }));
 
+    // Gemini requires the first message in chat history to be from the 'user' role.
+    // If the welcome message is the first history item (role: 'model'), remove it.
+    while (formattedHistory.length > 0 && formattedHistory[0].role === "model") {
+        formattedHistory.shift();
+    }
+
+    // Ensure strict alternation of user -> model -> user -> model
+    const alternatingHistory = [];
+    let expectedRole = "user";
+    for (const msg of formattedHistory) {
+        if (msg.role === expectedRole) {
+            alternatingHistory.push(msg);
+            expectedRole = expectedRole === "user" ? "model" : "user";
+        }
+    }
+
     const chat = model.startChat({
-        history: formattedHistory,
+        history: alternatingHistory,
     });
 
     const result = await chat.sendMessage(message);
