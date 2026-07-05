@@ -1,5 +1,8 @@
 // src/components/marketplace/CropCard.jsx
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
+import axiosInstance from '../../utils/axiosInstance';
 
 const typeStyles = {
   Grain: 'border-amber-200 bg-amber-50 text-amber-700',
@@ -9,9 +12,57 @@ const typeStyles = {
   Oilseed: 'border-sky-200 bg-sky-50 text-sky-700',
 };
 
+const HeartIcon = ({ filled, ...p }) => (
+  <svg viewBox="0 0 24 24" width={16} height={16} fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+  </svg>
+);
+
+const isSameId = (a, b) => !!a && !!b && a.toString() === b.toString();
+
 const CropCard = ({ crop }) => {
-  const { _id, name, price, state, district, type, images } = crop;
+  const { _id, name, price, state, district, type, images, seller, wishlistedBy } = crop;
   const badgeStyle = typeStyles[type] || 'border-emerald-200 bg-emerald-50 text-emerald-700';
+
+  const navigate = useNavigate();
+  const { user, isLoggedIn, isBuyer } = useAuth();
+
+  const sellerId = seller?._id || seller;
+  const isOwner = isSameId(user?._id, sellerId);
+
+  const [wishlisted, setWishlisted] = useState(
+    Array.isArray(wishlistedBy) && user?._id
+      ? wishlistedBy.some((id) => isSameId(id, user._id))
+      : false
+  );
+  const [wishlistBusy, setWishlistBusy] = useState(false);
+
+  const handleToggleWishlist = async (e) => {
+    
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (wishlistBusy) return;
+
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!isBuyer) {
+      alert('Only buyer accounts can save items to a wishlist.');
+      return;
+    }
+
+    setWishlistBusy(true);
+    try {
+      await axiosInstance.patch(`/v1/listing/${_id}/wishlist`);
+      setWishlisted((w) => !w);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update wishlist.');
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
 
   return (
     <Link to={`/marketplace/${_id}`} className="group block">
@@ -32,6 +83,21 @@ const CropCard = ({ crop }) => {
           <span className={`absolute left-4 top-4 rounded-full border px-3 py-1 text-xs font-black ${badgeStyle}`}>
             {type || 'Crop'}
           </span>
+          {!isOwner && (
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              disabled={wishlistBusy}
+              aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+              className={`absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full backdrop-blur-sm transition disabled:opacity-60 ${
+                wishlisted
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-white/85 text-emerald-900/50 hover:text-rose-500'
+              }`}
+            >
+              <HeartIcon filled={wishlisted} />
+            </button>
+          )}
         </div>
 
         <div className="p-5">

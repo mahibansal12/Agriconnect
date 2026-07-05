@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchCropById, deleteCrop, clearSelectedCrop } from '../../redux/slices/cropSlice';
 import Loader from '../../components/common/Loader';
 import useAuth from '../../hooks/useAuth';
+import axiosInstance from '../../utils/axiosInstance';
  
-// ─── Small inline icons — same convention as FarmerDashboard.jsx /
-//     AddListing.jsx / CropImageUpload.jsx, no external icon library ──
+
 const Icon = {
   back: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -30,6 +30,17 @@ const Icon = {
       <path d="M11 20A7 7 0 0 1 4 13c0-6 6-10 15-11 1 9-3 15-11 15Z" /><path d="M4 20 12 12" />
     </svg>
   ),
+  cart: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  ),
+  heart: ({ filled, ...p }) => (
+    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  ),
 };
  
 const CropDetail = () => {
@@ -37,16 +48,29 @@ const CropDetail = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selectedCrop: crop, loading, error } = useSelector((state) => state.crops);
-  const { user } = useAuth();
+  const { user, isLoggedIn, isBuyer } = useAuth();
  
   const [activeImg, setActiveImg] = useState(0);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
  
   useEffect(() => {
     dispatch(fetchCropById(id));
     // cleanup on unmount
     return () => dispatch(clearSelectedCrop());
   }, [id, dispatch]);
+ 
+  // ── Sync the wishlist heart with this listing's saved-by list ──
+  useEffect(() => {
+    if (crop && user?._id && Array.isArray(crop.wishlistedBy)) {
+      setWishlisted(
+        crop.wishlistedBy.some((wid) => (wid?._id || wid)?.toString?.() === user._id.toString())
+      );
+    } else {
+      setWishlisted(false);
+    }
+  }, [crop, user?._id]);
  
   // ── Track recently viewed in localStorage (frontend-only, no backend) ──
   useEffect(() => {
@@ -79,6 +103,51 @@ const CropDetail = () => {
       navigate('/marketplace');
     } else {
       setDeleteLoading(false);
+    }
+  };
+ 
+  // ── Contact Seller — reveals the farmer's phone via a tel: link ──
+  const handleContactSeller = () => {
+    const phone = crop?.seller?.phone;
+    if (!phone) {
+      alert('Seller contact number is not available.');
+      return;
+    }
+    window.location.href = `tel:${phone}`;
+  };
+ 
+  // ── Buy Now — hands off to the existing OrderForm at /buyer/order ──
+  const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!isBuyer) {
+      alert('Only buyer accounts can place orders.');
+      return;
+    }
+    navigate('/buyer/order', { state: { crop } });
+  };
+ 
+  // ── Wishlist toggle — calls the existing PATCH /v1/listing/:id/wishlist ──
+  const handleToggleWishlist = async () => {
+    if (wishlistBusy) return;
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!isBuyer) {
+      alert('Only buyer accounts can save items to a wishlist.');
+      return;
+    }
+    setWishlistBusy(true);
+    try {
+      await axiosInstance.patch(`/v1/listing/${id}/wishlist`);
+      setWishlisted((w) => !w);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update wishlist.');
+    } finally {
+      setWishlistBusy(false);
     }
   };
  
@@ -170,10 +239,25 @@ const CropDetail = () => {
               {/* Actions */}
               <div className="cd-actions">
                 {!isOwner && (
-                  <button className="cd-btn cd-btn--primary">
-                    <Icon.phone width={16} height={16} />
-                    Contact Seller
-                  </button>
+                  <>
+                    <button onClick={handleBuyNow} className="cd-btn cd-btn--primary">
+                      <Icon.cart width={16} height={16} />
+                      Buy Now
+                    </button>
+                    <button onClick={handleContactSeller} className="cd-btn cd-btn--secondary">
+                      <Icon.phone width={16} height={16} />
+                      Contact Seller
+                    </button>
+                    <button
+                      onClick={handleToggleWishlist}
+                      disabled={wishlistBusy}
+                      aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                      className={`cd-btn cd-btn--wishlist${wishlisted ? ' cd-btn--wishlist-active' : ''}`}
+                    >
+                      <Icon.heart width={16} height={16} filled={wishlisted} />
+                      {wishlisted ? 'Wishlisted' : 'Wishlist'}
+                    </button>
+                  </>
                 )}
                 {isOwner && (
                   <button onClick={handleDelete} disabled={deleteLoading} className="cd-btn cd-btn--danger">
@@ -280,12 +364,12 @@ const CropDetailStyles = () => (
     .cd-desc-label { font-size: 11.5px; color: #A8A29E; margin-bottom: 4px; }
     .cd-desc-text { font-size: 13.5px; color: #57534E; line-height: 1.6; }
  
-    .cd-actions { border-top: 1px solid rgba(0,0,0,0.07); padding-top: 18px; }
+    .cd-actions { border-top: 1px solid rgba(0,0,0,0.07); padding-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
     .cd-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; height: 48px; border: none; border-radius: 14px;
+      flex: 1; min-width: 140px; height: 48px; border: none; border-radius: 14px;
       font-size: 14.5px; font-weight: 600; cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
     }
     .cd-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     .cd-btn--primary {
@@ -294,6 +378,12 @@ const CropDetailStyles = () => (
       box-shadow: 0 10px 24px rgba(101,163,13,0.32);
     }
     .cd-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(101,163,13,0.4); }
+    .cd-btn--secondary { background: rgba(0,0,0,0.05); color: #57534E; }
+    .cd-btn--secondary:hover { background: rgba(0,0,0,0.09); }
+    .cd-btn--wishlist { background: rgba(244,63,94,0.1); color: #E11D48; }
+    .cd-btn--wishlist:hover { background: rgba(244,63,94,0.18); }
+    .cd-btn--wishlist-active { background: #E11D48; color: #fff; }
+    .cd-btn--wishlist-active:hover { background: #BE123C; }
     .cd-btn--danger { background: rgba(239,68,68,0.1); color: #DC2626; }
     .cd-btn--danger:hover { background: rgba(239,68,68,0.18); }
  
