@@ -5,10 +5,11 @@ import { fetchCrops, deleteCrop } from '../../redux/slices/cropSlice';
 import { fetchFarmerOrders, updateOrderStatus } from '../../redux/slices/cartSlice';
 import useAuth from '../../hooks/useAuth';
 import Loader from '../../components/common/Loader';
+import axiosInstance from '../../utils/axiosInstance';
  
 // ─── Status badge styles (now scoped classNames, not Tailwind) ──
 const STATUS_STYLES = {
-  pending:   'fd-badge--pending',
+  placed:   'fd-badge--pending',
   confirmed: 'fd-badge--confirmed',
   shipped:   'fd-badge--shipped',
   delivered: 'fd-badge--delivered',
@@ -16,8 +17,8 @@ const STATUS_STYLES = {
 };
  
 const STATUS_ACTIONS = {
-  pending:   ['confirmed', 'cancelled'],
-  confirmed: ['shipped',   'cancelled'],
+  placed:   ['confirmed'],
+  confirmed: ['shipped',],
   shipped:   ['delivered'],
   delivered: [],
   cancelled: [],
@@ -76,6 +77,8 @@ const FarmerDashboard = () => {
   const [activeTab,    setActiveTab]    = useState('listings'); // 'listings' | 'orders' | 'earnings'
   const [deletingId,   setDeletingId]   = useState(null);
   const [updatingId,   setUpdatingId]   = useState(null);
+  const [upiId,        setUpiId]        = useState(user?.payoutDetails?.upiId || '');   // ← paste here
+  const [savingUpi,    setSavingUpi]    = useState(false);           
  
   // Fetch farmer's own listings + orders on mount
   useEffect(() => {
@@ -88,9 +91,17 @@ const FarmerDashboard = () => {
   // ── Derived stats ──────────────────────────────────────────
   const myListings     = crops.filter((c) => c.seller?._id === user?._id || c.seller === user?._id);
   const totalEarnings  = orders
-    .filter((o) => o.status === 'delivered')
-    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-  const pendingOrders  = orders.filter((o) => o.status === 'pending').length;
+    .filter((o) => o.orderStatus === 'delivered')
+    .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+  const pendingOrders  = orders.filter((o) => o.orderStatus === 'pending').length;
+
+  const paidOut = orders
+    .filter((o) => o.payoutStatus === 'paid')
+    .reduce((s, o) => s + (o.farmerPayoutAmount || 0), 0);
+  const pendingPayout = orders
+    .filter((o) => o.orderStatus === 'delivered' && o.payoutStatus === 'pending')
+    .reduce((s, o) => s + (o.farmerPayoutAmount || 0), 0);
+
   const activeListings = myListings.length;
  
   // ── Handlers ───────────────────────────────────────────────
@@ -106,7 +117,19 @@ const FarmerDashboard = () => {
     await dispatch(updateOrderStatus({ orderId, status }));
     setUpdatingId(null);
   };
- 
+
+  const handleSaveUpi = async () => {        
+    setSavingUpi(true);
+    try {
+      await axiosInstance.patch('/v1/user/payout-details', { upiId });
+      alert('UPI ID saved');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to save UPI ID');
+    } finally {
+      setSavingUpi(false);
+    }
+  };     
+  
   const isLoading = cropLoading || orderLoading;
  
   const navItems = [
@@ -308,15 +331,15 @@ const FarmerDashboard = () => {
                             {/* Order info */}
                             <div>
                               <div className="fd-order-title-row">
-                                <p className="fd-order-crop">{order.crop?.name || 'Crop'}</p>
-                                <span className={`fd-badge ${STATUS_STYLES[order.status] || STATUS_STYLES.pending}`}>
-                                  {order.status}
+                                <p className="fd-order-crop">{order.listing?.cropName || 'Crop'}</p>
+                                <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
+                                  {order.orderStatus}
                                 </span>
                               </div>
                               <div className="fd-order-meta">
                                 <p>Buyer: <span className="fd-order-meta-strong">{order.buyer?.name || '—'}</span></p>
                                 <p>Qty: <span className="fd-order-meta-strong">{order.quantity} qtl</span></p>
-                                <p>Amount: <span className="fd-order-amount">₹{order.totalAmount?.toLocaleString('en-IN')}</span></p>
+                                <p>Amount: <span className="fd-order-amount">₹{order.totalPrice?.toLocaleString('en-IN')}</span></p>
                                 <p>Ordered: <span className="fd-order-meta-strong">
                                   {order.createdAt
                                     ? new Date(order.createdAt).toLocaleDateString('en-IN', {
@@ -328,9 +351,9 @@ const FarmerDashboard = () => {
                             </div>
  
                             {/* Status update buttons */}
-                            {STATUS_ACTIONS[order.status]?.length > 0 && (
+                            {STATUS_ACTIONS[order.orderStatus]?.length > 0 && (
                               <div className="fd-order-actions">
-                                {STATUS_ACTIONS[order.status].map((nextStatus) => (
+                                {STATUS_ACTIONS[order.orderStatus].map((nextStatus) => (
                                   <button
                                     key={nextStatus}
                                     onClick={() => handleStatusChange(order._id, nextStatus)}
@@ -354,6 +377,22 @@ const FarmerDashboard = () => {
                 ═══════════════════════════════════════════════ */}
                 {activeTab === 'earnings' && (
                   <div className="fd-earnings">
+                    <div className="fd-card" style={{ marginBottom: 18, padding: 16 }}>
+                        <p className="fd-card-title" style={{ marginBottom: 8 }}>Payout UPI ID</p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            placeholder="yourname@upi"
+                            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #d6d3d1' }}
+                          />
+                          <button onClick={handleSaveUpi} disabled={savingUpi} className="fd-btn fd-btn--progress">
+                            {savingUpi ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                    </div>
+
+
                     {/* Summary cards */}
                     <div className="fd-summary-grid">
                       {[
@@ -367,8 +406,8 @@ const FarmerDashboard = () => {
                         {
                           label: 'Pending Amount',
                           value: `₹${orders
-                            .filter((o) => ['pending', 'confirmed', 'shipped'].includes(o.status))
-                            .reduce((s, o) => s + (o.totalAmount || 0), 0)
+                            .filter((o) => ['placed', 'confirmed', 'shipped'].includes(o.orderStatus))
+                            .reduce((s, o) => s + (o.totalPrice || 0), 0)
                             .toLocaleString('en-IN')}`,
                           sub: 'awaiting delivery',
                           icon: '⏳',
@@ -377,13 +416,27 @@ const FarmerDashboard = () => {
                         {
                           label: 'Cancelled Value',
                           value: `₹${orders
-                            .filter((o) => o.status === 'cancelled')
-                            .reduce((s, o) => s + (o.totalAmount || 0), 0)
+                            .filter((o) => o.orderStatus === 'cancelled')
+                            .reduce((s, o) => s + (o.totalPrice || 0), 0)
                             .toLocaleString('en-IN')}`,
                           sub: 'from cancelled orders',
                           icon: '❌',
                           accent: 'rose',
                         },
+                        {                                                              // ← paste starts here
+                          label: 'Paid Out',
+                          value: `₹${paidOut.toLocaleString('en-IN')}`,
+                          sub: 'already transferred to you',
+                          icon: '✅',
+                          accent: 'green',
+                        },
+                        {
+                          label: 'Awaiting Payout',
+                          value: `₹${pendingPayout.toLocaleString('en-IN')}`,
+                          sub: 'delivered, payment on the way',
+                          icon: '🕒',
+                          accent: 'gold',
+                        },                   
                       ].map(({ label, value, sub, icon, accent }) => (
                         <div key={label} className={`fd-summary-card fd-summary-card--${accent}`}>
                           <div className="fd-summary-icon">{icon}</div>
@@ -417,10 +470,10 @@ const FarmerDashboard = () => {
                                   <td className="fd-td-strong">{order.crop?.name || '—'}</td>
                                   <td className="fd-td-muted">{order.buyer?.name || '—'}</td>
                                   <td className="fd-td-muted">{order.quantity}</td>
-                                  <td className="fd-td-accent">₹{order.totalAmount?.toLocaleString('en-IN') || '—'}</td>
+                                  <td className="fd-td-accent">₹{order.totalPrice?.toLocaleString('en-IN') || '—'}</td>
                                   <td>
-                                    <span className={`fd-badge ${STATUS_STYLES[order.status] || STATUS_STYLES.pending}`}>
-                                      {order.status}
+                                    <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
+                                      {order.orderStatus}
                                     </span>
                                   </td>
                                   <td className="fd-td-faint">
