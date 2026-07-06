@@ -112,6 +112,7 @@ export default function BuyerDashboard() {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
+  const [removingWishlistId, setRemovingWishlistId] = useState(null);
   const navigate = useNavigate();
   const { name, user }           = useAuth();
  
@@ -174,6 +175,20 @@ export default function BuyerDashboard() {
       alert(err.response?.data?.message || "Failed to cancel order.");
     } finally {
       setCancellingId(null);
+    }
+  };
+ 
+  // ── Remove from wishlist (reuses the same toggle endpoint CropCard uses) ─
+  const handleRemoveFromWishlist = async (listingId) => {
+    if (removingWishlistId) return;
+    setRemovingWishlistId(listingId);
+    try {
+      await axiosInstance.patch(`/v1/listing/${listingId}/wishlist`);
+      setWishlist((prev) => prev.filter((item) => item._id !== listingId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to remove from wishlist.");
+    } finally {
+      setRemovingWishlistId(null);
     }
   };
  
@@ -318,7 +333,7 @@ export default function BuyerDashboard() {
                                onClick={() => navigate(`/buyer/orders/${order._id}`)}
                                style ={{ cursor: "pointer" }}
                           >
-
+ 
                             <div className="bd-item-top">
                               <div className="bd-thumb">
                                 {imgSrc ? <img src={imgSrc} alt={order.cropName} className="bd-thumb-img" /> : <div className="bd-thumb-fallback">🌾</div>}
@@ -412,6 +427,24 @@ export default function BuyerDashboard() {
                               <p className="bd-meta-label">Farmer</p>
                               <p className="bd-meta-value">{item.farmer}</p>
                             </div>
+                          </div>
+ 
+                          <div className="bd-item-actions">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/marketplace/${item._id}`)}
+                              className="bd-btn bd-btn--primary"
+                            >
+                              Order
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFromWishlist(item._id)}
+                              disabled={removingWishlistId === item._id}
+                              className="bd-btn bd-btn--outline-danger"
+                            >
+                              {removingWishlistId === item._id ? "Removing..." : "Remove"}
+                            </button>
                           </div>
                         </div>
                       ))
@@ -680,7 +713,7 @@ export default function BuyerDashboard() {
         .bd-meta-value { font-size: 13.5px; font-weight: 600; color: #1F2937; }
         .bd-meta-value--accent { color: #4D7C0F; }
  
-        .bd-item-actions { display: flex; justify-content: flex-end; }
+        .bd-item-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
         .bd-no-action { font-size: 12px; color: #A8A29E; font-style: italic; }
  
         /* ── Buttons ── */
@@ -692,6 +725,18 @@ export default function BuyerDashboard() {
         .bd-btn:disabled { opacity: 0.55; cursor: not-allowed; }
         .bd-btn--danger { background: rgba(239,68,68,0.12); color: #DC2626; }
         .bd-btn--danger:hover { background: rgba(239,68,68,0.2); }
+        .bd-btn--primary {
+          background: linear-gradient(135deg, #FACC15, #65A30D);
+          color: #fff;
+          box-shadow: 0 4px 12px rgba(101,163,13,0.28);
+        }
+        .bd-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(101,163,13,0.35); }
+        .bd-btn--outline-danger {
+          background: transparent;
+          color: #DC2626;
+          border: 1.5px solid rgba(220,38,38,0.5);
+        }
+        .bd-btn--outline-danger:hover { background: rgba(239,68,68,0.08); border-color: #DC2626; }
  
         /* ── Loader ── */
         .bd-loader { text-align: center; padding: 80px 20px; }

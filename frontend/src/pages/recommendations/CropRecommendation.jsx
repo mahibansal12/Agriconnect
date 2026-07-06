@@ -1,10 +1,9 @@
-// src/pages/recommendations/CropRecommendation.jsx
 import { useState } from 'react';
 import CropRecommendForm from '../../components/recommendations/CropRecommendForm';
 import CropResultCard from '../../components/recommendations/CropResultCard';
 import Navbar from '../../components/common/Navbar';
 import axiosInstance from '../../utils/axiosInstance';
-
+ 
 const LOCAL_RECOMMENDATIONS = {
   Alluvial: [
     { name: 'Wheat', confidence: 92, season: 'Rabi', waterNeed: 'Medium', duration: '110-150 days', avgYield: '20-25 qtl/acre', marketPrice: 'Rs 2200/qtl', emoji: '🌾', tips: ['Best in well-drained alluvial plains', 'Apply urea at tillering stage'] },
@@ -22,14 +21,14 @@ const LOCAL_RECOMMENDATIONS = {
     { name: 'Mustard', confidence: 74, season: 'Rabi', waterNeed: 'Low', duration: '110-140 days', avgYield: '6-8 qtl/acre', marketPrice: 'Rs 5100/qtl', emoji: '🟡', tips: ['Tolerates dry conditions', 'Apply sulphur fertilizer'] },
   ],
 };
-
+ 
 const getLocalRecommendations = ({ soilType }) => {
   const key = Object.keys(LOCAL_RECOMMENDATIONS).find((name) =>
     soilType?.toLowerCase().includes(name.toLowerCase())
   );
   return LOCAL_RECOMMENDATIONS[key] || LOCAL_RECOMMENDATIONS.Alluvial;
 };
-
+ 
 const toCropCards = (payload) => {
   const recommendations = payload?.recommendations ?? payload;
   if (!Array.isArray(recommendations)) return [];
@@ -45,18 +44,18 @@ const toCropCards = (payload) => {
     emoji: crop.emoji ?? '🌾',
   }));
 };
-
+ 
 const CropRecommendation = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
+ 
   const handleSubmit = async (formData) => {
     setLoading(true);
     setError('');
     setSubmitted(true);
-
+ 
     try {
       const payload = {
         previousCrop: formData.previousCrop || 'wheat',
@@ -74,40 +73,36 @@ const CropRecommendation = () => {
       setLoading(false);
     }
   };
-
+ 
+  const allLocalCrops = Object.values(LOCAL_RECOMMENDATIONS).flat();
+  const soilTypesCount = Object.keys(LOCAL_RECOMMENDATIONS).length;
+  const seasonsCount = new Set(allLocalCrops.map((c) => c.season)).size;
+  const waterLevelsCount = new Set(allLocalCrops.map((c) => c.waterNeed)).size;
+  const aiRecommendationsCount = results.length || allLocalCrops.length;
+ 
   return (
     <div className="advisor-page">
       <Navbar />
-
+ 
       <section className="advisor-hero">
-        <div className="advisor-field-lines" />
+        <div className="advisor-hero-circle advisor-hero-circle-1" />
+        <div className="advisor-hero-circle advisor-hero-circle-2" />
         <div className="advisor-hero-inner">
-          <div className="advisor-copy">
-            <div className="advisor-eyebrow">Smart crop advisor</div>
-            <h1>Crop Recommendation</h1>
-            <p>
-              Match your soil, season, climate, and water availability with crops
-              that fit Indian farming conditions.
-            </p>
-            <div className="advisor-actions">
-              <a href="#advisor-form" className="advisor-primary">Start analysis</a>
-              <span className="advisor-pill">Frontend demo ready</span>
-            </div>
+          <div className="advisor-eyebrow">AgriConnect • Crop Advisor</div>
+          <h1>🌱 Crop Recommendation</h1>
+          <p>
+            Match your soil type, season, climate, and water availability with
+            crops best suited for your farming conditions.
+          </p>
+          <div className="advisor-hero-stats">
+            <div><strong>{soilTypesCount}</strong><span>Soil Types</span></div>
+            <div><strong>{seasonsCount}</strong><span>Seasons</span></div>
+            <div><strong>{waterLevelsCount}</strong><span>Water Levels</span></div>
+            <div><strong>{aiRecommendationsCount}</strong><span>AI Recommendations</span></div>
           </div>
-
-          <aside className="advisor-panel">
-            <div className="advisor-panel-label">Decision support</div>
-            <div className="advisor-score">92%</div>
-            <p>Typical match score for complete soil and season inputs.</p>
-            <div className="advisor-mini-grid">
-              <div><strong>7</strong><span>Soils</span></div>
-              <div><strong>3</strong><span>Seasons</span></div>
-              <div><strong>India</strong><span>Region</span></div>
-            </div>
-          </aside>
         </div>
       </section>
-
+ 
       <main id="advisor-form" className="advisor-main">
         <section className="advisor-stats">
           {[
@@ -121,12 +116,12 @@ const CropRecommendation = () => {
             </div>
           ))}
         </section>
-
+ 
         <div className="advisor-grid">
           <div className="advisor-form-card">
             <CropRecommendForm onSubmit={handleSubmit} loading={loading} />
           </div>
-
+ 
           <aside className="advisor-side">
             <h2>How recommendations are ranked</h2>
             <div className="advisor-steps">
@@ -143,9 +138,9 @@ const CropRecommendation = () => {
             </div>
           </aside>
         </div>
-
+ 
         {error && <div className="advisor-error">{error}</div>}
-
+ 
         {submitted && !loading && results.length > 0 && (
           <section className="advisor-results">
             <div className="advisor-section-head">
@@ -159,7 +154,7 @@ const CropRecommendation = () => {
             </div>
           </section>
         )}
-
+ 
         {submitted && !loading && results.length === 0 && (
           <div className="advisor-empty">
             <span>🌾</span>
@@ -168,26 +163,31 @@ const CropRecommendation = () => {
           </div>
         )}
       </main>
-
+ 
       <style>{`
         .advisor-page { min-height: 100vh; background: linear-gradient(135deg, #EAF7FF 0%, #FFF8E6 46%, #EFFBEF 100%); }
-        .advisor-hero { position: relative; overflow: hidden; min-height: 420px; background: linear-gradient(90deg, rgba(7,41,18,0.88), rgba(18,85,28,0.72), rgba(14,165,233,0.36)), radial-gradient(circle at 82% 16%, rgba(255,205,83,0.95) 0 8%, rgba(255,173,46,0.24) 9% 22%, transparent 34%), linear-gradient(180deg, #74C7F2 0%, #BDEBFF 31%, #FFE19A 45%, #79B54A 46%, #236E2A 100%); }
-        .advisor-field-lines { position: absolute; left: -8%; right: -8%; top: 45%; bottom: -30%; opacity: 0.82; background: repeating-linear-gradient(104deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 58px), repeating-linear-gradient(76deg, rgba(8,69,22,0.30) 0 3px, transparent 3px 70px); transform: perspective(520px) rotateX(58deg); transform-origin: top; }
-        .advisor-hero-inner { position: relative; z-index: 1; width: min(100% - 48px, 1280px); min-height: 420px; margin: 0 auto; padding: 58px 0 66px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; align-items: center; gap: 72px; }
-        .advisor-copy h1 { margin: 0; color: #fff; font-size: clamp(42px, 5vw, 66px); line-height: 1.05; font-weight: 900; letter-spacing: 0; }
-        .advisor-copy p { max-width: 650px; margin: 20px 0 0; color: rgba(255,255,255,0.88); font-size: 18px; line-height: 1.8; }
-        .advisor-eyebrow { display: inline-flex; margin-bottom: 20px; padding: 6px 14px; border: 1px solid rgba(255,226,139,0.48); border-radius: 6px; background: rgba(255,248,220,0.16); color: #FFE7A3; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-        .advisor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 32px; }
-        .advisor-primary { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 24px; border-radius: 8px; background: linear-gradient(135deg, #F59E0B, #EF4444); color: #fff; font-weight: 900; text-decoration: none; box-shadow: 0 14px 30px rgba(239,68,68,0.24); }
-        .advisor-pill { min-height: 38px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255,235,167,0.72); color: #fff; background: rgba(255,255,255,0.08); font-weight: 800; font-size: 13px; }
-        .advisor-panel { border: 1px solid rgba(179,229,252,0.42); border-radius: 14px; padding: 22px; color: #fff; background: rgba(9,68,76,0.42); box-shadow: 0 20px 50px rgba(10,45,30,0.22); backdrop-filter: blur(6px); }
-        .advisor-panel-label { color: #B3E5FC; font-size: 12px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-        .advisor-score { margin-top: 18px; font-size: 54px; line-height: 1; color: #FFE082; font-weight: 900; }
-        .advisor-panel p { color: rgba(255,255,255,0.76); line-height: 1.6; }
-        .advisor-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 18px; }
-        .advisor-mini-grid div { min-height: 74px; border-radius: 10px; background: rgba(255,255,255,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .advisor-mini-grid strong { color: #fff; font-size: 19px; }
-        .advisor-mini-grid span { margin-top: 4px; color: rgba(255,255,255,0.68); font-size: 12px; }
+ 
+        /* ===== Header (Crop Knowledge style) ===== */
+        .advisor-hero { position: relative; overflow: hidden; min-height: 300px; display: flex; align-items: center; background: linear-gradient(135deg, #0a3d1f 0%, #14532d 55%, #1b6b34 100%); }
+        .advisor-hero-circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.05); pointer-events: none; }
+        .advisor-hero-circle-1 { width: 420px; height: 420px; top: -160px; right: -90px; }
+        .advisor-hero-circle-2 { width: 240px; height: 240px; bottom: -120px; left: 8%; background: rgba(255,255,255,0.04); }
+        .advisor-hero-inner { position: relative; z-index: 1; width: min(100% - 48px, 1280px); margin: 0 auto; padding: 40px 0 36px; }
+        .advisor-eyebrow { display: inline-flex; margin-bottom: 14px; color: #86efac; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+        .advisor-hero-inner h1 { margin: 0; display: flex; align-items: center; gap: 12px; color: #fff; font-size: clamp(28px, 3.4vw, 38px); font-weight: 900; line-height: 1.1; }
+        .advisor-hero-inner p { max-width: 700px; margin: 14px 0 0; color: rgba(255,255,255,0.82); font-size: 15px; line-height: 1.65; }
+        .advisor-hero-stats { display: flex; flex-wrap: wrap; gap: 0; margin-top: 22px; }
+        .advisor-hero-stats div { display: flex; align-items: baseline; gap: 6px; padding-right: 20px; margin-right: 20px; border-right: 1px solid rgba(255,255,255,0.2); }
+        .advisor-hero-stats div:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+        .advisor-hero-stats strong { color: #fff; font-size: 20px; font-weight: 900; }
+        .advisor-hero-stats span { color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 700; }
+        @media (max-width: 640px) {
+          .advisor-hero-inner { width: min(100% - 32px, 1280px); padding: 32px 0 28px; }
+          .advisor-hero-stats { flex-direction: column; gap: 12px; }
+          .advisor-hero-stats div { border-right: none; padding-right: 0; margin-right: 0; }
+        }
+        /* ===== End Header ===== */
+ 
         .advisor-main { width: min(100% - 48px, 1280px); margin: 0 auto; padding: 32px 0 72px; }
         .advisor-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 22px; }
         .advisor-stat { display: flex; align-items: center; gap: 14px; border: 1px solid #D8E8C8; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 18px; box-shadow: 0 18px 40px rgba(45,92,30,0.08); }
@@ -211,11 +211,11 @@ const CropRecommendation = () => {
         .advisor-empty { margin-top: 22px; min-height: 220px; border: 1px dashed #BBF7D0; border-radius: 16px; background: rgba(255,255,255,0.86); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #4B7A5C; }
         .advisor-empty span { font-size: 52px; }
         .advisor-empty p { margin: 10px 0 2px; color: #0A2E0C; font-weight: 900; }
-        @media (max-width: 980px) { .advisor-hero-inner, .advisor-grid { grid-template-columns: 1fr; } .advisor-panel { max-width: 520px; } .advisor-stats, .advisor-result-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 640px) { .advisor-hero-inner, .advisor-main { width: min(100% - 32px, 1280px); } .advisor-copy h1 { font-size: 38px; } .advisor-copy p { font-size: 16px; } .advisor-mini-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 980px) { .advisor-grid { grid-template-columns: 1fr; } .advisor-stats, .advisor-result-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .advisor-main { width: min(100% - 32px, 1280px); } }
       `}</style>
     </div>
   );
 };
-
+ 
 export default CropRecommendation;

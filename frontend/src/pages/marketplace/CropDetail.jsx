@@ -7,7 +7,7 @@ import Loader from '../../components/common/Loader';
 import useAuth from '../../hooks/useAuth';
 import axiosInstance from '../../utils/axiosInstance';
  
-
+ 
 const Icon = {
   back: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -54,6 +54,8 @@ const CropDetail = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistBusy, setWishlistBusy] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [copied, setCopied] = useState(false);
  
   useEffect(() => {
     dispatch(fetchCropById(id));
@@ -106,14 +108,28 @@ const CropDetail = () => {
     }
   };
  
-  // ── Contact Seller — reveals the farmer's phone via a tel: link ──
+  // ── Contact Seller — shows the farmer's phone in a modal (tel: link
+  // silently does nothing on desktop browsers with no dialer app, so we
+  // surface the number on-screen too, with a one-tap copy option) ──
   const handleContactSeller = () => {
     const phone = crop?.seller?.phone;
     if (!phone) {
       alert('Seller contact number is not available.');
       return;
     }
-    window.location.href = `tel:${phone}`;
+    setShowContactModal(true);
+  };
+ 
+  const handleCopyPhone = async () => {
+    const phone = crop?.seller?.phone;
+    if (!phone) return;
+    try {
+      await navigator.clipboard.writeText(phone);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (_) {
+      // Clipboard API unavailable — number is already visible to copy manually
+    }
   };
  
   // ── Buy Now — hands off to the existing OrderForm at /buyer/order ──
@@ -271,6 +287,29 @@ const CropDetail = () => {
         </div>
       </div>
  
+      {showContactModal && (
+        <div className="cd-modal-overlay" onClick={() => setShowContactModal(false)}>
+          <div className="cd-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="cd-modal-close" onClick={() => setShowContactModal(false)} aria-label="Close">✕</button>
+            <div className="cd-modal-icon">
+              <Icon.phone width={22} height={22} />
+            </div>
+            <p className="cd-modal-label">Seller Contact</p>
+            <h3 className="cd-modal-name">{crop.seller?.name || 'Seller'}</h3>
+            <p className="cd-modal-phone">{crop.seller?.phone}</p>
+            <div className="cd-modal-actions">
+              <a href={`tel:${crop.seller?.phone}`} className="cd-btn cd-btn--primary">
+                <Icon.phone width={16} height={16} />
+                Call Now
+              </a>
+              <button onClick={handleCopyPhone} className="cd-btn cd-btn--secondary" type="button">
+                {copied ? 'Copied!' : 'Copy Number'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+ 
       <CropDetailStyles />
     </div>
   );
@@ -386,6 +425,42 @@ const CropDetailStyles = () => (
     .cd-btn--wishlist-active:hover { background: #BE123C; }
     .cd-btn--danger { background: rgba(239,68,68,0.1); color: #DC2626; }
     .cd-btn--danger:hover { background: rgba(239,68,68,0.18); }
+ 
+    /* ── Contact Seller modal ── */
+    .cd-modal-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(31,41,55,0.45);
+      backdrop-filter: blur(4px);
+      display: grid; place-items: center;
+      padding: 20px;
+    }
+    .cd-modal {
+      position: relative;
+      width: 100%; max-width: 340px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 22px;
+      padding: 32px 26px 26px;
+      text-align: center;
+      box-shadow: 0 24px 60px -14px rgba(120,90,10,0.32), 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .cd-modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 28px; height: 28px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.05); color: #57534E; font-size: 13px;
+      cursor: pointer; display: grid; place-items: center;
+    }
+    .cd-modal-close:hover { background: rgba(0,0,0,0.1); }
+    .cd-modal-icon {
+      width: 52px; height: 52px; margin: 0 auto 14px;
+      border-radius: 16px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #FACC15, #65A30D); color: #fff;
+    }
+    .cd-modal-label { font-size: 11.5px; font-weight: 600; color: #A8A29E; text-transform: uppercase; letter-spacing: 0.04em; }
+    .cd-modal-name { font-size: 19px; font-weight: 700; color: #1F2937; margin-top: 4px; }
+    .cd-modal-phone { font-size: 20px; font-weight: 700; color: #4D7C0F; margin-top: 10px; letter-spacing: 0.02em; }
+    .cd-modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .cd-modal-actions .cd-btn { height: 44px; font-size: 13.5px; min-width: 0; }
  
     /* ── Responsive ── */
     @media (max-width: 800px) {
