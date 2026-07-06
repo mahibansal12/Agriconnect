@@ -49,6 +49,7 @@ import Schemes from "../pages/schemes/Schemes";
 import SchemeDetail from "../pages/schemes/SchemeDetail";
 import Donations from "../pages/donations/Donations";
 import DonationDetail from "../pages/donations/DonationDetail";
+import CampaignDetail from "../pages/donations/CampaignDetail";
 import PestLibrary from "../pages/pest-library/PestLibrary";
 import PestDetail from "../pages/pest-library/PestDetail";
 import ShopFinder from "../pages/ShopFinder";
@@ -109,8 +110,9 @@ export default function AppRoutes() {
       <Route path="/schemes" element={<Schemes />} />
       <Route path="/schemes/:id" element={<SchemeDetail />} />  
 
-      {/* ── Donations (roommate) ── */}
+      {/* ── Donations ── */}
       <Route path="/donations" element={<Donations />} />
+      <Route path="/donations/campaign/:id" element={<CampaignDetail />} />
       <Route path="/donations/:id" element={<DonationDetail />} />
 
       {/* ── Pest library (roommate) ── */}

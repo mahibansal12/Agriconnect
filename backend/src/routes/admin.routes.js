@@ -11,6 +11,10 @@ import {
     deleteListing,
     getAllOrders,
     getAllDonations,
+    getAllDonationRequests,
+    approveDonationRequest,
+    rejectDonationRequest,
+    deleteDonationRequest,
     getPendingPayouts,
     markPayoutPaid
 } from "../controllers/admin.controller.js";
@@ -28,7 +32,7 @@ router.route("/stats").get(getDashboardStats);
 router.route("/users").get(getAllUsers);
 router.route("/users/:id").get(getUserById).delete(deleteUser);
 router.route("/users/:id/ban").patch(toggleBanUser);
- 
+
 //  Listings 
 router.route("/listings").get(getAllListings);
 router.route("/listings/:id/approve").patch(approveListing);
@@ -40,6 +44,12 @@ router.route("/orders").get(getAllOrders);
 
 //  Donations 
 router.route("/donations").get(getAllDonations);
+
+//  Donation Requests (Farmer Campaign Requests) 
+router.route("/donation-requests").get(getAllDonationRequests);
+router.route("/donation-requests/:id/approve").patch(approveDonationRequest);
+router.route("/donation-requests/:id/reject").patch(rejectDonationRequest);
+router.route("/donation-requests/:id").delete(deleteDonationRequest);
 
 router.route("/payouts").get(getPendingPayouts);
 router.route("/payouts/:farmerId/mark-paid").patch(markPayoutPaid);

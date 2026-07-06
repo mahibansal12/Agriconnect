@@ -24,10 +24,22 @@ const donationSchema = new mongoose.Schema(
     paymentId: {
       type: String, // Razorpay payment ID
     },
+    campaignId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DonationRequest", // optional — links to a farmer's campaign
+    },
     status: {
       type: String,
       enum: ["pending", "completed", "failed"],
       default: "pending",
+    },
+    payoutStatus: {
+      type: String,
+      enum: ["pending", "paid"],
+      default: "pending",
+    },
+    payoutDate: {
+      type: Date,
     },
   },
   { timestamps: true }
