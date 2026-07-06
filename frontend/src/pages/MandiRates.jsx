@@ -79,7 +79,6 @@ const MandiRates = () => {
 
   const sourceRates = rates.length ? rates : DEMO_RATES;
   const visibleRates = applyFilters(sourceRates, filters);
-  const isDemo = !!error || !rates.length;
   const liveCount = visibleRates.filter((r) => r.isLive).length;
 
   const history = selectedCrop
@@ -97,41 +96,31 @@ const MandiRates = () => {
     <div className="mandi-page">
       <Navbar />
 
+      {/* ===== Header (Crop Knowledge style) ===== */}
       <section className="mandi-hero">
-        <div className="mandi-field-lines" />
+        <div className="mandi-hero-circle mandi-hero-circle-1" />
+        <div className="mandi-hero-circle mandi-hero-circle-2" />
         <div className="mandi-hero-inner">
-          <div className="mandi-copy">
-            <div className="mandi-eyebrow">Official mandi intelligence</div>
-            <h1>Mandi Rates</h1>
-            <p>
-              Track crop prices across major Indian mandis, compare modal rates,
-              and spot market movement before selling your harvest.
-            </p>
-            <div className="mandi-actions">
-              <a href="#mandi-board" className="mandi-primary">View live board</a>
-              <span className="mandi-pill">{isDemo ? 'Demo data active' : 'Backend connected'}</span>
-            </div>
+          <div className="mandi-eyebrow">AgriConnect • Mandi Rates</div>
+          <h1>📈 Mandi Rates</h1>
+          <p>
+            Track crop prices across major Indian mandis, compare modal rates,
+            and monitor market trends before selling your harvest.
+          </p>
+          <div className="mandi-hero-stats">
+            <div><strong>{visibleRates.length}</strong><span>Total Records</span></div>
+            <div><strong>{new Set(visibleRates.map((r) => r.crop)).size}</strong><span>Crops Listed</span></div>
+            <div><strong>{new Set(visibleRates.map((r) => r.market)).size}</strong><span>Markets Covered</span></div>
+            <div><strong>{liveCount}</strong><span>Live Updates</span></div>
           </div>
-
-          <aside className="mandi-panel">
-            <div className="mandi-panel-label">Market pulse</div>
-            <div className="mandi-price">₹{visibleRates[0]?.price?.toLocaleString('en-IN') || '2,440'}</div>
-            <div className="mandi-panel-sub">{visibleRates[0]?.crop || 'Wheat'} modal price today</div>
-            <div className="mandi-mini-grid">
-              <div><strong>{visibleRates.length}</strong><span>Records</span></div>
-              <div><strong>{new Set(visibleRates.map((r) => r.crop)).size}</strong><span>Crops</span></div>
-              <div><strong>{liveCount}</strong><span>Live</span></div>
-            </div>
-            <div className="mandi-status">
-              <span className={isConnected ? 'mandi-dot live' : 'mandi-dot'} />
-              {isConnected ? 'Socket live' : 'Offline preview'}
-            </div>
-          </aside>
         </div>
       </section>
+      {/* ===== End Header ===== */}
 
       <main id="mandi-board" className="mandi-main">
-        <MandiFilters filters={filters} onChange={setFilters} />
+        <div className="mandi-filters-card">
+          <MandiFilters filters={filters} onChange={setFilters} />
+        </div>
 
         <section className="mandi-stats">
           {[
@@ -171,27 +160,82 @@ const MandiRates = () => {
 
       <style>{`
         .mandi-page { min-height: 100vh; background: linear-gradient(135deg, #EAF7FF 0%, #FFF8E6 46%, #EFFBEF 100%); }
-        .mandi-hero { position: relative; overflow: hidden; min-height: 420px; background: linear-gradient(90deg, rgba(7,41,18,0.88), rgba(18,85,28,0.72), rgba(245,158,11,0.42)), radial-gradient(circle at 82% 14%, rgba(255,205,83,0.95) 0 8%, rgba(255,173,46,0.24) 9% 22%, transparent 34%), linear-gradient(180deg, #74C7F2 0%, #BDEBFF 31%, #FFE19A 45%, #79B54A 46%, #236E2A 100%); }
-        .mandi-field-lines { position: absolute; left: -8%; right: -8%; top: 45%; bottom: -30%; opacity: 0.82; background: repeating-linear-gradient(104deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 58px), repeating-linear-gradient(76deg, rgba(8,69,22,0.30) 0 3px, transparent 3px 70px); transform: perspective(520px) rotateX(58deg); transform-origin: top; }
-        .mandi-hero-inner { position: relative; z-index: 1; width: min(100% - 48px, 1280px); min-height: 420px; margin: 0 auto; padding: 58px 0 66px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; align-items: center; gap: 72px; }
-        .mandi-copy h1 { margin: 0; color: #fff; font-size: clamp(42px, 5vw, 66px); line-height: 1.05; font-weight: 900; letter-spacing: 0; }
-        .mandi-copy p { max-width: 650px; margin: 20px 0 0; color: rgba(255,255,255,0.88); font-size: 18px; line-height: 1.8; }
-        .mandi-eyebrow { display: inline-flex; margin-bottom: 20px; padding: 6px 14px; border: 1px solid rgba(255,226,139,0.48); border-radius: 6px; background: rgba(255,248,220,0.16); color: #FFE7A3; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-        .mandi-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 32px; }
-        .mandi-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 24px; border-radius: 8px; background: linear-gradient(135deg, #F59E0B, #EF4444); color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; box-shadow: 0 14px 30px rgba(239,68,68,0.24); }
-        .mandi-pill { min-height: 38px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255,235,167,0.72); color: #fff; background: rgba(255,255,255,0.08); font-weight: 800; font-size: 13px; }
-        .mandi-panel { border: 1px solid rgba(179,229,252,0.42); border-radius: 14px; padding: 22px; color: #fff; background: rgba(9,68,76,0.42); box-shadow: 0 20px 50px rgba(10,45,30,0.22); backdrop-filter: blur(6px); }
-        .mandi-panel-label { color: #B3E5FC; font-size: 12px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-        .mandi-price { margin-top: 20px; font-size: 48px; line-height: 1; font-weight: 900; color: #FFE082; }
-        .mandi-panel-sub { margin-top: 8px; color: rgba(255,255,255,0.78); }
-        .mandi-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 22px; }
-        .mandi-mini-grid div { min-height: 76px; border-radius: 10px; background: rgba(255,255,255,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .mandi-mini-grid strong { color: #fff; font-size: 22px; }
-        .mandi-mini-grid span { margin-top: 4px; color: rgba(255,255,255,0.68); font-size: 12px; }
-        .mandi-status { margin-top: 16px; display: flex; align-items: center; gap: 8px; color: #DFFBE8; font-size: 13px; }
-        .mandi-dot { width: 9px; height: 9px; border-radius: 50%; background: #CBD5E1; }
-        .mandi-dot.live { background: #22C55E; box-shadow: 0 0 0 5px rgba(34,197,94,0.18); }
+
+        /* ===== Header (Crop Knowledge style — matched dimensions) ===== */
+        .mandi-hero { position: relative; overflow: hidden; min-height: 300px; display: flex; align-items: center; background: linear-gradient(135deg, #0a3d1f 0%, #14532d 55%, #1b6b34 100%); }
+        .mandi-hero-circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.05); pointer-events: none; }
+        .mandi-hero-circle-1 { width: 420px; height: 420px; top: -160px; right: -90px; }
+        .mandi-hero-circle-2 { width: 240px; height: 240px; bottom: -120px; left: 8%; background: rgba(255,255,255,0.04); }
+        .mandi-hero-inner { position: relative; z-index: 1; width: min(100% - 48px, 1280px); margin: 0 auto; padding: 40px 0 36px; }
+        .mandi-eyebrow { display: inline-flex; margin-bottom: 14px; color: #86efac; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+        .mandi-hero-inner h1 { margin: 0; display: flex; align-items: center; gap: 12px; color: #fff; font-size: clamp(28px, 3.4vw, 38px); font-weight: 900; line-height: 1.1; }
+        .mandi-hero-inner p { max-width: 700px; margin: 14px 0 0; color: rgba(255,255,255,0.82); font-size: 15px; line-height: 1.65; }
+        .mandi-hero-stats { display: flex; flex-wrap: wrap; gap: 0; margin-top: 22px; }
+        .mandi-hero-stats div { display: flex; align-items: baseline; gap: 6px; padding-right: 20px; margin-right: 20px; border-right: 1px solid rgba(255,255,255,0.2); }
+        .mandi-hero-stats div:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+        .mandi-hero-stats strong { color: #fff; font-size: 20px; font-weight: 900; }
+        .mandi-hero-stats span { color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 700; }
+        @media (max-width: 640px) {
+          .mandi-hero-inner { width: min(100% - 32px, 1280px); padding: 32px 0 28px; }
+          .mandi-hero-stats { flex-direction: column; gap: 12px; }
+          .mandi-hero-stats div { border-right: none; padding-right: 0; margin-right: 0; }
+        }
+        /* ===== End Header ===== */
+
         .mandi-main { width: min(100% - 48px, 1280px); margin: 0 auto; padding: 32px 0 72px; }
+
+        /* ===== Filters card ===== */
+        .mandi-filters-card {
+          background: #ffffff;
+          border: 1px solid #E4EEDC;
+          border-radius: 18px;
+          padding: 28px 32px;
+          margin-bottom: 24px;
+          box-shadow: 0 18px 44px rgba(20,83,45,0.08);
+        }
+        .mandi-filters-card > * {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 20px;
+        }
+        .mandi-filters-card label,
+        .mandi-filters-card > * > div > label {
+          display: block;
+          margin-bottom: 8px;
+          color: #4B7A5C;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .mandi-filters-card select,
+        .mandi-filters-card input {
+          height: 46px;
+          min-width: 200px;
+          padding: 0 14px;
+          border: 1px solid #DDE8D2;
+          border-radius: 10px;
+          background: #F9FBF6;
+          color: #0A2E0C;
+          font-size: 14px;
+          font-weight: 600;
+          box-shadow: 0 1px 2px rgba(20,83,45,0.04);
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .mandi-filters-card select:focus,
+        .mandi-filters-card input:focus {
+          outline: none;
+          border-color: #1b6b34;
+          box-shadow: 0 0 0 3px rgba(27,107,52,0.12);
+        }
+        .mandi-filters-card input::placeholder { color: #9CB8A8; font-weight: 500; }
+        @media (max-width: 768px) {
+          .mandi-filters-card { padding: 22px 20px; }
+          .mandi-filters-card > * { flex-direction: column; align-items: stretch; gap: 16px; }
+          .mandi-filters-card select,
+          .mandi-filters-card input { width: 100%; min-width: 0; }
+        }
         .mandi-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 20px 0; }
         .mandi-stat { display: flex; align-items: center; gap: 14px; min-height: 92px; border: 1px solid #D8E8C8; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 18px; box-shadow: 0 18px 40px rgba(45,92,30,0.08); }
         .mandi-stat span { font-size: 28px; }
@@ -204,8 +248,8 @@ const MandiRates = () => {
         .mandi-section-head h2 { margin: 0; color: #0A2E0C; font-size: 24px; font-weight: 900; }
         .mandi-section-head p { margin: 4px 0 0; color: #4B7A5C; font-size: 14px; }
         .mandi-tip { margin-top: 12px; border: 1px solid #BBF7D0; background: #F0FDF4; color: #166534; border-radius: 12px; padding: 12px; text-align: center; font-size: 13px; font-weight: 800; }
-        @media (max-width: 980px) { .mandi-hero-inner, .mandi-content { grid-template-columns: 1fr; } .mandi-panel { max-width: 520px; } .mandi-stats { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 640px) { .mandi-hero-inner, .mandi-main { width: min(100% - 32px, 1280px); } .mandi-copy h1 { font-size: 38px; } .mandi-copy p { font-size: 16px; } .mandi-stats, .mandi-mini-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 980px) { .mandi-content { grid-template-columns: 1fr; } .mandi-stats { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 640px) { .mandi-main { width: min(100% - 32px, 1280px); } .mandi-stats { grid-template-columns: 1fr; } }
       `}</style>
     </div>
   );
