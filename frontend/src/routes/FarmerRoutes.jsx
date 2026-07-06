@@ -8,6 +8,7 @@ import RoleRoute    from '../components/common/RoleRoute';
 import FarmerDashboard  from '../pages/dashboard/FarmerDashboard';
 import AddListing       from '../pages/marketplace/AddListing';
 import OrderForm        from '../pages/order/OrderForm';
+import OrderDetail      from '../pages/order/OrderDetail';
 
 // ── Wrappers ───────────────────────────────────────────────────
 
@@ -52,6 +53,16 @@ export default function FarmerRoutes() {
         element={
           <FarmerOnly>
             <OrderForm />
+          </FarmerOnly>
+        }
+      />
+
+     {/* /farmer/orders/:id — view a single order's full details */}
+      <Route
+        path="orders/:id"
+        element={
+          <FarmerOnly>
+            <OrderDetail />
           </FarmerOnly>
         }
       />

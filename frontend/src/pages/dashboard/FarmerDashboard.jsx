@@ -326,7 +326,11 @@ const FarmerDashboard = () => {
                       </div>
                     ) : (
                       orders.map((order) => (
-                        <div key={order._id} className="fd-order-card">
+                        <div key={order._id} 
+                         className="fd-order-card"
+                         onClick={() => navigate(`/farmer/orders/${order._id}`)}
+                         style={{ cursor: 'pointer' }}
+                        >
                           <div className="fd-order-row">
                             {/* Order info */}
                             <div>
@@ -356,7 +360,10 @@ const FarmerDashboard = () => {
                                 {STATUS_ACTIONS[order.orderStatus].map((nextStatus) => (
                                   <button
                                     key={nextStatus}
-                                    onClick={() => handleStatusChange(order._id, nextStatus)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStatusChange(order._id, nextStatus);
+                                    }}
                                     disabled={updatingId === order._id}
                                     className={`fd-btn ${nextStatus === 'cancelled' ? 'fd-btn--danger' : 'fd-btn--progress'}`}
                                   >

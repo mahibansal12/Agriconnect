@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { formatPrice, formatDate } from "../../utils/formatters";
 import useAuth from "../../hooks/useAuth";
 import axiosInstance from "../../utils/axiosInstance";
@@ -112,7 +112,8 @@ export default function BuyerDashboard() {
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
-  const { name, email, user }           = useAuth();
+  const navigate = useNavigate();
+  const { name, user }           = useAuth();
  
   // ── Fetch all data on mount ─────────────────────────────────────────────
   const fetchData = async () => {
@@ -312,7 +313,12 @@ export default function BuyerDashboard() {
                         const imgSrc = order.listing?.images?.[0]?.url || order.listing?.images?.[0];
  
                         return (
-                          <div key={order._id} className="bd-item-card">
+                          <div key={order._id}
+                               className="bd-item-card"
+                               onClick={() => navigate(`/buyer/orders/${order._id}`)}
+                               style ={{ cursor: "pointer" }}
+                          >
+
                             <div className="bd-item-top">
                               <div className="bd-thumb">
                                 {imgSrc ? <img src={imgSrc} alt={order.cropName} className="bd-thumb-img" /> : <div className="bd-thumb-fallback">🌾</div>}
@@ -349,7 +355,10 @@ export default function BuyerDashboard() {
                             <div className="bd-item-actions">
                               {canCancel ? (
                                 <button
-                                  onClick={() => handleCancel(order._id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancel(order._id);
+                                  }}
                                   disabled={cancellingId === order._id}
                                   className="bd-btn bd-btn--danger"
                                 >
