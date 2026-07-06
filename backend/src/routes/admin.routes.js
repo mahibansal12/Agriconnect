@@ -28,7 +28,7 @@ router.route("/stats").get(getDashboardStats);
 router.route("/users").get(getAllUsers);
 router.route("/users/:id").get(getUserById).delete(deleteUser);
 router.route("/users/:id/ban").patch(toggleBanUser);
-
+ 
 //  Listings 
 router.route("/listings").get(getAllListings);
 router.route("/listings/:id/approve").patch(approveListing);
