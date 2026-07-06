@@ -65,7 +65,7 @@
 
         if (!donation) {
             throw new ApiError(404, "Donation not found");
-        }
+        }     
 
         donation.status = status;
         await donation.save();
