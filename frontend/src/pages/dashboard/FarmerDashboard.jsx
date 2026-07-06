@@ -1,29 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { fetchCrops, deleteCrop } from '../../redux/slices/cropSlice';
 import { fetchFarmerOrders, updateOrderStatus } from '../../redux/slices/cartSlice';
 import useAuth from '../../hooks/useAuth';
 import Loader from '../../components/common/Loader';
 import axiosInstance from '../../utils/axiosInstance';
- 
 // ─── Status badge styles (now scoped classNames, not Tailwind) ──
 const STATUS_STYLES = {
-  placed:   'fd-badge--pending',
+  placed: 'fd-badge--pending',
   confirmed: 'fd-badge--confirmed',
-  shipped:   'fd-badge--shipped',
+  shipped: 'fd-badge--shipped',
   delivered: 'fd-badge--delivered',
   cancelled: 'fd-badge--cancelled',
 };
- 
+
 const STATUS_ACTIONS = {
-  placed:   ['confirmed'],
+  placed: ['confirmed'],
   confirmed: ['shipped',],
-  shipped:   ['delivered'],
+  shipped: ['delivered'],
   delivered: [],
   cancelled: [],
 };
- 
+
 // ─── Small inline icons for sidebar / topbar / brand ────────────
 const Icon = {
   leaf: (p) => (
@@ -46,13 +45,19 @@ const Icon = {
       <circle cx="12" cy="12" r="9" /><path d="M12 7v10M9 9.5a2.5 2.5 0 0 1 2.5-1.5h1a2 2 0 1 1 0 4h-1a2 2 0 1 0 0 4h1a2.5 2.5 0 0 0 2.5-1.5" />
     </svg>
   ),
+  // ── donation request icon
+  donations: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  ),
   bell: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
   ),
 };
- 
+
 // ─── Small reusable stat card ──────────────────────────────────
 const StatCard = ({ icon, label, value, sub, accent = 'green' }) => (
   <div className="fd-stat-card">
@@ -64,46 +69,78 @@ const StatCard = ({ icon, label, value, sub, accent = 'green' }) => (
     {sub && <p className="fd-stat-sub">{sub}</p>}
   </div>
 );
- 
+
 // ─── Main Component ────────────────────────────────────────────
 const FarmerDashboard = () => {
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, name } = useAuth();
- 
-  const { list: crops,  loading: cropLoading  } = useSelector((s) => s.crops);
-  const { orders,       loading: orderLoading  } = useSelector((s) => s.cart);
- 
-  const [activeTab,    setActiveTab]    = useState('listings'); // 'listings' | 'orders' | 'earnings'
-  const [deletingId,   setDeletingId]   = useState(null);
-  const [updatingId,   setUpdatingId]   = useState(null);
-  const [upiId,        setUpiId]        = useState(user?.payoutDetails?.upiId || '');   // ← paste here
-  const [savingUpi,    setSavingUpi]    = useState(false);           
- 
-  // Fetch farmer's own listings + orders on mount
+
+  const { list: crops, loading: cropLoading } = useSelector((s) => s.crops);
+  const { orders, loading: orderLoading } = useSelector((s) => s.cart);
+
+  // Open the correct tab; supports navigating here with location.state = { tab: 'donations' }
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'listings');
+  const [deletingId, setDeletingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [upiId, setUpiId] = useState(user?.payoutDetails?.upiId || '');
+  const [savingUpi, setSavingUpi] = useState(false);
+
+  // ── Donation request state ─────────────────────────────────────
+  const [myRequests, setMyRequests] = useState([]);
+  const [reqLoading, setReqLoading] = useState(false);
+  const [reqForm, setReqForm] = useState({ title: '', cause: 'general', targetAmount: '', description: '' });
+  const [reqSubmitting, setReqSubmitting] = useState(false);
+  const [reqError, setReqError] = useState(null);
+  const [reqSuccess, setReqSuccess] = useState(false);
+  const [receivedDonations, setReceivedDonations] = useState([]);
+
+  // Fetch farmer's own listings + orders + donation requests on mount
   useEffect(() => {
     if (user?._id) {
       dispatch(fetchCrops({ sellerId: user._id }));
       dispatch(fetchFarmerOrders());
+      fetchMyRequests();
+      fetchReceivedDonations();
     }
   }, [user, dispatch]);
- 
+
   // ── Derived stats ──────────────────────────────────────────
-  const myListings     = crops.filter((c) => c.seller?._id === user?._id || c.seller === user?._id);
-  const totalEarnings  = orders
+  const myListings = crops.filter((c) => c.seller?._id === user?._id || c.seller === user?._id);
+
+  // 1. Calculate orders financial stats
+  const ordersTotal = orders
     .filter((o) => o.orderStatus === 'delivered')
     .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
-  const pendingOrders  = orders.filter((o) => o.orderStatus === 'pending').length;
+  const pendingOrders = orders.filter((o) => o.orderStatus === 'pending').length;
 
-  const paidOut = orders
+  const ordersPaidOut = orders
     .filter((o) => o.payoutStatus === 'paid')
     .reduce((s, o) => s + (o.farmerPayoutAmount || 0), 0);
-  const pendingPayout = orders
+  const ordersPendingPayout = orders
     .filter((o) => o.orderStatus === 'delivered' && o.payoutStatus === 'pending')
     .reduce((s, o) => s + (o.farmerPayoutAmount || 0), 0);
 
+  // 2. Calculate donations financial stats (where status === "completed")
+  const completedDonations = receivedDonations.filter((d) => d.status === 'completed');
+  
+  const donationsTotal = completedDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
+  
+  const donationsPaidOut = completedDonations
+    .filter((d) => d.payoutStatus === 'paid')
+    .reduce((sum, d) => sum + (d.amount || 0), 0);
+  const donationsPendingPayout = completedDonations
+    .filter((d) => d.payoutStatus !== 'paid') // matches "pending" or missing status
+    .reduce((sum, d) => sum + (d.amount || 0), 0);
+
+  // 3. Combined derived stats
+  const totalEarnings = ordersTotal + donationsTotal;
+  const paidOut = ordersPaidOut + donationsPaidOut;
+  const pendingPayout = ordersPendingPayout + donationsPendingPayout;
+
   const activeListings = myListings.length;
- 
+
   // ── Handlers ───────────────────────────────────────────────
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this listing?')) return;
@@ -111,14 +148,65 @@ const FarmerDashboard = () => {
     await dispatch(deleteCrop(id));
     setDeletingId(null);
   };
- 
+
   const handleStatusChange = async (orderId, status) => {
     setUpdatingId(orderId);
     await dispatch(updateOrderStatus({ orderId, status }));
     setUpdatingId(null);
   };
 
-  const handleSaveUpi = async () => {        
+  const fetchMyRequests = async () => {
+    try {
+      setReqLoading(true);
+      const res = await axiosInstance.get('/v1/donation-requests/farmer/mine');
+      setMyRequests(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch donation requests:', err);
+    } finally {
+      setReqLoading(false);
+    }
+  };
+
+  const fetchReceivedDonations = async () => {
+    try {
+      const res = await axiosInstance.get('/v1/donations/farmer/received');
+      setReceivedDonations(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch received donations:', err);
+    }
+  };
+
+  const handleReqSubmit = async (e) => {
+    e.preventDefault();
+    setReqError(null);
+    setReqSuccess(false);
+    if (!reqForm.title || !reqForm.cause || !reqForm.targetAmount) {
+      setReqError('Please fill in all required fields.');
+      return;
+    }
+    if (Number(reqForm.targetAmount) <= 0) {
+      setReqError('Target amount must be greater than 0.');
+      return;
+    }
+    try {
+      setReqSubmitting(true);
+      await axiosInstance.post('/v1/donation-requests', {
+        title: reqForm.title,
+        cause: reqForm.cause,
+        targetAmount: Number(reqForm.targetAmount),
+        description: reqForm.description,
+      });
+      setReqSuccess(true);
+      setReqForm({ title: '', cause: 'general', targetAmount: '', description: '' });
+      fetchMyRequests();
+    } catch (err) {
+      setReqError(err.response?.data?.message || 'Failed to submit request.');
+    } finally {
+      setReqSubmitting(false);
+    }
+  };
+
+  const handleSaveUpi = async () => {
     setSavingUpi(true);
     try {
       await axiosInstance.patch('/v1/user/payout-details', { upiId });
@@ -128,16 +216,17 @@ const FarmerDashboard = () => {
     } finally {
       setSavingUpi(false);
     }
-  };     
-  
+  };
+
   const isLoading = cropLoading || orderLoading;
- 
+
   const navItems = [
     { key: 'listings', label: 'My Listings', icon: Icon.listings },
-    { key: 'orders',   label: 'Orders',      icon: Icon.orders },
-    { key: 'earnings', label: 'Earnings',    icon: Icon.earnings },
+    { key: 'orders', label: 'Orders', icon: Icon.orders },
+    { key: 'earnings', label: 'Earnings', icon: Icon.earnings },
+    { key: 'donations', label: 'Donation Requests', icon: Icon.donations },
   ];
- 
+
   return (
     <div className="fd-page">
       <div className="fd-shell">
@@ -152,7 +241,7 @@ const FarmerDashboard = () => {
               <p className="fd-brand-sub">Farmer Console</p>
             </div>
           </Link>
- 
+
           <nav className="fd-nav">
             {navItems.map((item) => {
               const active = activeTab === item.key;
@@ -169,13 +258,13 @@ const FarmerDashboard = () => {
               );
             })}
           </nav>
- 
+
           <div className="fd-sidebar-cta">
             <Link to="/marketplace/add" className="fd-add-btn">
               + Add New Listing
             </Link>
           </div>
- 
+
           <div className="fd-profile-card">
             <p className="fd-profile-label">Signed in as</p>
             <div className="fd-profile-row">
@@ -187,7 +276,7 @@ const FarmerDashboard = () => {
             </div>
           </div>
         </aside>
- 
+
         {/* ── Main ── */}
         <div className="fd-main">
           <header className="fd-topbar">
@@ -199,15 +288,15 @@ const FarmerDashboard = () => {
               <Icon.bell width={18} height={18} />
             </button>
           </header>
- 
+
           <main className="fd-content">
             <div className="fd-page-head">
               <h2 className="fd-page-title">Welcome back, {name || 'Farmer'} 👋</h2>
               <p className="fd-page-subtitle">Here's what's happening with your farm today</p>
             </div>
- 
+
             {isLoading && <Loader />}
- 
+
             {!isLoading && (
               <>
                 {/* ── Stats row ── */}
@@ -240,7 +329,7 @@ const FarmerDashboard = () => {
                     accent="violet"
                   />
                 </div>
- 
+
                 {/* ── Mobile tab bar (mirrors sidebar) ── */}
                 <div className="fd-mobile-tabs">
                   {navItems.map((item) => (
@@ -253,7 +342,7 @@ const FarmerDashboard = () => {
                     </button>
                   ))}
                 </div>
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: MY LISTINGS
                 ═══════════════════════════════════════════════ */}
@@ -278,7 +367,7 @@ const FarmerDashboard = () => {
                               <div className="fd-thumb-fallback">🌾</div>
                             )}
                           </div>
- 
+
                           {/* Info */}
                           <div className="fd-listing-info">
                             <p className="fd-listing-name">{crop.name}</p>
@@ -291,7 +380,7 @@ const FarmerDashboard = () => {
                               <span>{crop.district}, {crop.state}</span>
                             </div>
                           </div>
- 
+
                           {/* Actions */}
                           <div className="fd-listing-actions">
                             <button onClick={() => navigate(`/marketplace/${crop._id}`)} className="fd-btn fd-btn--neutral">
@@ -313,7 +402,7 @@ const FarmerDashboard = () => {
                     )}
                   </div>
                 )}
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: ORDERS
                 ═══════════════════════════════════════════════ */}
@@ -326,10 +415,10 @@ const FarmerDashboard = () => {
                       </div>
                     ) : (
                       orders.map((order) => (
-                        <div key={order._id} 
-                         className="fd-order-card"
-                         onClick={() => navigate(`/farmer/orders/${order._id}`)}
-                         style={{ cursor: 'pointer' }}
+                        <div key={order._id}
+                          className="fd-order-card"
+                          onClick={() => navigate(`/farmer/orders/${order._id}`)}
+                          style={{ cursor: 'pointer' }}
                         >
                           <div className="fd-order-row">
                             {/* Order info */}
@@ -347,13 +436,13 @@ const FarmerDashboard = () => {
                                 <p>Ordered: <span className="fd-order-meta-strong">
                                   {order.createdAt
                                     ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                        day: '2-digit', month: 'short', year: 'numeric',
-                                      })
+                                      day: '2-digit', month: 'short', year: 'numeric',
+                                    })
                                     : '—'}
                                 </span></p>
                               </div>
                             </div>
- 
+
                             {/* Status update buttons */}
                             {STATUS_ACTIONS[order.orderStatus]?.length > 0 && (
                               <div className="fd-order-actions">
@@ -378,25 +467,25 @@ const FarmerDashboard = () => {
                     )}
                   </div>
                 )}
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: EARNINGS
                 ═══════════════════════════════════════════════ */}
                 {activeTab === 'earnings' && (
                   <div className="fd-earnings">
                     <div className="fd-card" style={{ marginBottom: 18, padding: 16 }}>
-                        <p className="fd-card-title" style={{ marginBottom: 8 }}>Payout UPI ID</p>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            placeholder="yourname@upi"
-                            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #d6d3d1' }}
-                          />
-                          <button onClick={handleSaveUpi} disabled={savingUpi} className="fd-btn fd-btn--progress">
-                            {savingUpi ? 'Saving...' : 'Save'}
-                          </button>
-                        </div>
+                      <p className="fd-card-title" style={{ marginBottom: 8 }}>Payout UPI ID</p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          value={upiId}
+                          onChange={(e) => setUpiId(e.target.value)}
+                          placeholder="yourname@upi"
+                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #d6d3d1' }}
+                        />
+                        <button onClick={handleSaveUpi} disabled={savingUpi} className="fd-btn fd-btn--progress">
+                          {savingUpi ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
                     </div>
 
 
@@ -443,7 +532,7 @@ const FarmerDashboard = () => {
                           sub: 'delivered, payment on the way',
                           icon: '🕒',
                           accent: 'gold',
-                        },                   
+                        },
                       ].map(({ label, value, sub, icon, accent }) => (
                         <div key={label} className={`fd-summary-card fd-summary-card--${accent}`}>
                           <div className="fd-summary-icon">{icon}</div>
@@ -453,7 +542,7 @@ const FarmerDashboard = () => {
                         </div>
                       ))}
                     </div>
- 
+
                     {/* Per-order earnings table */}
                     <div className="fd-card">
                       <div className="fd-card-head">
@@ -486,8 +575,8 @@ const FarmerDashboard = () => {
                                   <td className="fd-td-faint">
                                     {order.createdAt
                                       ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                          day: '2-digit', month: 'short', year: 'numeric',
-                                        })
+                                        day: '2-digit', month: 'short', year: 'numeric',
+                                      })
                                       : '—'}
                                   </td>
                                 </tr>
@@ -499,12 +588,155 @@ const FarmerDashboard = () => {
                     </div>
                   </div>
                 )}
+                {/* ═══════════════════════════════════════════════
+                     TAB: DONATION REQUESTS
+                 ═══════════════════════════════════════════════ */}
+                {activeTab === 'donations' && (
+                  <div className="fd-donations-wrap">
+
+                    {/* ── Request form ── */}
+                    <div className="fd-card" style={{ marginBottom: 20 }}>
+                      <div className="fd-card-head" style={{ background: 'linear-gradient(135deg,rgba(22,101,52,0.08),rgba(101,163,13,0.06))' }}>
+                        <h3 className="fd-card-title">💚 Raise a Donation Campaign</h3>
+                        <p style={{ fontSize: 12, color: '#6B5A2E', marginTop: 4 }}>Submit a request to receive donations from the AgriConnect community. Admin approval required before it goes live.</p>
+                      </div>
+                      <form onSubmit={handleReqSubmit} style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        {/* Title */}
+                        <div>
+                          <label className="fd-req-label">Campaign Title *</label>
+                          <input
+                            className="fd-req-input"
+                            placeholder="e.g. Help rebuild after flood damage"
+                            value={reqForm.title}
+                            onChange={(e) => setReqForm(f => ({ ...f, title: e.target.value }))}
+                            disabled={reqSubmitting}
+                          />
+                        </div>
+                        {/* Cause + Amount row */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <div>
+                            <label className="fd-req-label">Cause *</label>
+                            <select
+                              className="fd-req-input"
+                              value={reqForm.cause}
+                              onChange={(e) => setReqForm(f => ({ ...f, cause: e.target.value }))}
+                              disabled={reqSubmitting}
+                            >
+                              <option value="general">💚 General</option>
+                              <option value="education">🎓 Education</option>
+                              <option value="healthcare">🏥 Healthcare</option>
+                              <option value="disaster relief">🌊 Disaster Relief</option>
+                              <option value="equipment">🚜 Equipment</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="fd-req-label">Target Amount (₹) *</label>
+                            <input
+                              className="fd-req-input"
+                              type="number"
+                              min="1"
+                              placeholder="e.g. 50000"
+                              value={reqForm.targetAmount}
+                              onChange={(e) => setReqForm(f => ({ ...f, targetAmount: e.target.value }))}
+                              disabled={reqSubmitting}
+                            />
+                          </div>
+                        </div>
+                        {/* Description */}
+                        <div>
+                          <label className="fd-req-label">Description (optional)</label>
+                          <textarea
+                            className="fd-req-input"
+                            rows={3}
+                            placeholder="Tell donors why you need help..."
+                            value={reqForm.description}
+                            onChange={(e) => setReqForm(f => ({ ...f, description: e.target.value }))}
+                            disabled={reqSubmitting}
+                            style={{ resize: 'vertical', minHeight: 72 }}
+                          />
+                        </div>
+
+                        {reqError && <p style={{ color: '#DC2626', fontSize: 12, fontWeight: 600, margin: 0 }}>⚠️ {reqError}</p>}
+                        {reqSuccess && <p style={{ color: '#16a34a', fontSize: 12, fontWeight: 700, margin: 0 }}>🎉 Request submitted! Awaiting admin approval.</p>}
+
+                        <button
+                          type="submit"
+                          disabled={reqSubmitting}
+                          className="fd-req-submit"
+                        >
+                          {reqSubmitting ? 'Submitting...' : '💚 Submit Campaign Request'}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* ── My existing requests ── */}
+                    <div className="fd-card">
+                      <div className="fd-card-head">
+                        <h3 className="fd-card-title">📋 My Campaign Requests ({myRequests.length})</h3>
+                      </div>
+                      {reqLoading ? (
+                        <div style={{ padding: '32px', textAlign: 'center', color: '#A8A29E', fontSize: 13 }}>Loading...</div>
+                      ) : myRequests.length === 0 ? (
+                        <div className="fd-table-empty">No requests yet. Submit your first campaign above!</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                          {myRequests.map((req) => {
+                            const statusMeta = {
+                              pending: { color: '#A16207', bg: 'rgba(250,204,21,0.16)', label: '⏳ Pending Review' },
+                              approved: { color: '#4D7C0F', bg: 'rgba(101,163,13,0.14)', label: '✅ Approved' },
+                              rejected: { color: '#DC2626', bg: 'rgba(239,68,68,0.12)', label: '❌ Rejected' },
+                            }[req.status] || { color: '#57534E', bg: '#f3f4f6', label: req.status };
+                            const pct = req.targetAmount > 0 ? Math.min(100, Math.round((req.amountRaised / req.targetAmount) * 100)) : 0;
+                            const causeIcon = { education: '🎓', healthcare: '🏥', 'disaster relief': '🌊', equipment: '🚜', general: '💚' }[req.cause] || '💚';
+                            return (
+                              <div key={req._id} className="fd-req-item">
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1F2937' }}>{causeIcon} {req.title}</span>
+                                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 999, background: statusMeta.bg, color: statusMeta.color }}>{statusMeta.label}</span>
+                                    </div>
+                                    <p style={{ fontSize: 12, color: '#78716C', margin: '0 0 8px', textTransform: 'capitalize' }}>Cause: {req.cause} · Target: ₹{req.targetAmount?.toLocaleString('en-IN')}</p>
+                                    {req.description && <p style={{ fontSize: 11.5, color: '#9CA3AF', margin: '0 0 8px' }}>{req.description}</p>}
+                                    {/* Progress bar */}
+                                    {req.status === 'approved' && (
+                                      <div style={{ marginTop: 8 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6B7280', marginBottom: 4 }}>
+                                          <span>₹{req.amountRaised?.toLocaleString('en-IN')} raised</span>
+                                          <span>{pct}% of ₹{req.targetAmount?.toLocaleString('en-IN')}</span>
+                                        </div>
+                                        <div style={{ height: 6, borderRadius: 999, background: '#f0fdf4', overflow: 'hidden' }}>
+                                          <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#16a34a,#65A30D)', borderRadius: 999, transition: 'width 0.5s ease' }} />
+                                        </div>
+                                      </div>
+                                    )}
+                                    {req.status === 'rejected' && req.adminNote && (
+                                      <p style={{ fontSize: 11.5, color: '#DC2626', marginTop: 6, padding: '6px 10px', background: 'rgba(239,68,68,0.08)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
+                                        📝 Admin note: {req.adminNote}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                                    <p style={{ fontSize: 11, color: '#A8A29E', margin: 0 }}>{new Date(req.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                    {req.status === 'approved' && (
+                                      <Link to={`/donations/campaign/${req._id}`} style={{ fontSize: 11.5, color: '#4D7C0F', fontWeight: 700, textDecoration: 'none', display: 'block', marginTop: 6 }}>View Campaign →</Link>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </main>
         </div>
       </div>
- 
+
       {/* ─────────────────────────────────────────────────────────
           Scoped styles — plain CSS, same approach used across
           AdminDashboard.jsx / BuyerDashboard.jsx in this project,
@@ -809,9 +1041,43 @@ const FarmerDashboard = () => {
         @media (max-width: 560px) {
           .fd-stats-grid { grid-template-columns: 1fr; }
         }
+
+        /* ── Donation Requests Tab ── */
+        .fd-donations-wrap { display: flex; flex-direction: column; gap: 18px; }
+        .fd-req-label {
+          display: block; font-size: 12px; font-weight: 600;
+          color: #6B5A2E; margin-bottom: 5px;
+        }
+        .fd-req-input {
+          width: 100%; box-sizing: border-box;
+          padding: 10px 13px; border-radius: 10px;
+          border: 1.5px solid rgba(234,179,8,0.3);
+          background: rgba(255,255,255,0.7);
+          font-size: 13.5px; font-family: inherit; color: #1F2937;
+          outline: none; transition: border 0.18s ease;
+        }
+        .fd-req-input:focus { border-color: #65A30D; background: #fff; }
+        .fd-req-input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .fd-req-submit {
+          padding: 12px 20px; border-radius: 11px; border: none;
+          background: linear-gradient(135deg, #16a34a, #65A30D);
+          color: #fff; font-size: 14px; font-weight: 700;
+          cursor: pointer; font-family: inherit;
+          box-shadow: 0 4px 16px rgba(101,163,13,0.32);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .fd-req-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(101,163,13,0.42); }
+        .fd-req-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .fd-req-item {
+          padding: 16px 22px;
+          border-bottom: 1px solid rgba(234,179,8,0.12);
+          transition: background 0.12s ease;
+        }
+        .fd-req-item:last-child { border-bottom: none; }
+        .fd-req-item:hover { background: rgba(250,204,21,0.05); }
       `}</style>
     </div>
   );
 };
- 
+
 export default FarmerDashboard;

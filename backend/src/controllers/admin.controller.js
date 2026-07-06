@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { CropListing } from "../models/cropListing.model.js";
 import { Order } from "../models/order.model.js";
 import { Donation } from "../models/donation.model.js";
+import { DonationRequest } from "../models/donationRequest.model.js";
 import { News } from "../models/news.model.js";
 import { Scheme } from "../models/scheme.model.js";
 
@@ -47,10 +48,10 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, {
             stats: {
-                users:    { total: totalUsers, farmers: totalFarmers, buyers: totalBuyers },
+                users: { total: totalUsers, farmers: totalFarmers, buyers: totalBuyers },
                 listings: { total: totalListings, pending: pendingListings, approved: approvedListings },
-                orders:   { total: totalOrders, paid: paidOrders },
-                donations:{ total: totalDonations },
+                orders: { total: totalOrders, paid: paidOrders },
+                donations: { total: totalDonations },
             },
             recent: { recentUsers, recentListings, recentOrders },
         }, "Dashboard stats fetched")
@@ -63,9 +64,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
     const { page = 1, limit = 20, role, search } = req.query
 
     const query = {}
-    if (role)   query.role = role
+    if (role) query.role = role
     if (search) query.$or = [
-        { name:  { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
     ]
 
@@ -224,13 +225,13 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
     const query = {}
     if (paymentStatus) query.paymentStatus = paymentStatus
-    if (orderStatus)   query.orderStatus   = orderStatus
+    if (orderStatus) query.orderStatus = orderStatus
 
     const skip = (Number(page) - 1) * Number(limit)
 
     const [orders, total] = await Promise.all([
         Order.find(query)
-            .populate("buyer",  "name email phone")
+            .populate("buyer", "name email phone")
             .populate("farmer", "name email phone")
             .populate("listing", "cropName")
             .sort({ createdAt: -1 })
@@ -263,33 +264,153 @@ const getAllDonations = asyncHandler(async (req, res) => {
 
 // GET /admin/payouts — how much you owe each farmer right now
 const getPendingPayouts = asyncHandler(async (req, res) => {
-  const payouts = await Order.aggregate([
-    { $match: { paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" } },
-    { $group: {
-        _id: "$farmer",
-        totalOwed: { $sum: "$farmerPayoutAmount" },
-        orderCount: { $sum: 1 },
-    }},
-    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "farmer" } },
-    { $unwind: "$farmer" },
-    { $project: {
-        farmerId: "$_id",
-        farmerName: "$farmer.name",
-        payoutDetails: "$farmer.payoutDetails",
-        totalOwed: 1,
-        orderCount: 1,
-    }},
-  ]);
-  return res.status(200).json(new ApiResponse(200, payouts, "Pending payouts fetched"));
+    // 1. Aggregate pending order payouts per farmer
+    const orderPayouts = await Order.aggregate([
+        { $match: { paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" } },
+        {
+            $group: {
+                _id: "$farmer",
+                totalOwedOrders: { $sum: "$farmerPayoutAmount" },
+                orderCount: { $sum: 1 },
+            }
+        }
+    ]);
+
+    // 2. Fetch all completed campaign donations that are pending payout
+    const pendingDonations = await Donation.find({
+        status: "completed",
+        payoutStatus: { $ne: "paid" },
+        campaignId: { $ne: null }
+    }).populate("campaignId");
+
+    // Group donations by farmer ID
+    const donationMap = {};
+    for (const d of pendingDonations) {
+        if (d.campaignId && d.campaignId.farmer) {
+            const fId = d.campaignId.farmer.toString();
+            if (!donationMap[fId]) {
+                donationMap[fId] = { amount: 0, count: 0 };
+            }
+            donationMap[fId].amount += d.amount;
+            donationMap[fId].count += 1;
+        }
+    }
+
+    // Find all unique farmers
+    const farmerIds = new Set([
+        ...orderPayouts.map(op => op._id.toString()),
+        ...Object.keys(donationMap)
+    ]);
+
+    const payouts = [];
+    for (const fId of farmerIds) {
+        const farmerUser = await User.findById(fId);
+        if (!farmerUser) continue;
+
+        const orderInfo = orderPayouts.find(op => op._id.toString() === fId) || { totalOwedOrders: 0, orderCount: 0 };
+        const donInfo = donationMap[fId] || { amount: 0, count: 0 };
+
+        payouts.push({
+            farmerId: fId,
+            farmerName: farmerUser.name,
+            payoutDetails: farmerUser.payoutDetails,
+            orderCount: orderInfo.orderCount,
+            ordersOwed: orderInfo.totalOwedOrders,
+            donationCount: donInfo.count,
+            donationsOwed: donInfo.amount,
+            totalOwed: orderInfo.totalOwedOrders + donInfo.amount,
+        });
+    }
+
+    return res.status(200).json(new ApiResponse(200, payouts, "Pending payouts fetched"));
 });
 
 // PATCH /admin/payouts/:farmerId/mark-paid — you paid them manually, record it
 const markPayoutPaid = asyncHandler(async (req, res) => {
-  const result = await Order.updateMany(
-    { farmer: req.params.farmerId, paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" },
-    { payoutStatus: "paid", payoutDate: new Date() }
-  );
-  return res.status(200).json(new ApiResponse(200, { modifiedCount: result.modifiedCount }, "Payout marked as paid"));
+    const { farmerId } = req.params;
+
+    // 1. Mark orders as paid
+    const orderResult = await Order.updateMany(
+        { farmer: farmerId, paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" },
+        { payoutStatus: "paid", payoutDate: new Date() }
+    );
+
+    // 2. Mark donations as paid
+    const myCampaigns = await DonationRequest.find({ farmer: farmerId });
+    const myCampaignIds = myCampaigns.map(c => c._id);
+
+    const donationResult = await Donation.updateMany(
+        { campaignId: { $in: myCampaignIds }, status: "completed", payoutStatus: { $ne: "paid" } },
+        { payoutStatus: "paid", payoutDate: new Date() }
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200, 
+            { 
+                ordersModified: orderResult.modifiedCount, 
+                donationsModified: donationResult.modifiedCount 
+            }, 
+            "Payout marked as paid"
+        )
+    );
+});
+
+// ── Donation Requests (Admin) ─────────────────────────────────────────────
+// GET /api/v1/admin/donation-requests
+const getAllDonationRequests = asyncHandler(async (req, res) => {
+    const { status } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const requests = await DonationRequest.find(query)
+        .populate("farmer", "name email phone")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, requests, "Donation requests fetched")
+    );
+});
+
+// PATCH /api/v1/admin/donation-requests/:id/approve
+const approveDonationRequest = asyncHandler(async (req, res) => {
+    const request = await DonationRequest.findById(req.params.id);
+    if (!request) throw new ApiError(404, "Donation request not found");
+
+    request.status = "approved";
+    request.adminNote = "";
+    await request.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, request, "Donation request approved")
+    );
+});
+
+// PATCH /api/v1/admin/donation-requests/:id/reject
+const rejectDonationRequest = asyncHandler(async (req, res) => {
+    const { adminNote } = req.body;
+    const request = await DonationRequest.findById(req.params.id);
+    if (!request) throw new ApiError(404, "Donation request not found");
+
+    request.status = "rejected";
+    request.adminNote = adminNote || "";
+    await request.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, request, "Donation request rejected")
+    );
+});
+
+// DELETE /api/v1/admin/donation-requests/:id
+const deleteDonationRequest = asyncHandler(async (req, res) => {
+    const request = await DonationRequest.findById(req.params.id);
+    if (!request) throw new ApiError(404, "Donation request not found");
+
+    await DonationRequest.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "Donation request deleted successfully")
+    );
 });
 
 export {
@@ -304,6 +425,10 @@ export {
     deleteListing,
     getAllOrders,
     getAllDonations,
+    getAllDonationRequests,
+    approveDonationRequest,
+    rejectDonationRequest,
+    deleteDonationRequest,
     getPendingPayouts,
     markPayoutPaid,
 }
