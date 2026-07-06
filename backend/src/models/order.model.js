@@ -43,6 +43,9 @@ const orderSchema = new mongoose.Schema(
         farmerPayoutAmount: { type: Number, default: 0 },
         payoutStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
         payoutDate:   { type: Date },
+        confirmedAt: { type: Date },
+        shippedAt:   { type: Date },
+        deliveredAt: { type: Date },
         // Razorpay fields
         razorpayOrderId: {
             type: String,    // created by Razorpay, used to open payment UI

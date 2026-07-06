@@ -218,6 +218,9 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     }
 
     order.orderStatus = orderStatus;
+    if (orderStatus === "confirmed") order.confirmedAt = new Date();
+    if (orderStatus === "shipped")   order.shippedAt   = new Date();
+    if (orderStatus === "delivered") order.deliveredAt = new Date();
     await order.save({ validateBeforeSave: false });
 
     return res

@@ -67,12 +67,28 @@ export default function OrderDetail() {
 
         {order.orderStatus !== 'cancelled' && (
           <div className="od-timeline">
-            {STATUS_STEPS.map((step, i) => (
-              <div key={step} className={`od-step ${i <= stepIndex ? 'od-step--done' : ''}`}>
-                <span className="od-dot" />
-                <span className="od-step-label">{step}</span>
-              </div>
-            ))}
+            {STATUS_STEPS.map((step, i) => {
+                const stepDateMap = {
+                    placed: order.createdAt,
+                    confirmed: order.confirmedAt,
+                    shipped: order.shippedAt,
+                    delivered: order.deliveredAt,
+                };
+                const stepDate = stepDateMap[step];
+                return (
+                    <div key={step} className={`od-step ${i <= stepIndex ? 'od-step--done' : ''}`}>
+                    <span className="od-dot" />
+                    <span className="od-step-label">{step}</span>
+                    {stepDate && (
+                      <span className="od-step-date">
+                        {new Date(stepDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        <br />
+                        {new Date(stepDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                    </div>
+                );
+                })}
           </div>
         )}
 
@@ -140,6 +156,7 @@ export default function OrderDetail() {
         .od-section { border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 8px; }
         .od-people { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .od-muted { color: #6b7280; font-size: 13px; }
+        .od-step-date { font-size: 11px; color: #9ca3af; }
       `}</style>
     </div>
   );
