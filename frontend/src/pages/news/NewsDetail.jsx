@@ -20,12 +20,19 @@ function NewsDetail() {
 
   // ── Fetch single news article from backend ──────────────────────────────
   useEffect(() => {
+    
     const fetchArticle = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        // GET /api/v1/news/:id  — public route
-        const res = await axiosInstance.get(`/v1/news/${id}`);
+  try {
+    setLoading(true);
+    setError(null);
+
+    if (id.startsWith("live_")) {
+      setError("This is a live article. Please use the link from the news page.");
+      setLoading(false);
+      return;
+    }
+
+    const res = await axiosInstance.get(`/v1/news/${id}`);
         setArticle(res.data.data);
       } catch (err) {
         console.error("NewsDetail fetch error:", err);
