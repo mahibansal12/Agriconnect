@@ -7,7 +7,7 @@ import { createRazorpayOrder, verifyPaymentSignature } from "../services/payment
 
 
 const getAllDonations = asyncHandler(async (req, res) => {
-    const donations = await Donation.find()
+    const donations = await Donation.find({ status: "completed" })
         .populate("donorId", "name email")
         .sort({ createdAt: -1 });
 
@@ -57,6 +57,15 @@ const createDonation = asyncHandler(async (req, res) => {
         // Block farmer from donating to their own campaign
         if (campaign.farmer.toString() === req.user._id.toString()) {
             throw new ApiError(403, "You cannot donate to your own campaign");
+        }
+
+        // Prevent donating if target achieved or exceeds target
+        const remaining = campaign.targetAmount - (campaign.amountRaised || 0);
+        if (remaining <= 0) {
+            throw new ApiError(400, "This campaign has already achieved its target goal");
+        }
+        if (Number(amount) > remaining) {
+            throw new ApiError(400, `The donation amount exceeds the remaining campaign target. Maximum donation allowed is ₹${remaining}`);
         }
     }
 
@@ -165,7 +174,11 @@ const updateDonationStatus = asyncHandler(async (req, res) => {
 
 
 const getMyDonations = asyncHandler(async (req, res) => {
-    const donations = await Donation.find({ donorId: req.user._id })
+    const donations = await Donation.find({
+        donorId: req.user._id,
+        status: "completed",
+    })
+        .populate("campaignId", "title cause")
         .sort({ createdAt: -1 });
 
     return res

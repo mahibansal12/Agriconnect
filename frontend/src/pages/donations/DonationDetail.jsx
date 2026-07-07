@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import DonationForm from "../../components/donations/DonationForm";
 import Navbar from "../../components/common/Navbar";
 
 const causeStyle = {
@@ -18,13 +17,11 @@ function DonationDetail() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
 
-  // ── Fetch single donation record from backend ────────────────────────────
   useEffect(() => {
     const fetchDonation = async () => {
       try {
         setLoading(true);
         setError(null);
-        // GET /api/v1/donations/:id  — public route
         const res = await axiosInstance.get(`/v1/donations/${id}`);
         setDonation(res.data.data);
       } catch (err) {
@@ -37,7 +34,7 @@ function DonationDetail() {
     if (id) fetchDonation();
   }, [id]);
 
-  // ── Loading state ────────────────────────────────────────────────────────
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
       <Navbar />
@@ -45,18 +42,14 @@ function DonationDetail() {
         <div style={{ width:"160px", height:"14px", borderRadius:"8px", background:"rgba(255,255,255,0.15)", marginBottom:"14px" }} />
         <div style={{ width:"300px", height:"28px", borderRadius:"8px", background:"rgba(255,255,255,0.2)" }} />
       </div>
-      <div style={{ maxWidth:"1200px", margin:"40px auto", padding:"0 40px", display:"grid", gridTemplateColumns:"1fr 360px", gap:"28px" }}>
-        <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
-          <div style={{ height:"300px", borderRadius:"22px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
-          <div style={{ height:"140px", borderRadius:"20px", background:"#f0fdf4" }} />
-        </div>
-        <div style={{ height:"380px", borderRadius:"20px", background:"#f0fdf4" }} />
+      <div style={{ maxWidth:"900px", margin:"40px auto", padding:"0 40px" }}>
+        <div style={{ height:"300px", borderRadius:"22px", background:"linear-gradient(90deg,#f0fdf4,#dcfce7,#f0fdf4)", backgroundSize:"200% 100%", animation:"shimmer 1.4s infinite" }} />
       </div>
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
     </div>
   );
 
-  // ── Error / Not found state ──────────────────────────────────────────────
+  // ── Error ────────────────────────────────────────────────────────────────
   if (error || !donation) return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
       <Navbar />
@@ -71,23 +64,20 @@ function DonationDetail() {
   );
 
   const cat = causeStyle[donation.cause] || causeStyle.general;
-
-  // Determine status badge color
   const statusColor = {
-    completed: { bg:"#dcfce7", text:"#166534", border:"#86efac" },
-    pending:   { bg:"#fef3c7", text:"#92400e", border:"#fcd34d" },
-    failed:    { bg:"#fee2e2", text:"#991b1b", border:"#fca5a5" },
-  }[donation.status] || { bg:"#f3f4f6", text:"#374151", border:"#d1d5db" };
+    completed: { bg:"#dcfce7", text:"#166534", border:"#86efac", icon:"✅" },
+    pending:   { bg:"#fef3c7", text:"#92400e", border:"#fcd34d", icon:"⏳" },
+    failed:    { bg:"#fee2e2", text:"#991b1b", border:"#fca5a5", icon:"❌" },
+  }[donation.status] || { bg:"#f3f4f6", text:"#374151", border:"#d1d5db", icon:"📄" };
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
-
       <Navbar />
 
-      {/* Hero */}
+      {/* ── Hero ── */}
       <div style={{ background:"linear-gradient(135deg,#052e16 0%,#14532d 40%,#166534 70%,#065f46 100%)", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"-40px", right:"120px", width:"180px", height:"180px", borderRadius:"50%", background:"rgba(134,239,172,0.07)", pointerEvents:"none" }} />
-        <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"28px 40px", position:"relative", zIndex:1 }}>
+        <div style={{ maxWidth:"900px", margin:"0 auto", padding:"28px 40px", position:"relative", zIndex:1 }}>
           <Link to="/donations" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"#86efac", fontSize:"13px", fontWeight:600, textDecoration:"none", marginBottom:"20px", padding:"7px 14px", borderRadius:"999px", background:"rgba(255,255,255,0.10)", border:"1.5px solid rgba(134,239,172,0.3)", backdropFilter:"blur(6px)" }}>
             ← Back to all donations
           </Link>
@@ -110,68 +100,67 @@ function DonationDetail() {
         </div>
       </div>
 
-      {/* Body */}
-      <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"32px 40px 56px" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 360px", gap:"28px", alignItems:"start" }}>
+      {/* ── Body ── */}
+      <div style={{ maxWidth:"900px", margin:"0 auto", padding:"32px 40px 56px" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
 
-          {/* Left — donation details */}
-          <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
-
-            {/* Main info card */}
-            <div style={{ background:"#fff", borderRadius:"22px", overflow:"hidden", border:`2px solid ${cat.border}`, boxShadow:`0 8px 32px ${cat.border}44` }}>
-              <div style={{ height:"5px", background:`linear-gradient(90deg,${cat.text},${cat.border})` }} />
-              <div style={{ padding:"28px 32px" }}>
-                <h3 style={{ margin:"0 0 20px", fontSize:"15px", fontWeight:800, color:"#14532d" }}>💰 Donation Details</h3>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"16px", marginBottom:"20px" }}>
-                  {[
-                    { label:"Amount",  val:`₹${donation.amount?.toLocaleString("en-IN") || "—"}`, icon:"💰", color:"#16a34a", bg:"#dcfce7", border:"#86efac" },
-                    { label:"Cause",   val: donation.cause,                                         icon: cat.icon, color:cat.text, bg:cat.bg, border:cat.border },
-                    { label:"Status",  val: donation.status,                                         icon:"📊", color:statusColor.text, bg:statusColor.bg, border:statusColor.border },
-                  ].map(item => (
-                    <div key={item.label} style={{ background:item.bg, border:`1.5px solid ${item.border}`, borderRadius:"14px", padding:"14px", textAlign:"center" }}>
-                      <div style={{ fontSize:"20px", marginBottom:"5px" }}>{item.icon}</div>
-                      <div style={{ fontSize:"14px", fontWeight:800, color:item.color, textTransform:"capitalize" }}>{item.val}</div>
-                      <div style={{ fontSize:"10px", color:"#9ca3af", marginTop:"2px" }}>{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-                {donation.paymentId && (
-                  <div style={{ background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:"12px", padding:"12px 16px", fontSize:"12px", color:"#374151" }}>
-                    <strong style={{ color:"#14532d" }}>Payment ID:</strong> {donation.paymentId}
+          {/* Stats row */}
+          <div style={{ background:"#fff", borderRadius:"22px", overflow:"hidden", border:`2px solid ${cat.border}`, boxShadow:`0 8px 32px ${cat.border}44` }}>
+            <div style={{ height:"5px", background:`linear-gradient(90deg,${cat.text},${cat.border})` }} />
+            <div style={{ padding:"28px 32px" }}>
+              <h3 style={{ margin:"0 0 20px", fontSize:"15px", fontWeight:800, color:"#14532d" }}>💰 Donation Details</h3>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"16px", marginBottom: donation.paymentId ? "20px" : 0 }}>
+                {[
+                  { label:"Amount", val:`₹${donation.amount?.toLocaleString("en-IN") || "—"}`, icon:"💰", color:"#16a34a", bg:"#dcfce7", border:"#86efac" },
+                  { label:"Cause",  val:donation.cause, icon:cat.icon, color:cat.text, bg:cat.bg, border:cat.border },
+                  { label:"Status", val:donation.status, icon:statusColor.icon, color:statusColor.text, bg:statusColor.bg, border:statusColor.border },
+                ].map(item => (
+                  <div key={item.label} style={{ background:item.bg, border:`1.5px solid ${item.border}`, borderRadius:"14px", padding:"14px", textAlign:"center" }}>
+                    <div style={{ fontSize:"20px", marginBottom:"5px" }}>{item.icon}</div>
+                    <div style={{ fontSize:"14px", fontWeight:800, color:item.color, textTransform:"capitalize" }}>{item.val}</div>
+                    <div style={{ fontSize:"10px", color:"#9ca3af", marginTop:"2px" }}>{item.label}</div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
-
-            {/* Donor info card */}
-            <div style={{ background:"#fff", borderRadius:"20px", border:"2px solid #bbf7d0", boxShadow:"0 4px 16px rgba(22,163,74,0.10)", padding:"24px 28px" }}>
-              <h3 style={{ margin:"0 0 14px", fontSize:"15px", fontWeight:800, color:"#14532d" }}>👤 Donor Information</h3>
-              {[
-                { label:"Donor Name", val: donation.donorName || "Anonymous", icon:"👤" },
-                { label:"Cause",      val: donation.cause,                    icon: cat.icon },
-                { label:"Status",     val: donation.status,                   icon:"📊" },
-                ...(donation.createdAt ? [{ label:"Date", val: new Date(donation.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" }), icon:"📅" }] : []),
-              ].map(item => (
-                <div key={item.label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 0", borderBottom:"1px solid #f3f4f6" }}>
-                  <span style={{ fontSize:"12px", color:"#9ca3af", display:"flex", alignItems:"center", gap:"6px" }}><span>{item.icon}</span>{item.label}</span>
-                  <span style={{ fontSize:"12px", fontWeight:700, color:"#1f2937", textTransform:"capitalize" }}>{item.val}</span>
+              {donation.paymentId && (
+                <div style={{ background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:"12px", padding:"12px 16px", fontSize:"12px", color:"#374151" }}>
+                  <strong style={{ color:"#14532d" }}>Payment ID:</strong> {donation.paymentId}
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          {/* Right — donation form */}
-          <div style={{ position:"sticky", top:"24px" }}>
-            <DonationForm campaignName={donation.cause} />
-
-            {/* Trust note */}
-            <div style={{ marginTop:"14px", background:"#f0fdf4", border:"1.5px solid #86efac", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"flex-start", gap:"10px" }}>
-              <span style={{ fontSize:"18px" }}>🔒</span>
-              <p style={{ margin:0, fontSize:"11px", color:"#4b7a5c", lineHeight:1.6 }}>
-                Donations are processed securely. This is a simulated payment — no real transaction will occur until the payment gateway is connected.
-              </p>
-            </div>
+          {/* Donor info */}
+          <div style={{ background:"#fff", borderRadius:"20px", border:"2px solid #bbf7d0", boxShadow:"0 4px 16px rgba(22,163,74,0.10)", padding:"24px 28px" }}>
+            <h3 style={{ margin:"0 0 14px", fontSize:"15px", fontWeight:800, color:"#14532d" }}>👤 Donor Information</h3>
+            {[
+              { label:"Donor Name", val:donation.donorName || "Anonymous", icon:"👤" },
+              { label:"Cause",      val:donation.cause,                    icon:cat.icon },
+              { label:"Status",     val:donation.status,                   icon:statusColor.icon },
+              ...(donation.createdAt ? [{ label:"Date", val:new Date(donation.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" }), icon:"📅" }] : []),
+            ].map(item => (
+              <div key={item.label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"9px 0", borderBottom:"1px solid #f3f4f6" }}>
+                <span style={{ fontSize:"12px", color:"#9ca3af", display:"flex", alignItems:"center", gap:"6px" }}><span>{item.icon}</span>{item.label}</span>
+                <span style={{ fontSize:"12px", fontWeight:700, color:"#1f2937", textTransform:"capitalize" }}>{item.val}</span>
+              </div>
+            ))}
           </div>
+
+          {/* Trust note */}
+          <div style={{ background:"#f0fdf4", border:"1.5px solid #86efac", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"flex-start", gap:"10px" }}>
+            <span style={{ fontSize:"18px" }}>🔒</span>
+            <p style={{ margin:0, fontSize:"11px", color:"#4b7a5c", lineHeight:1.6 }}>
+              Donations are processed securely via Razorpay. Your payment details are encrypted and never stored on our servers.
+            </p>
+          </div>
+
+          {/* Back to campaigns */}
+          <div style={{ textAlign:"center" }}>
+            <Link to="/donations" style={{ display:"inline-flex", alignItems:"center", gap:"8px", padding:"12px 24px", borderRadius:"12px", background:"linear-gradient(135deg,#14532d,#16a34a)", color:"#fff", fontWeight:700, textDecoration:"none", fontSize:"14px", boxShadow:"0 4px 16px rgba(22,163,74,0.3)" }}>
+              💚 View All Campaigns
+            </Link>
+          </div>
+
         </div>
       </div>
     </div>
