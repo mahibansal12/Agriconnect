@@ -716,6 +716,18 @@ import { useState, useEffect } from "react";
                                 <p style={{ margin: "0 0 4px", fontSize: 12, color: "#6b7280", textTransform: "capitalize" }}>
                                   Cause: {req.cause} · Target: ₹{req.targetAmount?.toLocaleString("en-IN")} · Raised: ₹{(req.amountRaised || 0).toLocaleString("en-IN")}
                                 </p>
+                                {/* Progress bar */}
+                                {req.status === 'approved' && (
+                                  <div style={{ marginTop: 8, marginBottom: 8, maxWidth: "400px" }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: '#6B7280', marginBottom: 4 }}>
+                                      <span>₹{(req.amountRaised || 0).toLocaleString('en-IN')} raised</span>
+                                      <span>{Math.min(100, Math.round(((req.amountRaised || 0) / req.targetAmount) * 100))}% of ₹{req.targetAmount?.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div style={{ height: 6, borderRadius: 999, background: '#f0fdf4', overflow: 'hidden', border: "1px solid #dcfce7" }}>
+                                      <div style={{ height: '100%', width: `${Math.min(100, Math.round(((req.amountRaised || 0) / req.targetAmount) * 100))}%`, background: 'linear-gradient(90deg,#16a34a,#65A30D)', borderRadius: 999 }} />
+                                    </div>
+                                  </div>
+                                )}
                                 {req.description && <p style={{ margin: "4px 0 0", fontSize: 11.5, color: "#9ca3af" }}>{req.description}</p>}
                                 {req.adminNote && <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "#DC2626", fontStyle: "italic" }}>Admin note: {req.adminNote}</p>}
                               </div>
@@ -754,26 +766,37 @@ import { useState, useEffect } from "react";
                               )}
  
                               {req.status === "approved" && (
-                                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                                  <input
-                                    placeholder="Rejection reason (optional)"
-                                    value={rejectNote[req._id] || ""}
-                                    onChange={(e) => setRejectNote(prev => ({ ...prev, [req._id]: e.target.value }))}
-                                    style={{ flex: 1, minWidth: 160, padding: "7px 12px", borderRadius: 8, border: "1.5px solid #fca5a5", fontSize: 12, fontFamily: "inherit", outline: "none" }}
-                                  />
-                                  <button
-                                    className="adm-btn adm-btn--reject"
-                                    onClick={() => rejectDonationRequest(req._id)}
-                                  >
-                                    ❌ Reject Campaign
-                                  </button>
-                                  <button
-                                    className="adm-btn adm-btn--reject"
-                                    style={{ background: "#EF4444", borderColor: "#DC2626" }}
-                                    onClick={() => deleteDonationRequest(req._id)}
-                                  >
-                                    🗑️ Delete
-                                  </button>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    <button
+                                      className="adm-btn adm-btn--approve"
+                                      style={{ background: "#16a34a", borderColor: "#15803d" }}
+                                      onClick={() => navigate(`/donations/campaign/${req._id}`)}
+                                    >
+                                      👁️ View Campaign Page
+                                    </button>
+                                  </div>
+                                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                                    <input
+                                      placeholder="Rejection reason (optional)"
+                                      value={rejectNote[req._id] || ""}
+                                      onChange={(e) => setRejectNote(prev => ({ ...prev, [req._id]: e.target.value }))}
+                                      style={{ flex: 1, minWidth: 160, padding: "7px 12px", borderRadius: 8, border: "1.5px solid #fca5a5", fontSize: 12, fontFamily: "inherit", outline: "none" }}
+                                    />
+                                    <button
+                                      className="adm-btn adm-btn--reject"
+                                      onClick={() => rejectDonationRequest(req._id)}
+                                    >
+                                      ❌ Reject Campaign
+                                    </button>
+                                    <button
+                                      className="adm-btn adm-btn--reject"
+                                      style={{ background: "#EF4444", borderColor: "#DC2626" }}
+                                      onClick={() => deleteDonationRequest(req._id)}
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
                                 </div>
                               )}
  

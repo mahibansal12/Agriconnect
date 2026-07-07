@@ -33,7 +33,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         CropListing.countDocuments({ status: "approved" }),
         Order.countDocuments(),
         Order.countDocuments({ paymentStatus: "paid" }),
-        Donation.countDocuments(),
+        Donation.countDocuments({ status: "completed" }),
     ])
 
     // recent 5 of each for quick overview
@@ -253,7 +253,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
 //  Donations 
 // GET /api/v1/admin/donations
 const getAllDonations = asyncHandler(async (req, res) => {
-    const donations = await Donation.find()
+    const donations = await Donation.find({ status: "completed" })
         .populate("donorId", "name email")
         .sort({ createdAt: -1 })
 

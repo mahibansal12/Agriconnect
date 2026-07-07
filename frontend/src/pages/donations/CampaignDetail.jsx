@@ -62,12 +62,18 @@ function CampaignDetail() {
     campaign.farmer === user._id
   );
 
+  const remainingAmount = campaign ? Math.max(0, campaign.targetAmount - (campaign.amountRaised || 0)) : 0;
+
   // ── Donate handler ────────────────────────────────────────────────────────
   const handleDonate = async (e) => {
     e.preventDefault();
     setDonErr(null);
     setDonOk(false);
     if (amount <= 0) { setDonErr("Please enter a valid amount."); return; }
+    if (amount > remainingAmount) {
+      setDonErr(`The donation amount exceeds the remaining campaign target. Maximum donation allowed is ₹${remainingAmount.toLocaleString("en-IN")}.`);
+      return;
+    }
     try {
       setDonating(true);
 
@@ -286,6 +292,21 @@ function CampaignDetail() {
                   </Link>
                 </div>
               </div>
+            ) : remainingAmount <= 0 ? (
+              // Target Achieved card
+              <div style={{ background: "#fff", borderRadius: "22px", overflow: "hidden", border: "2px solid #86efac", boxShadow: "0 8px 32px rgba(22,163,74,0.12)" }}>
+                <div style={{ background: "linear-gradient(135deg,#14532d,#166534)", padding: "18px 22px", textAlign: "center" }}>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: "16px", fontWeight: 800 }}>🎉 Target Achieved!</h3>
+                </div>
+                <div style={{ padding: "28px 22px", textAlign: "center" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "12px" }}>🏆</div>
+                  <p style={{ margin: "0 0 8px", fontWeight: 700, color: "#14532d", fontSize: "15px" }}>Goal Successfully Reached!</p>
+                  <p style={{ margin: 0, color: "#6b7280", fontSize: "13px", lineHeight: 1.5 }}>
+                    This campaign has successfully reached its target goal of ₹{campaign.targetAmount?.toLocaleString("en-IN")}.
+                    Thank you so much to all the donors for your incredible support!
+                  </p>
+                </div>
+              </div>
             ) : (
               // Logged in and not owner → show form
               <div style={{ background: "#fff", borderRadius: "22px", overflow: "hidden", border: "2px solid #bbf7d0", boxShadow: "0 8px 32px rgba(22,163,74,0.12)" }}>
@@ -294,24 +315,33 @@ function CampaignDetail() {
                   <p style={{ margin: "4px 0 0", color: "#a7f3d0", fontSize: "12px" }}>Supporting: {campaign.title}</p>
                 </div>
                 <div style={{ padding: "22px" }}>
+                  {/* Remaining needed note */}
+                  <div style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "10px", padding: "8px 12px", marginBottom: "14px", fontSize: "11px", fontWeight: 700, color: "#166534", display: "flex", justifyContent: "space-between" }}>
+                    <span>Remaining Needed:</span>
+                    <span>₹{remainingAmount.toLocaleString("en-IN")}</span>
+                  </div>
+
                   {/* Preset amounts */}
                   <p style={{ margin: "0 0 10px", fontSize: "12px", color: "#9ca3af", fontWeight: 600 }}>SELECT AMOUNT</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", marginBottom: "16px" }}>
-                    {presetAmounts.map((amt) => (
-                      <button key={amt} type="button" disabled={donating || donOk} onClick={() => setAmount(amt)} style={{
-                        padding: "10px 4px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
-                        cursor: "pointer", border: "none", outline: "none", transition: "all 0.15s",
-                        background: amount === amt ? "linear-gradient(135deg,#14532d,#16a34a)" : "#f0fdf4",
-                        color: amount === amt ? "#fff" : "#166534",
-                        boxShadow: amount === amt ? "0 3px 10px rgba(22,163,74,0.3)" : "none",
-                        borderWidth: 2, borderStyle: "solid", borderColor: amount === amt ? "transparent" : "#bbf7d0",
-                      }}>₹{amt}</button>
-                    ))}
+                    {presetAmounts.map((amt) => {
+                      const isDisabled = donating || donOk || amt > remainingAmount;
+                      return (
+                        <button key={amt} type="button" disabled={isDisabled} onClick={() => setAmount(amt)} style={{
+                          padding: "10px 4px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
+                          cursor: isDisabled ? "not-allowed" : "pointer", border: "none", outline: "none", transition: "all 0.15s",
+                          background: amount === amt ? "linear-gradient(135deg,#14532d,#16a34a)" : amt > remainingAmount ? "#f1f5f9" : "#f0fdf4",
+                          color: amount === amt ? "#fff" : amt > remainingAmount ? "#94a3b8" : "#166534",
+                          boxShadow: amount === amt ? "0 3px 10px rgba(22,163,74,0.3)" : "none",
+                          borderWidth: 2, borderStyle: "solid", borderColor: amount === amt ? "transparent" : amt > remainingAmount ? "#e2e8f0" : "#bbf7d0",
+                        }}>₹{amt}</button>
+                      );
+                    })}
                   </div>
                   {/* Custom amount */}
                   <div style={{ marginBottom: "14px" }}>
                     <label style={{ fontSize: "12px", color: "#6b7280", fontWeight: 600, display: "block", marginBottom: "6px" }}>Custom Amount (₹)</label>
-                    <input type="number" min="1" disabled={donating || donOk} value={amount}
+                    <input type="number" min="1" max={remainingAmount} disabled={donating || donOk} value={amount}
                       onChange={(e) => setAmount(Number(e.target.value))}
                       style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", borderRadius: "10px", border: "2px solid #bbf7d0", fontSize: "14px", outline: "none", fontFamily: "inherit", color: "#1f2937" }}
                     />

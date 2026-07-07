@@ -70,6 +70,20 @@ const StatCard = ({ icon, label, value, sub, accent = 'green' }) => (
   </div>
 );
 
+// ─── Empty state reusable component ────────────────────────────
+function EmptyState({ icon, title, sub, ctaTo, ctaLabel }) {
+  return (
+    <div className="fd-empty-state">
+      <span className="fd-empty-icon">{icon}</span>
+      <p className="fd-empty-text">{title}</p>
+      {sub && <p className="fd-empty-sub">{sub}</p>}
+      {ctaTo && (
+        <Link to={ctaTo} className="fd-empty-cta">{ctaLabel}</Link>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────
 const FarmerDashboard = () => {
   const dispatch = useDispatch();
@@ -95,6 +109,8 @@ const FarmerDashboard = () => {
   const [reqError, setReqError] = useState(null);
   const [reqSuccess, setReqSuccess] = useState(false);
   const [receivedDonations, setReceivedDonations] = useState([]);
+  const [myDonations, setMyDonations] = useState([]);
+  const [myDonationsLoading, setMyDonationsLoading] = useState(false);
 
   // Fetch farmer's own listings + orders + donation requests on mount
   useEffect(() => {
@@ -103,6 +119,7 @@ const FarmerDashboard = () => {
       dispatch(fetchFarmerOrders());
       fetchMyRequests();
       fetchReceivedDonations();
+      fetchMyDonations();
     }
   }, [user, dispatch]);
 
@@ -176,6 +193,18 @@ const FarmerDashboard = () => {
     }
   };
 
+  const fetchMyDonations = async () => {
+    try {
+      setMyDonationsLoading(true);
+      const res = await axiosInstance.get('/v1/donations/my/donations');
+      setMyDonations(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch my donations:', err);
+    } finally {
+      setMyDonationsLoading(false);
+    }
+  };
+
   const handleReqSubmit = async (e) => {
     e.preventDefault();
     setReqError(null);
@@ -225,6 +254,7 @@ const FarmerDashboard = () => {
     { key: 'orders', label: 'Orders', icon: Icon.orders },
     { key: 'earnings', label: 'Earnings', icon: Icon.earnings },
     { key: 'donations', label: 'Donation Requests', icon: Icon.donations },
+    { key: 'my-donations', label: 'My Donations', icon: Icon.donations },
   ];
 
   return (
@@ -731,6 +761,74 @@ const FarmerDashboard = () => {
                     </div>
                   </div>
                 )}
+
+                {/* ═══════════════════════════════════════════════
+                     TAB: MY DONATIONS (CONTRIBUTED BY FARMER)
+                 ═══════════════════════════════════════════════ */}
+                {activeTab === 'my-donations' && (
+                  <div className="fd-donations-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div className="fd-card">
+                      <div className="fd-card-head" style={{ background: 'linear-gradient(135deg,rgba(22,101,52,0.08),rgba(101,163,13,0.06))' }}>
+                        <h3 className="fd-card-title">💚 Contributions History</h3>
+                        <p style={{ fontSize: 12, color: '#6B5A2E', marginTop: 4 }}>List of donation campaigns you have personally contributed to help other farmers.</p>
+                      </div>
+                      
+                      {myDonationsLoading ? (
+                        <div style={{ padding: 40, textAlign: 'center', color: '#78716C' }}>Loading your donations...</div>
+                      ) : myDonations.length === 0 ? (
+                        <div style={{ padding: '40px 20px' }}>
+                          <EmptyState
+                            icon="💚"
+                            title="No contributions made yet"
+                            sub="Support other farmers by making a donation to active campaigns."
+                            ctaTo="/donations"
+                            ctaLabel="View Active Campaigns"
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                          <table className="fd-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ background: '#f9fafb', borderBottom: '1.5px solid #e5e7eb', textAlign: 'left' }}>
+                                <th style={{ padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#4b5563' }}>Campaign / Cause</th>
+                                <th style={{ padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#4b5563' }}>Amount</th>
+                                <th style={{ padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#4b5563' }}>Transaction ID</th>
+                                <th style={{ padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#4b5563' }}>Date</th>
+                                <th style={{ padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#4b5563' }}>Receipt</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {myDonations.map((d) => (
+                                <tr key={d._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                  <td style={{ padding: '14px 18px' }}>
+                                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#1f2937' }}>
+                                      {d.campaignId?.title || d.campaignId || "Direct Contribution"}
+                                    </div>
+                                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#e0f2fe', color: '#0369a1', textTransform: 'capitalize', display: 'inline-block', marginTop: '4px' }}>
+                                      {d.cause || 'general'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px 18px', fontWeight: 800, color: '#16a34a', fontSize: '13px' }}>
+                                    ₹{d.amount?.toLocaleString('en-IN')}
+                                  </td>
+                                  <td style={{ padding: '14px 18px', fontFamily: 'monospace', fontSize: '11.5px', color: '#6b7280' }}>
+                                    {d.paymentId || '—'}
+                                  </td>
+                                  <td style={{ padding: '14px 18px', fontSize: '12px', color: '#6b7280' }}>
+                                    {d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                  </td>
+                                  <td style={{ padding: '14px 18px' }}>
+                                    <Link to={`/donations/${d._id}`} style={{ fontSize: '11.5px', fontWeight: 700, color: '#16a34a', textDecoration: 'none', padding: '5px 12px', borderRadius: '8px', background: '#dcfce7', border: '1.5px solid #86efac', display: 'inline-block', whiteSpace: 'nowrap' }}>View →</Link>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </main>
@@ -1075,6 +1173,22 @@ const FarmerDashboard = () => {
         }
         .fd-req-item:last-child { border-bottom: none; }
         .fd-req-item:hover { background: rgba(250,204,21,0.05); }
+
+        /* ── Empty State ── */
+        .fd-empty-state {
+          display: flex; flex-direction: column; align-items: center;
+          justify-content: center; padding: 40px 20px; text-align: center;
+        }
+        .fd-empty-icon { font-size: 40px; margin-bottom: 12px; }
+        .fd-empty-text { font-size: 14px; font-weight: 700; color: #374151; margin: 0 0 6px; }
+        .fd-empty-sub  { font-size: 12px; color: #9ca3af; margin: 0 0 16px; line-height: 1.6; }
+        .fd-empty-cta  {
+          display: inline-flex; align-items: center;
+          padding: 10px 22px; border-radius: 10px;
+          background: linear-gradient(135deg,#16a34a,#65A30D);
+          color: #fff; font-weight: 700; font-size: 13px;
+          text-decoration: none;
+        }
       `}</style>
     </div>
   );

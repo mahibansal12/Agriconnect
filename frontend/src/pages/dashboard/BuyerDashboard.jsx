@@ -109,6 +109,7 @@ export default function BuyerDashboard() {
   const [orders, setOrders]             = useState([]);
   const [wishlist, setWishlist]         = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [myDonations, setMyDonations]   = useState([]);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
@@ -151,6 +152,10 @@ export default function BuyerDashboard() {
       // 3. Recently viewed — stored in localStorage by CropDetail page
       const recent = JSON.parse(localStorage.getItem("agriconnect_recent_viewed") || "[]");
       setRecentlyViewed(recent);
+
+      // 4. Completed donations from backend
+      const donationsRes = await axiosInstance.get("/v1/donations/my/donations").catch(() => ({ data: { data: [] } }));
+      setMyDonations(donationsRes.data.data || []);
  
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -199,6 +204,7 @@ export default function BuyerDashboard() {
   const navItems = [
     { key: "orders",          label: "My Orders",       icon: Icon.cart,  count: orders.length },
     { key: "wishlist",        label: "Saved Wishlist",  icon: Icon.heart, count: wishlist.length },
+    { key: "donations",       label: "My Donations",    icon: Icon.heart, count: myDonations.length },
     { key: "recently-viewed", label: "Recently Viewed", icon: Icon.clock, count: recentlyViewed.length },
   ];
  
@@ -491,6 +497,65 @@ export default function BuyerDashboard() {
                           </div>
                         </div>
                       ))
+                    )}
+                  </div>
+                )}
+
+                {/* ═══════════════════════════════════════════════
+                    TAB: MY DONATIONS
+                ═══════════════════════════════════════════════ */}
+                {activeTab === "donations" && (
+                  <div className="bd-list" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {myDonations.length === 0 ? (
+                      <EmptyState
+                        icon="💚"
+                        title="No donations made yet"
+                        sub="Support struggling farmers by contributing to their donation campaigns."
+                        ctaTo="/donations"
+                        ctaLabel="View Campaigns"
+                      />
+                    ) : (
+                      <div className="fd-card" style={{ background: "#fff", borderRadius: "16px", border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+                        <div style={{ overflowX: "auto" }}>
+                          <table className="fd-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <thead>
+                              <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb", textAlign: "left" }}>
+                                <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Campaign / Cause</th>
+                                <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Amount</th>
+                                <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Transaction ID</th>
+                                <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Date</th>
+                                 <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Receipt</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {myDonations.map((d) => (
+                                <tr key={d._id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                                  <td style={{ padding: "14px 18px" }}>
+                                    <div style={{ fontWeight: 700, fontSize: "13px", color: "#1f2937" }}>
+                                      {d.campaignId?.title || d.campaignId || "Direct Contribution"}
+                                    </div>
+                                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "#e0f2fe", color: "#0369a1", textTransform: "capitalize", display: "inline-block", marginTop: "4px" }}>
+                                      {d.cause || "general"}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "14px 18px", fontWeight: 800, color: "#16a34a", fontSize: "13px" }}>
+                                    ₹{d.amount?.toLocaleString("en-IN")}
+                                  </td>
+                                  <td style={{ padding: "14px 18px", fontFamily: "monospace", fontSize: "11.5px", color: "#6b7280" }}>
+                                    {d.paymentId || "—"}
+                                  </td>
+                                  <td style={{ padding: "14px 18px", fontSize: "12px", color: "#6b7280" }}>
+                                    {d.createdAt ? new Date(d.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                                  </td>
+                                  <td style={{ padding: "14px 18px" }}>
+                                    <Link to={`/donations/${d._id}`} style={{ fontSize: "11.5px", fontWeight: 700, color: "#16a34a", textDecoration: "none", padding: "5px 12px", borderRadius: "8px", background: "#dcfce7", border: "1.5px solid #86efac", display: "inline-block", whiteSpace: "nowrap" }}>➝ View Receipt</Link>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
