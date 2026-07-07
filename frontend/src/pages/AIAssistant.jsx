@@ -25,8 +25,8 @@ export default function AIAssistant() {
 
             <div className="aia-header-icon">🤖</div>
             <div>
-              <h1 className="aia-title">AI Farming Assistant</h1>
-              <p className="aia-subtitle">Smart agricultural guidance powered by AI</p>
+              <h1 className="aia-title">KRISHI AI</h1>
+              <p className="aia-subtitle">Smart Agricultural Agent</p>
             </div>
           </div>
 

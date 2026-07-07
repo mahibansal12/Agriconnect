@@ -10,23 +10,23 @@ const WELCOME_MESSAGE = {
 };
 
 const FEATURE_PILLS = [
-  { icon: '🌾', label: 'Crop Advice' },
-  { icon: '🌦️', label: 'Weather' },
-  { icon: '💰', label: 'Mandi Prices' },
-  { icon: '🏛️', label: 'Govt. Schemes' },
-  { icon: '🦠', label: 'Disease Detection' },
-  { icon: '💧', label: 'Irrigation' },
+  { icon: '🌾', label: 'Crop Advice',       prompt: 'Give me crop advice for my region and current season.' },
+  { icon: '🌦️', label: 'Weather',           prompt: 'What is the weather forecast for the next few days?' },
+  { icon: '💰', label: 'Mandi Prices',       prompt: 'What are the current mandi prices for major crops?' },
+  { icon: '🏛️', label: 'Govt. Schemes',      prompt: 'What government schemes am I eligible for as a farmer?' },
+  { icon: '🦠', label: 'Disease Detection', prompt: 'Help me identify a crop disease from its symptoms.' },
+  { icon: '💧', label: 'Irrigation',         prompt: 'Give me irrigation tips for my crop.' },
 ];
 
 const HERO_TOPICS = [
-  { icon: '🌾', label: 'Crop recommendations' },
-  { icon: '🧪', label: 'Fertilizers' },
-  { icon: '🦠', label: 'Disease detection' },
-  { icon: '🏛️', label: 'Government schemes' },
-  { icon: '💰', label: 'Mandi prices' },
-  { icon: '🌦️', label: 'Weather' },
-  { icon: '💧', label: 'Irrigation' },
-  { icon: '📈', label: 'Market trends' },
+  { icon: '🌾', label: 'Crop recommendations', prompt: 'Recommend crops suitable for my region and season.' },
+  { icon: '🧪', label: 'Fertilizers',           prompt: 'Suggest fertilizers for my crop and soil type.' },
+  { icon: '🦠', label: 'Disease detection',    prompt: 'Help me identify a crop disease from its symptoms.' },
+  { icon: '🏛️', label: 'Government schemes',   prompt: 'What government schemes am I eligible for as a farmer?' },
+  { icon: '💰', label: 'Mandi prices',          prompt: 'What are the current mandi prices for major crops?' },
+  { icon: '🌦️', label: 'Weather',              prompt: 'What is the weather forecast for the next few days?' },
+  { icon: '💧', label: 'Irrigation',            prompt: 'Give me irrigation tips for my crop.' },
+  { icon: '📈', label: 'Market trends',         prompt: 'What are the current market trends for crop prices?' },
 ];
 
 const SUGGESTIONS = [
@@ -122,9 +122,15 @@ export default function ChatInterface() {
       {/* Feature pills */}
       <div className="aic-pills">
         {FEATURE_PILLS.map(p => (
-          <span key={p.label} className="aic-pill">
+          <button
+            key={p.label}
+            type="button"
+            className="aic-pill"
+            onClick={() => sendMessage(p.prompt)}
+            disabled={loading}
+          >
             <span aria-hidden="true">{p.icon}</span>{p.label}
-          </span>
+          </button>
         ))}
       </div>
 
@@ -138,9 +144,15 @@ export default function ChatInterface() {
             <p className="aic-hero-sub">Ask me anything about</p>
             <div className="aic-hero-topics">
               {HERO_TOPICS.map(t => (
-                <span key={t.label} className="aic-hero-topic">
+                <button
+                  key={t.label}
+                  type="button"
+                  className="aic-hero-topic"
+                  onClick={() => sendMessage(t.prompt)}
+                  disabled={loading}
+                >
                   <span aria-hidden="true">{t.icon}</span>{t.label}
-                </span>
+                </button>
               ))}
             </div>
           </div>
@@ -251,6 +263,7 @@ export default function ChatInterface() {
           padding: 6px 14px; border-radius: 999px;
           background: #FFFFFF; border: 1px solid #E5E7EB;
           font-size: 12.5px; font-weight: 600; color: #374151;
+          font-family: inherit; cursor: pointer; 
           transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
         .aic-pill:hover {
@@ -289,6 +302,7 @@ export default function ChatInterface() {
           padding: 8px 14px; border-radius: 12px;
           background: #F4FBF6; border: 1px solid #DCFCE7;
           font-size: 13px; font-weight: 600; color: #166534;
+          font-family: inherit; cursor: pointer;
         }
 
         /* Messages */
