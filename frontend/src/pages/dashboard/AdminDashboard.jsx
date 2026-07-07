@@ -1,4 +1,4 @@
-  import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
   import { useNavigate } from "react-router-dom";
   import axiosInstance from "../../utils/axiosInstance";
  
@@ -503,7 +503,11 @@
                           const isPending = status === "pending";
                           const statusTone = status === "approved" ? "green" : status === "rejected" ? "red" : "amber";
                           return (
-                            <tr key={listing._id}>
+                            <tr
+                              key={listing._id}
+                              className="adm-row-clickable"
+                              onClick={() => navigate(`/marketplace/${listing._id}`)}
+                            >
                               <td className="adm-td-strong">{listing.cropName}</td>
                               <td className="adm-td-muted">{listing.quantity} {listing.unit || "quintal"}</td>
                               <td className="adm-td-muted">
@@ -518,7 +522,7 @@
                               </td>
                               <td className="adm-td-faint">{listing.createdAt ? new Date(listing.createdAt).toLocaleDateString("en-IN") : "-"}</td>
                               <td><Badge tone={statusTone}>{status}</Badge></td>
-                              <td>
+                              <td onClick={(e) => e.stopPropagation()}>
                                 {isPending ? (
                                   <div className="adm-action-row">
                                     <button className="adm-btn adm-btn--approve"
@@ -1152,6 +1156,8 @@
           .adm-table-wrap { overflow-x: auto; }
           .adm-table { width: 100%; border-collapse: collapse; }
           .adm-table thead tr { border-bottom: 1px solid #E9EEE9; }
+          .adm-row-clickable { cursor: pointer; transition: background 0.15s ease; }
+          .adm-row-clickable:hover { background: rgba(101,163,13,0.06); }
           .adm-table th {
             text-align: left;
             padding: 12px 24px;

@@ -41,6 +41,16 @@ const Icon = {
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
     </svg>
   ),
+  check: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ),
+  x: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M18 6 6 18" /><path d="M6 6l12 12" />
+    </svg>
+  ),
 };
  
 const CropDetail = () => {
@@ -48,7 +58,7 @@ const CropDetail = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { selectedCrop: crop, loading, error } = useSelector((state) => state.crops);
-  const { user, isLoggedIn, isBuyer } = useAuth();
+  const { user, isLoggedIn, isBuyer, isAdmin } = useAuth();
  
   const [activeImg, setActiveImg] = useState(0);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -56,6 +66,8 @@ const CropDetail = () => {
   const [wishlistBusy, setWishlistBusy] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [moderationStatus, setModerationStatus] = useState(null);
+  const [moderationBusy, setModerationBusy] = useState(false);
  
   useEffect(() => {
     dispatch(fetchCropById(id));
@@ -120,6 +132,11 @@ const CropDetail = () => {
     setShowContactModal(true);
   };
  
+  // ── Sync local moderation status with the loaded listing ──
+  useEffect(() => {
+    setModerationStatus(crop?.status || null);
+  }, [crop?._id, crop?.status]);
+
   const handleCopyPhone = async () => {
     const phone = crop?.seller?.phone;
     if (!phone) return;
@@ -167,6 +184,33 @@ const CropDetail = () => {
     }
   };
  
+  // ── Admin moderation — same endpoints used on the Admin Dashboard listings tab ──
+  const handleApprove = async () => {
+    if (moderationBusy) return;
+    setModerationBusy(true);
+    try {
+      const res = await axiosInstance.patch(`/v1/admin/listings/${id}/approve`);
+      setModerationStatus(res.data?.data?.status || 'approved');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve listing');
+    } finally {
+      setModerationBusy(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (moderationBusy) return;
+    setModerationBusy(true);
+    try {
+      const res = await axiosInstance.patch(`/v1/admin/listings/${id}/reject`);
+      setModerationStatus(res.data?.data?.status || 'rejected');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject listing');
+    } finally {
+      setModerationBusy(false);
+    }
+  };
+
   if (loading) return <div className="cd-page"><Loader /></div>;
   if (error) {
     return (
@@ -254,7 +298,32 @@ const CropDetail = () => {
  
               {/* Actions */}
               <div className="cd-actions">
-                {!isOwner && (
+                {isAdmin && (
+                  <>
+                    {moderationStatus && (
+                      <span className={`cd-status-badge cd-status-badge--${moderationStatus}`}>
+                        {moderationStatus}
+                      </span>
+                    )}
+                    {moderationStatus === 'pending' && (
+                      <>
+                        <button onClick={handleApprove} disabled={moderationBusy} className="cd-btn cd-btn--approve">
+                          <Icon.check width={16} height={16} />
+                          {moderationBusy ? 'Approving...' : 'Approve'}
+                        </button>
+                        <button onClick={handleReject} disabled={moderationBusy} className="cd-btn cd-btn--reject">
+                          <Icon.x width={16} height={16} />
+                          {moderationBusy ? 'Rejecting...' : 'Reject'}
+                        </button>
+                      </>
+                    )}
+                    <button onClick={handleContactSeller} className="cd-btn cd-btn--secondary">
+                      <Icon.phone width={16} height={16} />
+                      Contact Seller
+                    </button>
+                  </>
+                )}
+                {!isAdmin && !isOwner && (
                   <>
                     <button onClick={handleBuyNow} className="cd-btn cd-btn--primary">
                       <Icon.cart width={16} height={16} />
@@ -275,7 +344,7 @@ const CropDetail = () => {
                     </button>
                   </>
                 )}
-                {isOwner && (
+                {!isAdmin && isOwner && (
                   <button onClick={handleDelete} disabled={deleteLoading} className="cd-btn cd-btn--danger">
                     <Icon.trash width={16} height={16} />
                     {deleteLoading ? 'Deleting...' : 'Delete Listing'}
@@ -425,6 +494,20 @@ const CropDetailStyles = () => (
     .cd-btn--wishlist-active:hover { background: #BE123C; }
     .cd-btn--danger { background: rgba(239,68,68,0.1); color: #DC2626; }
     .cd-btn--danger:hover { background: rgba(239,68,68,0.18); }
+    .cd-btn--approve { background: rgba(101,163,13,0.14); color: #4D7C0F; }
+    .cd-btn--approve:hover { background: rgba(101,163,13,0.24); }
+    .cd-btn--reject { background: rgba(239,68,68,0.1); color: #DC2626; }
+    .cd-btn--reject:hover { background: rgba(239,68,68,0.18); }
+
+    .cd-status-badge {
+      display: inline-flex; align-items: center;
+      height: 48px; padding: 0 16px; border-radius: 14px;
+      font-size: 13px; font-weight: 700; text-transform: capitalize;
+      letter-spacing: 0.02em;
+    }
+    .cd-status-badge--pending { background: rgba(245,158,11,0.14); color: #B45309; }
+    .cd-status-badge--approved { background: rgba(101,163,13,0.14); color: #4D7C0F; }
+    .cd-status-badge--rejected { background: rgba(239,68,68,0.12); color: #DC2626; }
  
     /* ── Contact Seller modal ── */
     .cd-modal-overlay {
