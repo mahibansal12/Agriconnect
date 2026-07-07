@@ -14,7 +14,26 @@ const formatText = (text) => {
   });
 };
 
-export default function MessageBubble({ message, darkMode = false }) {
+const IconBtn = ({ title, active, onClick, children }) => (
+  <button
+    type="button"
+    title={title}
+    aria-label={title}
+    onClick={onClick}
+    className="msg-icon-btn"
+    style={active ? { color: '#15803D', background: '#DCFCE7' } : undefined}
+  >
+    {children}
+  </button>
+);
+
+export default function MessageBubble({
+  message,
+  isLatestAssistant = false,
+  onCopy,
+  onRegenerate,
+  onFeedback,
+}) {
   const isUser = message.role === 'user';
   const isError = message.isError ?? false;
 
@@ -24,63 +43,72 @@ export default function MessageBubble({ message, darkMode = false }) {
 
   if (isUser) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: '10px', marginBottom: '14px' }}>
-        <div style={{ maxWidth: '68%' }}>
-          <div style={{
-            background: 'linear-gradient(135deg,#166534,#16a34a)',
-            color: '#fff',
-            borderRadius: '18px', borderBottomRightRadius: '4px',
-            padding: '13px 18px',
-            fontSize: '14px', lineHeight: 1.7,
-            boxShadow: '0 4px 20px rgba(22,163,74,0.4)',
-            border: '1px solid rgba(74,222,128,0.3)',
-          }}>
+      <div className="msg-row msg-row--user">
+        <div className="msg-col" style={{ alignItems: 'flex-end' }}>
+          <div className="msg-bubble msg-bubble--user">
             {formatText(message.text)}
           </div>
-          <p style={{ margin: '5px 4px 0 0', fontSize: '10px', color: 'rgba(134,239,172,0.5)', textAlign: 'right' }}>{time}</p>
+          <p className="msg-time" style={{ textAlign: 'right' }}>{time}</p>
         </div>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-          background: 'linear-gradient(135deg,#14532d,#16a34a)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: '13px', fontWeight: 800,
-          boxShadow: '0 0 16px rgba(22,163,74,0.45)',
-          border: '2px solid rgba(74,222,128,0.4)',
-        }}>U</div>
+        <div className="msg-avatar msg-avatar--user">U</div>
       </div>
     );
   }
 
   // Assistant bubble
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', marginBottom: '14px' }}>
-      <div style={{
-        width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-        background: 'linear-gradient(135deg,#14532d,#16a34a)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '17px',
-        boxShadow: '0 0 16px rgba(22,163,74,0.4)',
-        border: '2px solid rgba(134,239,172,0.35)',
-      }}>🤖</div>
+    <div className="msg-row">
+      <div className="msg-avatar msg-avatar--bot" aria-hidden="true">🌱</div>
 
-      <div style={{ maxWidth: '68%' }}>
-        <div style={{
-          background: isError
-            ? 'rgba(153,27,27,0.5)'
-            : 'rgba(15,45,20,0.82)',
-          border: isError
-            ? '1.5px solid rgba(252,165,165,0.4)'
-            : '1.5px solid rgba(134,239,172,0.2)',
-          borderRadius: '18px', borderBottomLeftRadius: '4px',
-          padding: '13px 18px',
-          fontSize: '14px', lineHeight: 1.7,
-          color: isError ? '#fca5a5' : 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-        }}>
+      <div className="msg-col">
+        <div className={`msg-bubble msg-bubble--bot${isError ? ' msg-bubble--error' : ''}`}>
           {formatText(message.text)}
         </div>
-        <p style={{ margin: '5px 0 0 4px', fontSize: '10px', color: 'rgba(134,239,172,0.4)' }}>{time}</p>
+
+        <div className="msg-footer">
+          <p className="msg-time">{time}</p>
+
+          {!isError && (
+            <div className="msg-actions">
+              <IconBtn title="Copy response" onClick={() => onCopy?.(message.text)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <rect x="8" y="8" width="12" height="12" rx="2" />
+                  <path d="M4 16V5a1 1 0 011-1h11" />
+                </svg>
+              </IconBtn>
+
+              {isLatestAssistant && (
+                <IconBtn title="Regenerate response" onClick={() => onRegenerate?.()}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M4 4v5h5" />
+                    <path d="M20 20v-5h-5" />
+                    <path d="M5 9a8 8 0 0113.6-3.4L20 9M19 15a8 8 0 01-13.6 3.4L4 15" />
+                  </svg>
+                </IconBtn>
+              )}
+
+              <IconBtn
+                title="Good response"
+                active={message.feedback === 'up'}
+                onClick={() => onFeedback?.(message.feedback === 'up' ? null : 'up')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M7 10v11H4a1 1 0 01-1-1v-9a1 1 0 011-1h3zm0 0l4.4-7.3a1.5 1.5 0 012.6 1.5L12.8 9H19a2 2 0 012 2.3l-1.4 7A2 2 0 0117.6 20H10a3 3 0 01-3-3" />
+                </svg>
+              </IconBtn>
+
+              <IconBtn
+                title="Poor response"
+                active={message.feedback === 'down'}
+                onClick={() => onFeedback?.(message.feedback === 'down' ? null : 'down')}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ transform: 'scaleY(-1)' }}>
+                  <path d="M7 10v11H4a1 1 0 01-1-1v-9a1 1 0 011-1h3zm0 0l4.4-7.3a1.5 1.5 0 012.6 1.5L12.8 9H19a2 2 0 012 2.3l-1.4 7A2 2 0 0117.6 20H10a3 3 0 01-3-3" />
+                </svg>
+              </IconBtn>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
