@@ -3,7 +3,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import PostCard from "../../components/community/PostCard";
 import CreatePostForm from "../../components/community/CreatePostForm";
 import Navbar from "../../components/common/Navbar";
-
+import "./Community.css";
 function Community() {
   const [posts, setPosts]     = useState([]);
   const [loading, setLoading] = useState(true);
