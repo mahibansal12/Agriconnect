@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
 import axiosInstance from '../../utils/axiosInstance';
+import useAuth from '../../hooks/useAuth';
 
 const WELCOME_MESSAGE = {
   role: 'assistant',
@@ -8,14 +9,37 @@ const WELCOME_MESSAGE = {
   timestamp: new Date().toISOString(),
 };
 
-const suggestions = [
-  { text: 'Which crops are best for June in UP?', icon: '🌾' },
-  { text: 'What is the MSP for wheat this year?', icon: '📈' },
-  { text: 'How to treat yellow rust in wheat?', icon: '🐛' },
-  { text: 'Am I eligible for PM-KISAN?', icon: '🏛️' },
+const FEATURE_PILLS = [
+  { icon: '🌾', label: 'Crop Advice' },
+  { icon: '🌦️', label: 'Weather' },
+  { icon: '💰', label: 'Mandi Prices' },
+  { icon: '🏛️', label: 'Govt. Schemes' },
+  { icon: '🦠', label: 'Disease Detection' },
+  { icon: '💧', label: 'Irrigation' },
 ];
 
-export default function ChatInterface({ compact = false, darkMode = false }) {
+const HERO_TOPICS = [
+  { icon: '🌾', label: 'Crop recommendations' },
+  { icon: '🧪', label: 'Fertilizers' },
+  { icon: '🦠', label: 'Disease detection' },
+  { icon: '🏛️', label: 'Government schemes' },
+  { icon: '💰', label: 'Mandi prices' },
+  { icon: '🌦️', label: 'Weather' },
+  { icon: '💧', label: 'Irrigation' },
+  { icon: '📈', label: 'Market trends' },
+];
+
+const SUGGESTIONS = [
+  { icon: '🌾', text: 'Best crops for June?', desc: 'Get season-wise crop picks for your region' },
+  { icon: '💰', text: 'MSP for Wheat', desc: "Check this year's minimum support price" },
+  { icon: '🌧️', text: 'Rain forecast', desc: 'Plan irrigation around upcoming weather' },
+  { icon: '🐛', text: 'Wheat disease', desc: 'Identify and treat yellow rust & more' },
+  { icon: '🏛️', text: 'PM-Kisan eligibility', desc: 'Check scheme eligibility criteria' },
+  { icon: '🚜', text: 'Best fertilizer', desc: 'Recommendations for your crop & soil' },
+];
+
+export default function ChatInterface() {
+  const { name } = useAuth();
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,17 +50,27 @@ export default function ChatInterface({ compact = false, darkMode = false }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const sendMessage = async () => {
-    const text = input.trim();
+  // Auto-grow the textarea as the user types
+  const autoGrow = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  };
+  useEffect(autoGrow, [input]);
+
+  const sendMessage = async (overrideText, { isRegenerate = false } = {}) => {
+    const text = (overrideText ?? input).trim();
     if (!text || loading) return;
-    setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
-    setInput('');
+
+    if (!isRegenerate) {
+      setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
+      setInput('');
+    }
     setLoading(true);
     try {
-      const { data } = await axiosInstance.post('/v1/ai/chat', {
-        message: text,
-        history: messages.slice(-6).map(m => ({ role: m.role, content: m.text })),
-      });
+      const history = messages.slice(-6).map(m => ({ role: m.role, content: m.text }));
+      const { data } = await axiosInstance.post('/v1/ai/chat', { message: text, history });
       setMessages(prev => [...prev, {
         role: 'assistant',
         text: data.data?.reply ?? 'Sorry, I could not get a response.',
@@ -59,173 +93,347 @@ export default function ChatInterface({ compact = false, darkMode = false }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
+  const handleCopy = (text) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+  };
+
+  const handleRegenerate = () => {
+    if (loading) return;
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+    // drop the last assistant reply, then re-ask the same question
+    setMessages(prev => {
+      const idx = prev.map(m => m.role).lastIndexOf('assistant');
+      return idx === -1 ? prev : prev.slice(0, idx);
+    });
+    sendMessage(lastUserMsg.text, { isRegenerate: true });
+  };
+
+  const handleFeedback = (idx, value) => {
+    setMessages(prev => prev.map((m, i) => (i === idx ? { ...m, feedback: value } : m)));
+  };
+
+  const lastAssistantIdx = messages.map(m => m.role).lastIndexOf('assistant');
+  const showWelcome = messages.length === 1 && !loading;
+  const firstName = name?.split(' ')[0];
+
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%',
-      background: 'transparent',
-    }}>
-
-      {/* Messages */}
-      <div style={{
-        flex: 1, overflowY: 'auto',
-        padding: '28px 40px',
-        display: 'flex', flexDirection: 'column', gap: '4px',
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'rgba(134,239,172,0.3) transparent',
-      }}>
-        {messages.map((msg, idx) => (
-          <MessageBubble key={idx} message={msg} darkMode={darkMode} />
+    <div className="aic-wrap">
+      {/* Feature pills */}
+      <div className="aic-pills">
+        {FEATURE_PILLS.map(p => (
+          <span key={p.label} className="aic-pill">
+            <span aria-hidden="true">{p.icon}</span>{p.label}
+          </span>
         ))}
+      </div>
 
-        {/* Loading */}
-        {loading && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', marginTop: '8px' }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '50%',
-              background: 'linear-gradient(135deg,#14532d,#16a34a)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', flexShrink: 0,
-              boxShadow: '0 0 16px rgba(22,163,74,0.5)',
-              border: '2px solid rgba(134,239,172,0.4)',
-            }}>🤖</div>
-            <div style={{
-              background: 'rgba(15,45,20,0.85)',
-              border: '1.5px solid rgba(134,239,172,0.25)',
-              borderRadius: '18px', borderBottomLeftRadius: '4px',
-              padding: '14px 20px',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{
-                    width: '8px', height: '8px', borderRadius: '50%',
-                    background: '#4ade80',
-                    animation: 'agri-bounce 1.2s infinite',
-                    animationDelay: `${i * 0.2}s`,
-                    boxShadow: '0 0 6px #4ade80',
-                  }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Suggestions */}
-        {messages.length === 1 && !loading && (
-          <div style={{ marginTop: '20px' }}>
-            <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'rgba(134,239,172,0.7)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              💡 Try asking:
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              {suggestions.map(({ text, icon }) => (
-                <button key={text}
-                  onClick={() => { setInput(text); inputRef.current?.focus(); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '14px 16px', borderRadius: '14px',
-                    background: 'rgba(15,45,20,0.7)',
-                    border: '1.5px solid rgba(134,239,172,0.2)',
-                    fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.85)',
-                    cursor: 'pointer', outline: 'none', textAlign: 'left',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                    transition: 'all 0.18s',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(22,163,74,0.25)';
-                    e.currentTarget.style.borderColor = 'rgba(134,239,172,0.5)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(15,45,20,0.7)';
-                    e.currentTarget.style.borderColor = 'rgba(134,239,172,0.2)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
-                  }}
-                >
-                  <span style={{ fontSize: '18px', flexShrink: 0 }}>{icon}</span>
-                  <span style={{ lineHeight: 1.4 }}>{text}</span>
-                </button>
+      {/* Scrollable content */}
+      <div className="aic-scroll">
+        {showWelcome && (
+          <div className="aic-hero">
+            <h2 className="aic-hero-title">
+              👋 Namaste{firstName ? ` ${firstName}` : ''}
+            </h2>
+            <p className="aic-hero-sub">Ask me anything about</p>
+            <div className="aic-hero-topics">
+              {HERO_TOPICS.map(t => (
+                <span key={t.label} className="aic-hero-topic">
+                  <span aria-hidden="true">{t.icon}</span>{t.label}
+                </span>
               ))}
             </div>
           </div>
         )}
 
-        <div ref={bottomRef} />
+        <div className="aic-messages">
+          {messages.map((msg, idx) => (
+            <MessageBubble
+              key={idx}
+              message={msg}
+              isLatestAssistant={idx === lastAssistantIdx}
+              onCopy={handleCopy}
+              onRegenerate={handleRegenerate}
+              onFeedback={(v) => handleFeedback(idx, v)}
+            />
+          ))}
+
+          {loading && (
+            <div className="msg-row">
+              <div className="msg-avatar msg-avatar--bot">🌱</div>
+              <div className="aic-typing">
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showWelcome && (
+            <div className="aic-suggestions">
+              <p className="aic-suggestions-label">💡 Try asking</p>
+              <div className="aic-suggestions-grid">
+                {SUGGESTIONS.map(({ text, icon, desc }) => (
+                  <button
+                    key={text}
+                    type="button"
+                    className="aic-suggestion-card"
+                    onClick={() => { setInput(text); inputRef.current?.focus(); }}
+                  >
+                    <span className="aic-suggestion-icon" aria-hidden="true">{icon}</span>
+                    <span>
+                      <span className="aic-suggestion-text">{text}</span>
+                      <span className="aic-suggestion-desc">{desc}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* Input bar */}
-      <div style={{
-        padding: '16px 40px 20px',
-        background: 'rgba(5,20,8,0.85)',
-        borderTop: '1px solid rgba(134,239,172,0.15)',
-        backdropFilter: 'blur(16px)',
-        display: 'flex', alignItems: 'flex-end', gap: '12px',
-        flexShrink: 0,
-        boxShadow: '0 -8px 32px rgba(0,0,0,0.3)',
-      }}>
-        <textarea
-          ref={inputRef}
-          rows={1}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask anything about farming…"
-          style={{
-            flex: 1, resize: 'none',
-            border: '1.5px solid rgba(134,239,172,0.3)',
-            borderRadius: '16px',
-            padding: '14px 20px',
-            fontSize: '14px',
-            outline: 'none',
-            fontFamily: 'inherit',
-            color: '#fff',
-            background: 'rgba(15,45,20,0.6)',
-            maxHeight: '112px',
-            overflowY: 'auto',
-            transition: 'border 0.2s, box-shadow 0.2s',
-            lineHeight: 1.5,
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-          }}
-          onFocus={e => {
-            e.target.style.border = '1.5px solid rgba(74,222,128,0.7)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(74,222,128,0.12), 0 2px 12px rgba(0,0,0,0.2)';
-          }}
-          onBlur={e => {
-            e.target.style.border = '1.5px solid rgba(134,239,172,0.3)';
-            e.target.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={loading || !input.trim()}
-          style={{
-            width: '48px', height: '48px', borderRadius: '14px', flexShrink: 0,
-            background: !loading && input.trim()
-              ? 'linear-gradient(135deg,#16a34a,#22c55e)'
-              : 'rgba(255,255,255,0.07)',
-            color: !loading && input.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
-            border: !loading && input.trim()
-              ? '1.5px solid rgba(74,222,128,0.5)'
-              : '1.5px solid rgba(255,255,255,0.1)',
-            cursor: !loading && input.trim() ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s',
-            boxShadow: !loading && input.trim() ? '0 4px 16px rgba(22,163,74,0.4)' : 'none',
-          }}
-          onMouseEnter={e => { if (!loading && input.trim()) { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(22,163,74,0.55)'; } }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = !loading && input.trim() ? '0 4px 16px rgba(22,163,74,0.4)' : 'none'; }}
-        >
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" style={{ transform: 'rotate(90deg)' }}>
-            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-          </svg>
-        </button>
+      <div className="aic-input-bar">
+        <div className="aic-input-shell">
+          <button type="button" className="aic-input-icon" title="Attach file (coming soon)" disabled aria-label="Attach file, coming soon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M21 12.5l-8.5 8.5a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8" />
+            </svg>
+          </button>
+          <button type="button" className="aic-input-icon" title="Voice input (coming soon)" disabled aria-label="Voice input, coming soon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 11a7 7 0 0014 0M12 18v4" />
+            </svg>
+          </button>
+
+          <textarea
+            ref={inputRef}
+            rows={1}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask anything about farming…"
+            className="aic-textarea"
+          />
+
+          <button
+            type="button"
+            onClick={() => sendMessage()}
+            disabled={loading || !input.trim()}
+            className="aic-send-btn"
+            aria-label="Send message"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" style={{ transform: 'rotate(90deg)' }}>
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <style>{`@keyframes agri-bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }`}</style>
+      <style>{`
+        .aic-wrap {
+          display: flex; flex-direction: column; height: 100%;
+          max-width: 1300px; width: 100%; margin: 0 auto;
+        }
+
+        /* Feature pills */
+        .aic-pills {
+          display: flex; flex-wrap: wrap; gap: 8px;
+          padding: 16px 40px 4px;
+          flex-shrink: 0;
+        }
+        .aic-pill {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 6px 14px; border-radius: 999px;
+          background: #FFFFFF; border: 1px solid #E5E7EB;
+          font-size: 12.5px; font-weight: 600; color: #374151;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .aic-pill:hover {
+          transform: translateY(-2px);
+          border-color: #BBF7D0;
+          box-shadow: 0 6px 16px rgba(21,128,61,0.12);
+          color: #15803D;
+        }
+
+        /* Scroll area */
+        .aic-scroll {
+          flex: 1; overflow-y: auto;
+          padding: 12px 40px 8px;
+          scrollbar-width: thin;
+          scrollbar-color: #D1FAE5 transparent;
+        }
+
+        /* Hero welcome card */
+        .aic-hero {
+          background: #FFFFFF;
+          border: 1px solid #E5E7EB;
+          border-radius: 20px;
+          padding: 28px 32px;
+          margin: 8px 0 24px;
+          box-shadow: 0 4px 20px rgba(17,24,39,0.05);
+          animation: aic-fade-in 0.35s ease;
+        }
+        .aic-hero-title {
+          margin: 0 0 6px; font-size: 22px; font-weight: 800; color: #111827;
+          letter-spacing: -0.01em;
+        }
+        .aic-hero-sub { margin: 0 0 16px; font-size: 14px; color: #6B7280; }
+        .aic-hero-topics { display: flex; flex-wrap: wrap; gap: 10px; }
+        .aic-hero-topic {
+          display: inline-flex; align-items: center; gap: 7px;
+          padding: 8px 14px; border-radius: 12px;
+          background: #F4FBF6; border: 1px solid #DCFCE7;
+          font-size: 13px; font-weight: 600; color: #166534;
+        }
+
+        /* Messages */
+        .aic-messages { display: flex; flex-direction: column; gap: 2px; }
+
+        /* Typing indicator */
+        .aic-typing {
+          display: flex; align-items: center; gap: 6px;
+          background: #FFFFFF; border: 1px solid #E5E7EB;
+          border-radius: 18px; border-bottom-left-radius: 4px;
+          padding: 14px 20px; box-shadow: 0 2px 10px rgba(17,24,39,0.05);
+          margin-bottom: 14px;
+        }
+        .aic-typing span {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #22C55E; display: inline-block;
+          animation: aic-bounce 1.2s infinite;
+        }
+
+        /* Suggestions */
+        .aic-suggestions { margin: 12px 0 20px; }
+        .aic-suggestions-label {
+          margin: 0 0 12px; font-size: 12.5px; font-weight: 700;
+          color: #6B7280; display: flex; align-items: center; gap: 6px;
+          text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .aic-suggestions-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        .aic-suggestion-card {
+          display: flex; align-items: flex-start; gap: 12px;
+          padding: 16px; border-radius: 16px;
+          background: #FFFFFF; border: 1px solid #E5E7EB;
+          text-align: left; cursor: pointer; font-family: inherit;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .aic-suggestion-card:hover {
+          transform: translateY(-3px);
+          border-color: #BBF7D0;
+          box-shadow: 0 10px 24px rgba(21,128,61,0.12);
+        }
+        .aic-suggestion-icon {
+          font-size: 20px; flex-shrink: 0;
+          width: 38px; height: 38px; border-radius: 10px;
+          background: #F4FBF6; display: flex; align-items: center; justify-content: center;
+        }
+        .aic-suggestion-text { display: block; font-size: 14px; font-weight: 700; color: #111827; }
+        .aic-suggestion-desc { display: block; font-size: 12.5px; color: #6B7280; margin-top: 2px; line-height: 1.4; }
+
+        /* Message bubbles (shared) */
+        .msg-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px; animation: aic-fade-in 0.25s ease; }
+        .msg-row--user { justify-content: flex-end; }
+        .msg-col { display: flex; flex-direction: column; max-width: 68%; }
+        .msg-avatar {
+          width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 15px; font-weight: 800; color: #fff;
+        }
+        .msg-avatar--bot { background: linear-gradient(135deg,#166534,#22C55E); box-shadow: 0 3px 10px rgba(34,197,94,0.35); }
+        .msg-avatar--user { background: linear-gradient(135deg,#0EA5E9,#15803D); box-shadow: 0 3px 10px rgba(14,165,233,0.3); }
+        .msg-bubble {
+          font-size: 14.5px; line-height: 1.7; padding: 13px 18px; border-radius: 18px;
+        }
+        .msg-bubble--bot {
+          background: #FFFFFF; color: #111827;
+          border: 1px solid #E5E7EB; border-bottom-left-radius: 4px;
+          box-shadow: 0 2px 10px rgba(17,24,39,0.05);
+        }
+        .msg-bubble--error { background: #FEF2F2; border-color: #FECACA; color: #B91C1C; }
+        .msg-bubble--user {
+          background: linear-gradient(135deg,#15803D,#22C55E); color: #fff;
+          border-bottom-right-radius: 4px;
+          box-shadow: 0 4px 16px rgba(21,128,61,0.28);
+        }
+        .msg-footer { display: flex; align-items: center; gap: 10px; margin-top: 4px; padding: 0 4px; }
+        .msg-time { margin: 0; font-size: 10.5px; color: #9CA3AF; }
+        .msg-actions { display: flex; align-items: center; gap: 2px; }
+        .msg-icon-btn {
+          display: flex; align-items: center; justify-content: center;
+          width: 24px; height: 24px; border-radius: 7px;
+          background: transparent; border: none; color: #9CA3AF; cursor: pointer;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .msg-icon-btn:hover { background: #F3F4F6; color: #374151; }
+
+        /* Input bar */
+        .aic-input-bar {
+          flex-shrink: 0; padding: 12px 40px 24px;
+        }
+        .aic-input-shell {
+          display: flex; align-items: flex-end; gap: 8px;
+          background: linear-gradient(120deg, #F0FDF4 0%, #FEFCE8 55%, #FEF9C3 100%);
+          border: 1.5px solid #FDE68A;
+          border-radius: 22px; padding: 8px 10px;
+          box-shadow: 0 8px 26px rgba(202,138,4,0.14), 0 2px 8px rgba(21,128,61,0.08);
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .aic-input-shell:focus-within {
+          border-color: #4D7C0F;
+          box-shadow: 0 0 0 3px rgba(77,124,15,0.16), 0 8px 26px rgba(202,138,4,0.16);
+        }
+        .aic-input-icon {
+          width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.6); border: 1px solid #FDE68A; color: #A16207;
+          cursor: not-allowed; opacity: 0.6;
+        }
+        .aic-textarea {
+          flex: 1; resize: none; border: none; outline: none;
+          font-family: inherit; font-size: 14.5px; line-height: 1.5;
+          color: #14532D; background: transparent;
+          padding: 9px 4px; max-height: 140px; overflow-y: auto;
+        }
+        .aic-textarea::placeholder { color: #A16207; opacity: 0.65; }
+        .aic-send-btn {
+          width: 40px; height: 40px; border-radius: 14px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          border: none; cursor: pointer; color: #fff;
+          background: linear-gradient(135deg,#15803D,#4D7C0F,#CA8A04);
+          box-shadow: 0 4px 14px rgba(202,138,4,0.4);
+          transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        }
+        .aic-send-btn:disabled {
+          background: #E5E7EB; color: #9CA3AF; box-shadow: none; cursor: not-allowed;
+        }
+        .aic-send-btn:not(:disabled):hover { transform: scale(1.06); box-shadow: 0 6px 18px rgba(202,138,4,0.5); }
+        .aic-send-btn:not(:disabled):active { transform: scale(0.94); }
+
+        @keyframes aic-bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+        @keyframes aic-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 760px) {
+          .aic-pills { padding: 12px 16px 4px; }
+          .aic-scroll { padding: 8px 16px 4px; }
+          .aic-input-bar { padding: 10px 16px 18px; }
+          .aic-suggestions-grid { grid-template-columns: 1fr; }
+          .msg-col { max-width: 82%; }
+          .aic-hero { padding: 20px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .msg-row, .aic-hero { animation: none; }
+          .aic-typing span { animation: none; }
+        }
+      `}</style>
     </div>
   );
 }

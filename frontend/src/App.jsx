@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { loadUserFromStorage } from "./redux/slices/authSlice";
 import AppRoutes from "./routes/AppRoutes";
+import FloatingAIAssistant from "./components/common/FloatingAIAssistant";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -11,5 +12,10 @@ export default function App() {
     dispatch(loadUserFromStorage());
   }, [dispatch]);
 
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      <FloatingAIAssistant />
+    </>
+  );
 }

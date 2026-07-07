@@ -1,6 +1,7 @@
 // src/pages/Calculators.jsx
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import YieldCalculator from '../components/calculators/YieldCalculator';
 import ProfitCalculator from '../components/calculators/ProfitCalculator';
 
@@ -23,12 +24,36 @@ const Calculators = () => {
       <div style={{ background: 'linear-gradient(135deg,#052e16 0%,#14532d 35%,#166534 65%,#065f46 100%)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-50px', right: '150px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(134,239,172,0.07)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-30px', left: '80px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(52,211,153,0.06)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 48px', display: 'flex', alignItems: 'center', gap: '18px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 48px', position: 'relative', zIndex: 1 }}>
+          <Link
+            to="/"
+            aria-label="Go to AgriConnect homepage"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '9px',
+              textDecoration: 'none', marginBottom: '18px',
+              padding: '6px 12px 6px 6px', borderRadius: '999px',
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(134,239,172,0.3)',
+              transition: 'background 0.15s ease, border-color 0.15s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'rgba(134,239,172,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(134,239,172,0.3)'; }}
+          >
+            <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'linear-gradient(135deg,#16A34A,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C12 2 6 7 6 14a6 6 0 0 0 12 0c0-7-6-12-6-12Z"/>
+                <path d="M12 14v6"/>
+              </svg>
+            </div>
+            <span style={{ color: '#fff', fontSize: '13px', fontWeight: 700 }}>AgriConnect</span>
+          </Link>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
           <div style={{ width: '64px', height: '64px', background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(134,239,172,0.4)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px', backdropFilter: 'blur(6px)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>🧮</div>
           <div>
             <div style={{ color: '#86efac', fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '5px' }}>AgriConnect • Tools</div>
             <h1 style={{ margin: 0, color: '#fff', fontSize: '30px', fontWeight: 900, letterSpacing: '-0.5px' }}>Farm Calculators</h1>
             <p style={{ margin: '7px 0 0', color: '#a7f3d0', fontSize: '14px' }}>Plan your season with accurate yield and profit estimates.</p>
+          </div>
           </div>
         </div>
         <div style={{ background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(134,239,172,0.12)' }}>

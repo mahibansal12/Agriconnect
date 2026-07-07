@@ -15,6 +15,7 @@ const PUBLIC_LINKS = [
   { to: "/news",                label: "News" },
   { to: "/shops",               label: "Shops" },
   { to: "/community",           label: "Community" },
+  { to: "/calculators",         label: "Calculators" },
 ];
 
 // ── Extra links shown only when logged in (by role) ────────────
@@ -249,6 +250,7 @@ export default function Navbar() {
         .nb-link:nth-child(6) { color: #BE123C; }
         .nb-link:nth-child(7) { color: #C2410C; }
         .nb-link:nth-child(8) { color: #0F766E; }
+        .nb-link:nth-child(9) { color: #166534; }
         .nb-link:hover {
           background: linear-gradient(135deg, #ECFDF5, #FFF7D6);
           border-color: #BBF7D0;
