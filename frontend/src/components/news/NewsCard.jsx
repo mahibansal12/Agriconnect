@@ -32,19 +32,14 @@ function NewsCard({ article, featured }) {
           onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow=`0 8px 32px ${cat.border}44`; }}
         >
           <div style={{ position:"relative", height:"260px" }}>
-  <img
-    src={article.image}
-    alt={article.title}
-    style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
-    onError={(e) => {
-      e.target.style.display = "none";
-      e.target.parentElement.style.background = "linear-gradient(135deg,#14532d,#166534)";
-      e.target.parentElement.style.display = "flex";
-      e.target.parentElement.style.alignItems = "center";
-      e.target.parentElement.style.justifyContent = "center";
-      e.target.parentElement.innerHTML += "<span style='font-size:60px'>📰</span>";
-    }}
-  />
+<img
+  src={article.image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format"}
+  alt={article.title}
+  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+  onError={(e) => {
+    e.target.src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format";
+  }}
+/>
             <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right,rgba(0,0,0,0.1),transparent)" }} />
             <div style={{ position:"absolute", top:"14px", left:"14px" }}>
               <span style={{ background:"rgba(255,255,255,0.92)", border:`1.5px solid ${cat.border}`, borderRadius:"999px", padding:"4px 12px", fontSize:"11px", fontWeight:700, color:cat.text }}>
@@ -83,7 +78,14 @@ function NewsCard({ article, featured }) {
         onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow=`0 3px 14px ${cat.border}33`; }}
       >
         <div style={{ position:"relative", height:"160px" }}>
-          <img src={article.image} alt={article.title} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+          <img
+  src={article.image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format"}
+  alt={article.title}
+  style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+  onError={(e) => {
+    e.target.src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&auto=format";
+  }}
+/>
           <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.3),transparent)" }} />
           <span style={{ position:"absolute", top:"10px", left:"10px", background:"rgba(255,255,255,0.92)", border:`1.5px solid ${cat.border}`, borderRadius:"999px", padding:"3px 10px", fontSize:"10px", fontWeight:700, color:cat.text, textTransform:"capitalize" }}>
             {cat.icon} {article.category}
