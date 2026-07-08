@@ -160,18 +160,16 @@ function Community() {
             <h2>Start a Discussion</h2>
             <p>Post a clear question with crop, location, and problem details for better answers.</p>
             <CreatePostForm onCreate={handlePostCreated} />
-            <div className="community-guidelines">
-              {[
-                "Search similar posts before writing a new question.",
-                "Be detailed and share pictures if relevant.",
-                "Respect other community members and keep answers helpful.",
+           <div className="community-guidelines">
+            {[
+            "Respect other community members and keep answers helpful.",
               ].map((g, i) => (
-                <div className="community-guideline" key={i}>
-                  <span>💡</span>
-                  <p>{g}</p>
-                </div>
-              ))}
+            <div className="community-guideline" key={i}>
+            <span>💡</span>
+            <p>{g}</p>
             </div>
+             ))}
+          </div>
           </aside>
         </div>
       </main>

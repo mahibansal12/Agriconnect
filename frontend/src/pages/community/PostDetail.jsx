@@ -118,53 +118,75 @@ function PostDetail() {
   const userHasLiked = user && Array.isArray(post.likes) && post.likes.includes(user._id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white px-6 py-10">
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
       <Navbar />
 
-      <div className="max-w-2xl mx-auto">
-        <Link to="/community" className="text-green-700 text-sm mb-4 inline-block hover:underline">
-          &larr; Back to community
+      <div style={{ maxWidth:"760px", margin:"0 auto", padding:"32px 24px 60px" }}>
+
+        {/* Back link */}
+        <Link to="/community" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"#16a34a", fontSize:"13px", fontWeight:700, textDecoration:"none", marginBottom:"24px", padding:"8px 16px", borderRadius:"999px", background:"#dcfce7", border:"1.5px solid #86efac" }}>
+          ← Back to community
         </Link>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-green-100 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold">
+        {/* Post card */}
+        <div style={{ background:"#fff", borderRadius:"20px", padding:"28px 32px", border:"2px solid #bbf7d0", boxShadow:"0 4px 20px rgba(22,163,74,0.10)", marginBottom:"24px" }}>
+
+          {/* Author row */}
+          <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"20px" }}>
+            <div style={{ width:"44px", height:"44px", borderRadius:"50%", background:"linear-gradient(135deg,#16a34a,#14532d)", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px", fontWeight:700, flexShrink:0 }}>
               {getInitials(authorName)}
             </div>
-            <div>
-              <p className="font-medium text-gray-800">{authorName}</p>
-              <p className="text-xs text-gray-400">{new Date(post.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:0, fontSize:"15px", fontWeight:700, color:"#111827" }}>{authorName}</p>
+              <p style={{ margin:0, fontSize:"12px", color:"#9ca3af" }}>
+                {new Date(post.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}
+              </p>
             </div>
-            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 font-bold capitalize">
+            <span style={{ padding:"5px 14px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#dcfce7", color:"#14532d", border:"1.5px solid #86efac", textTransform:"capitalize" }}>
               {(post.category || "general").replace("-", " ")}
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-green-800 mb-3">{post.title}</h1>
-          <p className="text-gray-700 leading-relaxed mb-4">{post.content}</p>
+          {/* Title */}
+          <h1 style={{ margin:"0 0 14px", fontSize:"24px", fontWeight:900, color:"#14532d", lineHeight:1.3 }}>
+            {post.title}
+          </h1>
 
+          {/* Content */}
+          <p style={{ margin:"0 0 20px", fontSize:"15px", color:"#374151", lineHeight:1.8 }}>
+            {post.content}
+          </p>
+
+          {/* Image if any */}
           {post.image && (
-            <div className="mb-4 rounded-xl overflow-hidden max-h-96 border border-gray-100">
-              <img src={post.image} alt={post.title} className="w-full object-cover" />
+            <div style={{ marginBottom:"20px", borderRadius:"14px", overflow:"hidden", border:"1px solid #e5e7eb" }}>
+              <img src={post.image} alt={post.title} style={{ width:"100%", objectFit:"cover", maxHeight:"360px" }} />
             </div>
           )}
 
+          {/* Divider */}
+          <div style={{ height:"1px", background:"linear-gradient(90deg,#bbf7d0,transparent)", marginBottom:"16px" }} />
+
+          {/* Like button */}
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`text-sm px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 font-semibold ${
-              userHasLiked 
-                ? "bg-rose-100 text-rose-600 border border-rose-200" 
-                : "bg-green-50 text-gray-600 border border-green-100 hover:bg-green-100"
-            }`}
+            style={{
+              display:"inline-flex", alignItems:"center", gap:"8px",
+              padding:"10px 20px", borderRadius:"999px",
+              background: userHasLiked ? "#fee2e2" : "#f0fdf4",
+              color: userHasLiked ? "#dc2626" : "#6b7280",
+              border: userHasLiked ? "1.5px solid #fca5a5" : "1.5px solid #bbf7d0",
+              fontSize:"13px", fontWeight:700, cursor:"pointer",
+              transition:"all 0.2s ease",
+            }}
           >
             ❤️ {likeCount} {userHasLiked ? "Liked" : "Like"}
           </button>
         </div>
 
-        <div className="max-w-2xl">
-          <CommentSection postId={post._id} comments={comments} onAddComment={handleCommentAdded} />
-        </div>
+        {/* Comments */}
+        <CommentSection postId={post._id} comments={comments} onAddComment={handleCommentAdded} />
       </div>
     </div>
   );

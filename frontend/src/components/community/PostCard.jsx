@@ -28,30 +28,95 @@ function PostCard({ post }) {
   // If backend returns populated comments count
   const commentCount = post.commentCount || (Array.isArray(post.comments) ? post.comments.length : 0);
 
-  return (
+ return (
     <Link
       to={`/community/${post._id}`}
-      className="block bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow border border-green-100"
+      style={{ textDecoration:"none", display:"block" }}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold">
-          {getInitials(authorName)}
+      <div style={{
+        background:"#fff",
+        borderRadius:"16px",
+        padding:"20px 24px",
+        border:"1.5px solid #bbf7d0",
+        boxShadow:"0 2px 12px rgba(22,163,74,0.08)",
+        marginBottom:"16px",
+        transition:"box-shadow 0.2s ease",
+        cursor:"pointer",
+      }}
+        onMouseEnter={e => e.currentTarget.style.boxShadow="0 6px 24px rgba(22,163,74,0.15)"}
+        onMouseLeave={e => e.currentTarget.style.boxShadow="0 2px 12px rgba(22,163,74,0.08)"}
+      >
+        {/* Author row */}
+        <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"14px" }}>
+          <div style={{
+            width:"40px", height:"40px", borderRadius:"50%",
+            background:"linear-gradient(135deg,#16a34a,#14532d)",
+            color:"#fff", display:"flex", alignItems:"center",
+            justifyContent:"center", fontSize:"14px", fontWeight:700,
+            flexShrink:0,
+          }}>
+            {getInitials(authorName)}
+          </div>
+          <div style={{ flex:1 }}>
+            <p style={{ margin:0, fontSize:"14px", fontWeight:700, color:"#111827" }}>{authorName}</p>
+            <p style={{ margin:0, fontSize:"11px", color:"#9ca3af" }}>{timeAgo(post.createdAt)}</p>
+          </div>
+          <span style={{
+            padding:"4px 12px",
+            borderRadius:"999px",
+            fontSize:"11px",
+            fontWeight:700,
+            background:"#dcfce7",
+            color:"#14532d",
+            border:"1.5px solid #86efac",
+            textTransform:"capitalize",
+          }}>
+            {(post.category || "general").replace("-", " ")}
+          </span>
         </div>
-        <div>
-          <p className="text-sm font-medium text-gray-800">{authorName}</p>
-          <p className="text-xs text-gray-400">{timeAgo(post.createdAt)}</p>
+
+        {/* Title */}
+        <h3 style={{
+          margin:"0 0 8px",
+          fontSize:"16px",
+          fontWeight:800,
+          color:"#14532d",
+          lineHeight:1.3,
+        }}>
+          {post.title}
+        </h3>
+
+        {/* Content */}
+        <p style={{
+          margin:"0 0 16px",
+          fontSize:"13px",
+          color:"#6b7280",
+          lineHeight:1.65,
+          display:"-webkit-box",
+          WebkitLineClamp:2,
+          WebkitBoxOrient:"vertical",
+          overflow:"hidden",
+        }}>
+          {post.content}
+        </p>
+
+        {/* Footer */}
+        <div style={{
+          display:"flex",
+          alignItems:"center",
+          gap:"16px",
+          paddingTop:"12px",
+          borderTop:"1px solid #f0fdf4",
+        }}>
+          <span style={{ fontSize:"13px", color:"#6b7280", display:"flex", alignItems:"center", gap:"4px" }}>
+            ❤️ {likeCount}
+          </span>
+          {commentCount > 0 && (
+            <span style={{ fontSize:"13px", color:"#6b7280", display:"flex", alignItems:"center", gap:"4px" }}>
+              💬 {commentCount}
+            </span>
+          )}
         </div>
-        <span className={`ml-auto text-xs px-2 py-1 rounded-full capitalize ${categoryColors[post.category] || "bg-gray-100"}`}>
-          {(post.category || "general").replace("-", " ")}
-        </span>
-      </div>
-
-      <h3 className="text-lg font-semibold text-green-800 mb-1">{post.title}</h3>
-      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{post.content}</p>
-
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span>❤️ {likeCount}</span>
-        {commentCount > 0 && <span>💬 {commentCount}</span>}
       </div>
     </Link>
   );
