@@ -4,6 +4,7 @@ import { Router } from "express";
 import {
     fetchCurrentWeather,
     fetchWeatherForecast,
+    fetchWeatherByCoords,
 } from "../controllers/weather.controller.js";
 
 const router = Router();
@@ -12,4 +13,5 @@ const router = Router();
 router.get("/current", fetchCurrentWeather);
 router.get("/forecast", fetchWeatherForecast);
 
+router.get("/coords", fetchWeatherByCoords);
 export default router;
