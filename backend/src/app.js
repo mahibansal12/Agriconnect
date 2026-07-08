@@ -32,7 +32,7 @@ import donationRoutes from "./routes/donation.routes.js"
 import donationRequestRoutes from "./routes/donationRequest.routes.js"
 import  cropListingRouter from "./routes/cropListing.routes.js"
 import weatherRoutes from "./routes/weather.routes.js"
-import mandiRateRoutes from "./routes/mandiRate.routes.js"
+import mandiRouter from "./routes/mandiRate.routes.js";
 import orderRouter from "./routes/order.routes.js"
 import recommendationRouter from "./routes/recommendation.routes.js"
 import aiRouter from "./routes/ai.routes.js"
@@ -51,7 +51,7 @@ app.use("/api/v1/donations", donationRoutes)
 app.use("/api/v1/donation-requests", donationRequestRoutes)
 app.use("/api/v1/listing", cropListingRouter)
 app.use("/api/v1/weather", weatherRoutes)
-app.use("/api/v1/mandi", mandiRateRoutes)
+app.use("/api/v1/mandi", mandiRouter);
 app.use("/api/v1/orders",orderRouter)
 app.use("/api/v1/recommend", recommendationRouter)
 app.use("/api/v1/ai",aiRouter)
