@@ -41,46 +41,61 @@ function CommentSection({ postId, comments = [], onAddComment }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-green-100">
-      <h3 className="text-lg font-semibold text-green-800 mb-4">{comments.length} Comments</h3>
+    <div style={{ background:"#fff", borderRadius:"20px", padding:"24px 28px", border:"2px solid #bbf7d0", boxShadow:"0 4px 20px rgba(22,163,74,0.08)" }}>
 
-      <div className="space-y-4 mb-4">
-        {comments.map((c) => {
-          const authorName = c.author?.name || "Anonymous";
-          return (
-            <div key={c._id} className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-semibold shrink-0">
-                {getInitials(authorName)}
+      {/* Header */}
+      <h3 style={{ margin:"0 0 20px", fontSize:"18px", fontWeight:800, color:"#14532d" }}>
+        💬 {comments.length} Comments
+      </h3>
+
+      {/* Comments list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:"14px", marginBottom:"20px" }}>
+        {comments.length === 0 ? (
+          <p style={{ fontSize:"13px", color:"#9ca3af", textAlign:"center", padding:"20px 0" }}>
+            No comments yet. Be the first to reply.
+          </p>
+        ) : (
+          comments.map((c) => {
+            const authorName = c.author?.name || "Anonymous";
+            return (
+              <div key={c._id} style={{ display:"flex", gap:"12px", alignItems:"flex-start" }}>
+                <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:"linear-gradient(135deg,#16a34a,#14532d)", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"12px", fontWeight:700, flexShrink:0 }}>
+                  {getInitials(authorName)}
+                </div>
+                <div style={{ flex:1, background:"#f0fdf4", borderRadius:"14px", padding:"12px 16px", border:"1px solid #bbf7d0" }}>
+                  <p style={{ margin:"0 0 4px", fontSize:"13px", fontWeight:700, color:"#111827" }}>{authorName}</p>
+                  <p style={{ margin:0, fontSize:"13px", color:"#374151", lineHeight:1.6 }}>{c.content}</p>
+                </div>
               </div>
-              <div className="bg-green-50 rounded-xl px-4 py-2 flex-1">
-                <p className="text-sm font-medium text-gray-800">{authorName}</p>
-                <p className="text-sm text-gray-600">{c.content}</p>
-              </div>
-            </div>
-          );
-        })}
-        {comments.length === 0 && <p className="text-sm text-gray-400">No comments yet. Be the first to reply.</p>}
+            );
+          })
+        )}
       </div>
 
+      {/* Error */}
       {error && (
-        <p className="text-xs text-rose-600 font-bold mb-3">
+        <p style={{ fontSize:"12px", color:"#dc2626", fontWeight:700, marginBottom:"12px" }}>
           ⚠️ {error}
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      {/* Divider */}
+      <div style={{ height:"1px", background:"linear-gradient(90deg,#bbf7d0,transparent)", marginBottom:"16px" }} />
+
+      {/* Comment input */}
+      <form onSubmit={handleSubmit} style={{ display:"flex", gap:"10px" }}>
         <input
           type="text"
           placeholder="Write a comment..."
           value={text}
           onChange={(e) => setText(e.target.value)}
           disabled={loading}
-          className="flex-1 px-4 py-2 rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+          style={{ flex:1, padding:"12px 16px", borderRadius:"12px", border:"1.5px solid #bbf7d0", fontSize:"14px", outline:"none", fontFamily:"inherit" }}
         />
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-colors disabled:bg-gray-300"
+          style={{ padding:"12px 22px", borderRadius:"12px", background:"linear-gradient(135deg,#16a34a,#14532d)", color:"#fff", border:"none", fontSize:"13px", fontWeight:700, cursor:"pointer" }}
         >
           {loading ? "Posting..." : "Reply"}
         </button>
