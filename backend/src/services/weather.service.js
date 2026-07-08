@@ -3,7 +3,7 @@
 import axios from "axios";
 
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
-const API_KEY = process.env.OPENWEATHER_API_KEY;
+const API_KEY = process.env.OPENWEATHERMAP_API_KEY;
 
 // get current weather by city name
 const getCurrentWeather = async (city) => {
@@ -31,4 +31,19 @@ const getWeatherForecast = async (city) => {
     return response.data;
 };
 
-export { getCurrentWeather, getWeatherForecast };
+// add this new function at the bottom
+const getWeatherByCoords = async (lat, lon) => {
+    const response = await axios.get(`${BASE_URL}/weather`, {
+        params: {
+            lat,
+            lon,
+            appid: API_KEY,
+            units: "metric",
+            lang: "en",
+        },
+    });
+    return response.data;
+};
+
+export { getCurrentWeather, getWeatherForecast, getWeatherByCoords };
+
