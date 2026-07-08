@@ -1,12 +1,31 @@
 // src/pages/MandiRates.jsx
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchMandiRates, fetchPriceHistory, updateLiveRate } from '../redux/slices/mandiSlice';
-import MandiTable from '../components/mandi/MandiTable';
-import MandiFilters from '../components/mandi/MandiFilters';
-import PriceChart from '../components/mandi/PriceChart';
+import {
+  fetchRates,
+  fetchHistory,
+  fetchStats,
+  fetchHighlights,
+  fetchStates,
+  fetchDistricts,
+  fetchMandis,
+  compareMandis,
+  setSelectedState,
+  setSelectedDistrict,
+  setSelectedMandi,
+  clearLocation
+} from '../redux/slices/mandiSlice';
 import Navbar from '../components/common/Navbar';
 import useSocket from '../hooks/useSocket';
+
+// Modular Sub-Components
+import Hero from '../components/mandi/Hero';
+import Stats from '../components/mandi/Stats';
+import LocationSelector from '../components/mandi/LocationSelector';
+import Highlights from '../components/mandi/Highlights';
+import RatesTable from '../components/mandi/RatesTable';
+import HistoryChart from '../components/mandi/HistoryChart';
+import CompareDrawer from '../components/mandi/CompareDrawer';
 
 const DEMO_RATES = [
   { crop: 'Wheat', market: 'Jaipur Mandi', state: 'Rajasthan', minPrice: 2320, maxPrice: 2510, price: 2440, prevPrice: 2390, date: '2026-07-02', isLive: true },
@@ -36,33 +55,60 @@ const DEMO_HISTORY = {
   ],
 };
 
-const applyFilters = (rows, filters) =>
-  rows.filter((row) => {
-    const cropOk = filters.crop === 'All' || row.crop === filters.crop;
-    const stateOk = filters.state === 'All' || row.state === filters.state;
-    const marketOk = !filters.market || row.market.toLowerCase().includes(filters.market.toLowerCase());
-    return cropOk && stateOk && marketOk;
-  });
+const getTrend = (crop) => {
+  const seed = (crop.charCodeAt(0) + crop.charCodeAt(crop.length - 1 || 0)) % 7 - 3;
+  const val = seed === 0 ? 1.5 : seed * 1.2;
+  return {
+    value: Math.abs(val).toFixed(1) + '%',
+    isUp: val >= 0
+  };
+};
 
 const MandiRates = () => {
   const dispatch = useDispatch();
   const socket = useSocket();
-  const { rates, priceHistory, loading, historyLoading, error } = useSelector((state) => state.mandi);
 
-  const [filters, setFilters] = useState({ crop: 'All', state: 'All', market: '' });
+  // Redux Selectors
+  const {
+    rates,
+    states,
+    districts,
+    mandis,
+    history,
+    stats,
+    highlights,
+    loading,
+    historyLoading,
+    selectedState: reduxState,
+    selectedDistrict: reduxDistrict,
+    selectedMandi: reduxMandi,
+    comparison,
+  } = useSelector((state) => state.mandi);
+
+  // Local State
+  const [heroSearch, setHeroSearch] = useState('');
+  const [tableSearch, setTableSearch] = useState('');
   const [selectedCrop, setSelectedCrop] = useState('Wheat');
   const [isConnected, setIsConnected] = useState(false);
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [compareCommodity, setCompareCommodity] = useState('Wheat');
 
+  // Fetch initial dashboard stats, highlights, and states on mount
   useEffect(() => {
-    dispatch(fetchMandiRates(filters));
-  }, [filters, dispatch]);
+    dispatch(fetchStats());
+    dispatch(fetchHighlights());
+    dispatch(fetchStates());
+  }, [dispatch]);
 
+  // Set up socket listener for live mandi rate updates
   useEffect(() => {
     if (!socket) return;
 
     const handleConnect = () => setIsConnected(true);
     const handleDisconnect = () => setIsConnected(false);
-    const handleMandiUpdate = (data) => dispatch(updateLiveRate(data));
+    const handleMandiUpdate = (data) => {
+      // Custom updates handler
+    };
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
@@ -77,180 +123,289 @@ const MandiRates = () => {
     };
   }, [socket, dispatch]);
 
-  const sourceRates = rates.length ? rates : DEMO_RATES;
-  const visibleRates = applyFilters(sourceRates, filters);
-  const liveCount = visibleRates.filter((r) => r.isLive).length;
+  // Map API response keys to standardized frontend keys
+  const mappedRates = (rates || []).map((r) => ({
+    crop: r.commodityName,
+    market: r.mandi,
+    state: r.state,
+    minPrice: r.minPrice,
+    maxPrice: r.maxPrice,
+    price: r.modalPrice,
+    prevPrice: r.modalPrice - 50,
+    date: r.arrivalDate,
+    isLive: true,
+  }));
 
-  const history = selectedCrop
-    ? priceHistory[selectedCrop] || DEMO_HISTORY[selectedCrop] || DEMO_RATES
+  const sourceRates = mappedRates.length ? mappedRates : DEMO_RATES;
+
+  // Filter rates locally based on crop, state, and search inputs
+  const filteredRates = sourceRates.filter((row) => {
+    const matchesHero = !heroSearch || row.crop.toLowerCase().includes(heroSearch.toLowerCase()) || row.market.toLowerCase().includes(heroSearch.toLowerCase());
+    const matchesTable = !tableSearch || row.crop.toLowerCase().includes(tableSearch.toLowerCase()) || row.market.toLowerCase().includes(tableSearch.toLowerCase());
+    return matchesHero && matchesTable;
+  });
+
+  // Fetch history dynamically when selection changes
+  useEffect(() => {
+    if (reduxMandi && selectedCrop) {
+      dispatch(fetchHistory({ mandi: reduxMandi, commodity: selectedCrop }));
+    }
+  }, [reduxMandi, selectedCrop, dispatch]);
+
+  // Fetch comparisons dynamically when comparison config changes
+  useEffect(() => {
+    const targetMandi = reduxMandi || 'Sri Madhopur Mandi';
+    dispatch(compareMandis({
+      commodity: compareCommodity,
+      mandis: [targetMandi, 'Sikar Mandi', 'Jaipur Mandi']
+    }));
+  }, [compareCommodity, reduxMandi, dispatch]);
+
+  // Price Trend Chart History mapping
+  const chartHistory = history && history.length
+    ? history.map((h) => ({ date: h.arrivalDate, price: h.modalPrice }))
+    : DEMO_HISTORY[selectedCrop] || DEMO_RATES
         .filter((row) => row.crop === selectedCrop)
-        .map((row) => ({ date: row.date, price: row.price }))
-    : [];
+        .map((row) => ({ date: row.date, price: row.price }));
+
+  // Handle location selector step triggers
+  const handleStateSelect = (e) => {
+    const val = e.target.value;
+    if (val) {
+      dispatch(setSelectedState(val));
+      dispatch(fetchDistricts(val));
+    } else {
+      dispatch(clearLocation());
+    }
+  };
+
+  const handleDistrictSelect = (e) => {
+    const val = e.target.value;
+    if (val && reduxState) {
+      dispatch(setSelectedDistrict(val));
+      dispatch(fetchMandis({ state: reduxState, district: val }));
+    }
+  };
+
+  const handleMandiSelect = (e) => {
+    const val = e.target.value;
+    if (val && reduxState && reduxDistrict) {
+      dispatch(setSelectedMandi(val));
+      dispatch(fetchRates({ state: reduxState, district: reduxDistrict, mandi: val }));
+    }
+  };
 
   const handleRowClick = useCallback((row) => {
     setSelectedCrop(row.crop);
-    if (!priceHistory[row.crop]) dispatch(fetchPriceHistory(row.crop));
-  }, [priceHistory, dispatch]);
+  }, []);
+
+  const handleRefresh = () => {
+    if (reduxState && reduxDistrict && reduxMandi) {
+      dispatch(fetchRates({ state: reduxState, district: reduxDistrict, mandi: reduxMandi }));
+      dispatch(fetchHighlights());
+    }
+  };
+
+  // Highlights calculated values
+  const highCrop = highlights?.highestPrice?.commodityName || 'Mustard';
+  const highPrice = highlights?.highestPrice?.maxPrice || 7510;
+  const lowCrop = highlights?.lowestPrice?.commodityName || 'Onion';
+  const lowPrice = highlights?.lowestPrice?.minPrice || 1120;
+
+  // Comparison mapped list
+  const comparisonList = comparison && comparison.length
+    ? comparison.map((c) => ({
+        name: c.mandi,
+        price: c.modalPrice,
+        trend: getTrend(c.commodityName || 'Wheat').value,
+        isUp: getTrend(c.commodityName || 'Wheat').isUp,
+      }))
+    : [
+        { name: reduxMandi || 'Sri Madhopur Mandi', price: 7510, trend: '↑ 3.4%', isUp: true },
+        { name: 'Sikar Mandi', price: 7380, trend: '↑ 2.8%', isUp: true },
+        { name: 'Jaipur Mandi', price: 7200, trend: '↑ 1.6%', isUp: true },
+      ];
 
   return (
-    <div className="mandi-page">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(160deg,#f0fdf4 0%,#f7fef9 40%,#ecfdf5 80%,#f0fdfa 100%)',
+      fontFamily: "'Segoe UI',system-ui,sans-serif",
+    }}>
       <Navbar />
 
-      {/* ===== Header (Crop Knowledge style) ===== */}
-      <section className="mandi-hero">
-        <div className="mandi-hero-circle mandi-hero-circle-1" />
-        <div className="mandi-hero-circle mandi-hero-circle-2" />
-        <div className="mandi-hero-inner">
-          <div className="mandi-eyebrow">AgriConnect • Mandi Rates</div>
-          <h1>📈 Mandi Rates</h1>
-          <p>
-            Track crop prices across major Indian mandis, compare modal rates,
-            and monitor market trends before selling your harvest.
-          </p>
-          <div className="mandi-hero-stats">
-            <div><strong>{visibleRates.length}</strong><span>Total Records</span></div>
-            <div><strong>{new Set(visibleRates.map((r) => r.crop)).size}</strong><span>Crops Listed</span></div>
-            <div><strong>{new Set(visibleRates.map((r) => r.market)).size}</strong><span>Markets Covered</span></div>
-            <div><strong>{liveCount}</strong><span>Live Updates</span></div>
+      {/* Hero Header Component */}
+      <Hero
+        heroSearch={heroSearch}
+        setHeroSearch={setHeroSearch}
+        setTableSearch={setTableSearch}
+      />
+
+      {/* Null placeholder since stats are in Hero strip */}
+      <Stats />
+
+      {/* Body Container */}
+      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '32px 48px 56px' }}>
+        
+        {/* Interactive Location Selector Component */}
+        <LocationSelector
+          states={states}
+          districts={districts}
+          mandis={mandis}
+          reduxState={reduxState}
+          reduxDistrict={reduxDistrict}
+          reduxMandi={reduxMandi}
+          handleStateSelect={handleStateSelect}
+          handleDistrictSelect={handleDistrictSelect}
+          handleMandiSelect={handleMandiSelect}
+          handleRefresh={handleRefresh}
+        />
+
+        {/* Highlights Section Component */}
+        <Highlights
+          highlights={highlights}
+          reduxMandi={reduxMandi}
+          highPrice={highPrice}
+          highCrop={highCrop}
+          lowPrice={lowPrice}
+          lowCrop={lowCrop}
+        />
+
+        {/* Main Grid Layout */}
+        <div className="mandi-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+          
+          {/* Left Column (Rates Table & Compare Mandis) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <RatesTable
+              reduxMandi={reduxMandi}
+              filteredRates={filteredRates}
+              tableSearch={tableSearch}
+              setTableSearch={setTableSearch}
+              showFiltersPanel={showFiltersPanel}
+              setShowFiltersPanel={setShowFiltersPanel}
+              handleRowClick={handleRowClick}
+            />
+
+            <CompareDrawer
+              compareCommodity={compareCommodity}
+              setCompareCommodity={setCompareCommodity}
+              comparisonList={comparisonList}
+            />
           </div>
-        </div>
-      </section>
-      {/* ===== End Header ===== */}
 
-      <main id="mandi-board" className="mandi-main">
-        <div className="mandi-filters-card">
-          <MandiFilters filters={filters} onChange={setFilters} />
-        </div>
+          {/* Right Column (Sidebar Chart & Nearby Lists) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <HistoryChart
+              selectedCrop={selectedCrop}
+              chartHistory={chartHistory}
+              historyLoading={historyLoading}
+            />
 
-        <section className="mandi-stats">
-          {[
-            ['Total Records', visibleRates.length, '📋'],
-            ['Crops Listed', new Set(visibleRates.map((r) => r.crop)).size, '🌾'],
-            ['Markets Covered', new Set(visibleRates.map((r) => r.market)).size, '🏪'],
-            ['Live Updates', liveCount, '⚡'],
-          ].map(([label, value, icon]) => (
-            <div className="mandi-stat" key={label}>
-              <span>{icon}</span>
-              <div><strong>{value}</strong><small>{label}</small></div>
-            </div>
-          ))}
-        </section>
+            {/* Nearby Mandis */}
+            <div style={{
+              background: '#fff',
+              borderRadius: '20px',
+              border: '2px solid #bbf7d0',
+              boxShadow: '0 4px 20px rgba(22,163,74,0.10)',
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#14532d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nearby Mandis</h3>
+                <button style={{ background: 'none', border: 'none', color: '#16a34a', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer' }}>View All</button>
+              </div>
 
-        {loading && !rates.length && (
-          <div className="mandi-note">Loading backend prices. Showing official demo board meanwhile.</div>
-        )}
-
-        <div className="mandi-content">
-          <div className="mandi-table-wrap">
-            <div className="mandi-section-head">
-              <div>
-                <h2>Market Board</h2>
-                <p>{visibleRates.length} rates visible after filters</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {[
+                  { name: 'Sikar Mandi', dist: '22 km' },
+                  { name: 'Neem Ka Thana', dist: '41 km' },
+                  { name: 'Fatehpur Mandi', dist: '55 km' },
+                  { name: 'Jaipur Mandi', dist: '98 km' },
+                ].map(({ name, dist }) => (
+                  <div
+                    key={name}
+                    onClick={() => setTableSearch(name.split(' ')[0])}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#f0fdf4'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 700 }}>{dist}</span>
+                      <span className="mandi-dist-arrow" style={{ fontSize: '11px', color: '#16a34a', transition: 'all 0.15s' }}>❯</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <MandiTable rates={visibleRates} onRowClick={handleRowClick} />
+
+            {/* Market Insights */}
+            <div style={{
+              background: '#fff',
+              borderRadius: '20px',
+              border: '2px solid #bbf7d0',
+              boxShadow: '0 4px 20px rgba(22,163,74,0.10)',
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#14532d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Market Insights</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  `${selectedCrop} prices increased by 3.4% today in Sri Madhopur Mandi due to lower arrivals.`,
+                  'Guar Seed prices are on the rise across major markets.',
+                ].map((insight, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '8px', fontSize: '12px', lineHeight: 1.5 }}>
+                    <span style={{ color: '#16a34a', fontWeight: 900 }}>•</span>
+                    <p style={{ margin: 0, color: '#4b5563', fontWeight: 500 }}>{insight}</p>
+                  </div>
+                ))}
+              </div>
+
+              <button style={{
+                width: '100%',
+                textAlign: 'center',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#16a34a',
+                background: 'none',
+                border: 'none',
+                paddingTop: '10px',
+                borderTop: '1px solid #f0fdf4',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}>
+                View More Insights →
+              </button>
+            </div>
+
           </div>
 
-          <div className="mandi-chart-wrap">
-            <PriceChart crop={selectedCrop} history={history} loading={historyLoading && !DEMO_HISTORY[selectedCrop]} />
-            <div className="mandi-tip">Click any row to update the trend chart.</div>
-          </div>
         </div>
-      </main>
 
-      <style>{`
-        .mandi-page { min-height: 100vh; background: linear-gradient(135deg, #EAF7FF 0%, #FFF8E6 46%, #EFFBEF 100%); }
+      </div>
 
-        /* ===== Header (Crop Knowledge style — matched dimensions) ===== */
-        .mandi-hero { position: relative; overflow: hidden; min-height: 300px; display: flex; align-items: center; background: linear-gradient(135deg, #0a3d1f 0%, #14532d 55%, #1b6b34 100%); }
-        .mandi-hero-circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.05); pointer-events: none; }
-        .mandi-hero-circle-1 { width: 420px; height: 420px; top: -160px; right: -90px; }
-        .mandi-hero-circle-2 { width: 240px; height: 240px; bottom: -120px; left: 8%; background: rgba(255,255,255,0.04); }
-        .mandi-hero-inner { position: relative; z-index: 1; width: min(100% - 48px, 1280px); margin: 0 auto; padding: 40px 0 36px; }
-        .mandi-eyebrow { display: inline-flex; margin-bottom: 14px; color: #86efac; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-        .mandi-hero-inner h1 { margin: 0; display: flex; align-items: center; gap: 12px; color: #fff; font-size: clamp(28px, 3.4vw, 38px); font-weight: 900; line-height: 1.1; }
-        .mandi-hero-inner p { max-width: 700px; margin: 14px 0 0; color: rgba(255,255,255,0.82); font-size: 15px; line-height: 1.65; }
-        .mandi-hero-stats { display: flex; flex-wrap: wrap; gap: 0; margin-top: 22px; }
-        .mandi-hero-stats div { display: flex; align-items: baseline; gap: 6px; padding-right: 20px; margin-right: 20px; border-right: 1px solid rgba(255,255,255,0.2); }
-        .mandi-hero-stats div:last-child { border-right: none; margin-right: 0; padding-right: 0; }
-        .mandi-hero-stats strong { color: #fff; font-size: 20px; font-weight: 900; }
-        .mandi-hero-stats span { color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 700; }
-        @media (max-width: 640px) {
-          .mandi-hero-inner { width: min(100% - 32px, 1280px); padding: 32px 0 28px; }
-          .mandi-hero-stats { flex-direction: column; gap: 12px; }
-          .mandi-hero-stats div { border-right: none; padding-right: 0; margin-right: 0; }
+      {/* Global CSS Style tag for responsiveness overrides */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 991px) {
+          .mandi-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
-        /* ===== End Header ===== */
+      `}} />
 
-        .mandi-main { width: min(100% - 48px, 1280px); margin: 0 auto; padding: 32px 0 72px; }
-
-        /* ===== Filters card ===== */
-        .mandi-filters-card {
-          background: #ffffff;
-          border: 1px solid #E4EEDC;
-          border-radius: 18px;
-          padding: 28px 32px;
-          margin-bottom: 24px;
-          box-shadow: 0 18px 44px rgba(20,83,45,0.08);
-        }
-        .mandi-filters-card > * {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: flex-end;
-          gap: 20px;
-        }
-        .mandi-filters-card label,
-        .mandi-filters-card > * > div > label {
-          display: block;
-          margin-bottom: 8px;
-          color: #4B7A5C;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-        }
-        .mandi-filters-card select,
-        .mandi-filters-card input {
-          height: 46px;
-          min-width: 200px;
-          padding: 0 14px;
-          border: 1px solid #DDE8D2;
-          border-radius: 10px;
-          background: #F9FBF6;
-          color: #0A2E0C;
-          font-size: 14px;
-          font-weight: 600;
-          box-shadow: 0 1px 2px rgba(20,83,45,0.04);
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-        .mandi-filters-card select:focus,
-        .mandi-filters-card input:focus {
-          outline: none;
-          border-color: #1b6b34;
-          box-shadow: 0 0 0 3px rgba(27,107,52,0.12);
-        }
-        .mandi-filters-card input::placeholder { color: #9CB8A8; font-weight: 500; }
-        @media (max-width: 768px) {
-          .mandi-filters-card { padding: 22px 20px; }
-          .mandi-filters-card > * { flex-direction: column; align-items: stretch; gap: 16px; }
-          .mandi-filters-card select,
-          .mandi-filters-card input { width: 100%; min-width: 0; }
-        }
-        .mandi-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 20px 0; }
-        .mandi-stat { display: flex; align-items: center; gap: 14px; min-height: 92px; border: 1px solid #D8E8C8; border-radius: 14px; background: rgba(255,255,255,0.9); padding: 18px; box-shadow: 0 18px 40px rgba(45,92,30,0.08); }
-        .mandi-stat span { font-size: 28px; }
-        .mandi-stat strong { display: block; color: #0A2E0C; font-size: 24px; line-height: 1; }
-        .mandi-stat small { display: block; margin-top: 6px; color: #4B7A5C; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-        .mandi-note { border: 1px solid #FDE68A; background: #FFFBEB; color: #92400E; border-radius: 12px; padding: 12px 14px; font-size: 14px; font-weight: 700; margin-bottom: 16px; }
-        .mandi-content { display: grid; grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr); gap: 22px; align-items: start; }
-        .mandi-table-wrap, .mandi-chart-wrap { min-width: 0; }
-        .mandi-section-head { margin-bottom: 12px; }
-        .mandi-section-head h2 { margin: 0; color: #0A2E0C; font-size: 24px; font-weight: 900; }
-        .mandi-section-head p { margin: 4px 0 0; color: #4B7A5C; font-size: 14px; }
-        .mandi-tip { margin-top: 12px; border: 1px solid #BBF7D0; background: #F0FDF4; color: #166534; border-radius: 12px; padding: 12px; text-align: center; font-size: 13px; font-weight: 800; }
-        @media (max-width: 980px) { .mandi-content { grid-template-columns: 1fr; } .mandi-stats { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 640px) { .mandi-main { width: min(100% - 32px, 1280px); } .mandi-stats { grid-template-columns: 1fr; } }
-      `}</style>
     </div>
   );
 };
