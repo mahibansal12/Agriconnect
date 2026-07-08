@@ -1,22 +1,43 @@
-// src/routes/mandiRate.routes.js
-
 import { Router } from "express";
+
 import {
-    getLiveMandiRates,
-    saveMandiRates,
-    getSavedMandiRates,
-    getAvailableStates,
+    syncRates,
+    fetchStates,
+    fetchDistricts,
+    fetchMandis,
+    fetchRates,
+    fetchCommoditySearch,
+    fetchDashboardStats,
+    fetchHighlights,
+    fetchComparison,
+    fetchPriceHistory,
 } from "../controllers/mandiRate.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = Router();
 
 
-router.get("/live", getLiveMandiRates);
-router.get("/saved", getSavedMandiRates);
-router.get("/states", getAvailableStates);
+// Dashboard
 
 
-router.post("/save", verifyJWT, saveMandiRates);
+router.get("/stats", fetchDashboardStats);
+router.get("/highlights", fetchHighlights);
+
+//Location
+
+router.get("/states", fetchStates);
+router.get("/districts/:state", fetchDistricts);
+router.get("/mandis", fetchMandis);
+
+//Rates
+router.get("/rates", fetchRates);
+router.get("/search", fetchCommoditySearch);
+router.get("/history", fetchPriceHistory);
+router.post("/compare", fetchComparison);
+
+//Admin/Cron
+
+router.post("/sync",verifyJWT,authorizeRoles("admin"), syncRates);
 
 export default router;

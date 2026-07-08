@@ -4,12 +4,16 @@ import mongoose from "mongoose";
 
 const mandiRateSchema = new mongoose.Schema(
   {
-    cropName: {
+    commodity: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Commodity",
+    },
+    commodityName: {
       type: String,
       required: true,
       trim: true,
     },
-    mandiName: {
+    mandi: {
       type: String,
       required: true,
     },
@@ -21,6 +25,14 @@ const mandiRateSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    variety: {
+      type: String,
+      default: "",
+    },
+    grade: {
+      type: String,
+      default: "",
+    },
     minPrice: {
       type: Number,
       required: true,
@@ -30,15 +42,20 @@ const mandiRateSchema = new mongoose.Schema(
       required: true,
     },
     modalPrice: {
-      type: Number, 
+      type: Number,
       required: true,
     },
-    date: {
+    arrivalDate: {
       type: Date,
       required: true,
+    },
+    lastSyncedAt: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
+
+mandiRateSchema.index({ commodityName: 1, mandi: 1, arrivalDate: 1 }, { unique: true });
 
 export const MandiRate = mongoose.model("MandiRate", mandiRateSchema);

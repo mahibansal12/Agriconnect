@@ -1,101 +1,219 @@
-// src/controllers/mandiRate.controller.js
-
-import { MandiRate } from "../models/mandiRate.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { fetchMandiRates } from "../services/mandi.service.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
 
+import {
+    syncMandiRates,
+    getStates,
+    getDistricts,
+    getMandis,
+    getRates,
+    searchCommodity,
+    getDashboardStats,
+    getTodayHighlights,
+    compareMandis,
+    getPriceHistory,
+} from "../services/mandi.service.js";
 
-const getLiveMandiRates = asyncHandler(async (req, res) => {
-    const { state, commodity, limit } = req.query;
+const syncRates = asyncHandler(async (req, res) => {
 
-    const records = await fetchMandiRates({
-        state,
+    await syncMandiRates();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            null,
+            "Mandi rates synchronized successfully."
+        )
+    );
+
+});
+
+const fetchStates = asyncHandler(async (req, res) => {
+
+    const states = await getStates();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            states,
+            "States fetched successfully."
+        )
+    );
+
+});
+
+const fetchDistricts = asyncHandler(async (req, res) => {
+
+    const { state } = req.params;
+
+    if (!state) {
+        throw new ApiError(400, "State is required.");
+    }
+
+    const districts = await getDistricts(state);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            districts,
+            "Districts fetched successfully."
+        )
+    );
+
+});
+
+const fetchMandis = asyncHandler(async (req, res) => {
+
+    const { state, district } = req.query;
+
+    if (!state || !district) {
+        throw new ApiError(
+            400,
+            "State and district are required."
+        );
+    }
+
+    const mandis = await getMandis(state, district);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            mandis,
+            "Mandis fetched successfully."
+        )
+    );
+
+});
+
+const fetchRates = asyncHandler(async (req, res) => {
+
+    const data = await getRates(req.query);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            data,
+            "Rates fetched successfully."
+        )
+    );
+
+});
+
+const fetchCommoditySearch = asyncHandler(async (req, res) => {
+
+    const { q, page, limit } = req.query;
+
+    if (!q) {
+        throw new ApiError(400, "Search query is required.");
+    }
+
+    const data = await searchCommodity(
+        q,
+        Number(page) || 1,
+        Number(limit) || 20
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            data,
+            "Commodity search successful."
+        )
+    );
+
+});
+
+const fetchDashboardStats = asyncHandler(async (req, res) => {
+
+    const stats = await getDashboardStats();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            stats,
+            "Dashboard statistics fetched."
+        )
+    );
+
+});
+
+const fetchHighlights = asyncHandler(async (req, res) => {
+
+    const highlights = await getTodayHighlights();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            highlights,
+            "Highlights fetched successfully."
+        )
+    );
+
+});
+
+const fetchComparison = asyncHandler(async (req, res) => {
+
+    const { commodity, mandis } = req.body;
+
+    if (!commodity || !mandis?.length) {
+        throw new ApiError(
+            400,
+            "Commodity and mandis are required."
+        );
+    }
+
+    const comparison = await compareMandis(
         commodity,
-        limit: limit ? parseInt(limit) : 20,
-    });
+        mandis
+    );
 
-    if (!records || records.length === 0) {
-        throw new ApiError(404, "No mandi rates found for given filters");
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            comparison,
+            "Comparison fetched successfully."
+        )
+    );
+
+});
+
+const fetchPriceHistory = asyncHandler(async (req, res) => {
+
+    const { mandi, commodity, days } = req.query;
+
+    if (!mandi || !commodity) {
+        throw new ApiError(
+            400,
+            "Mandi and commodity are required."
+        );
     }
 
-    
-    const rates = records.map((record) => ({
-        cropName: record.commodity,
-        mandiName: record.market,
-        state: record.state,
-        district: record.district,
-        minPrice: record.min_price,
-        maxPrice: record.max_price,
-        modalPrice: record.modal_price,
-        date: record.arrival_date,
-    }));
+    const history = await getPriceHistory(
+        mandi,
+        commodity,
+        Number(days) || 30
+    );
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, rates, "Live mandi rates fetched successfully"));
-});
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            history,
+            "Price history fetched successfully."
+        )
+    );
 
-
-const saveMandiRates = asyncHandler(async (req, res) => {
-    const { state, commodity } = req.body;
-
-    const records = await fetchMandiRates({ state, commodity, limit: 50 });
-
-    if (!records || records.length === 0) {
-        throw new ApiError(404, "No records found to save");
-    }
-
-    
-    const ratesToSave = records.map((record) => ({
-        cropName: record.commodity,
-        mandiName: record.market,
-        state: record.state,
-        district: record.district,
-        minPrice: record.min_price,
-        maxPrice: record.max_price,
-        modalPrice: record.modal_price,
-        date: new Date(record.arrival_date),
-    }));
-
-    
-    await MandiRate.insertMany(ratesToSave);
-
-    return res
-        .status(201)
-        .json(new ApiResponse(201, {}, `${ratesToSave.length} mandi rates saved successfully`));
-});
-
-
-const getSavedMandiRates = asyncHandler(async (req, res) => {
-    const { state, cropName } = req.query;
-
-    const filter = {};
-    if (state) filter.state = state;
-    if (cropName) filter.cropName = cropName;
-
-    const rates = await MandiRate.find(filter)
-        .sort({ date: -1 })
-        .limit(50);
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, rates, "Saved mandi rates fetched successfully"));
-});
-
-
-const getAvailableStates = asyncHandler(async (req, res) => {
-    const states = await MandiRate.distinct("state");
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, states, "States fetched successfully"));
 });
 
 export {
-    getLiveMandiRates,
-    saveMandiRates,
-    getSavedMandiRates,
-    getAvailableStates,
+    syncRates,
+    fetchStates,
+    fetchDistricts,
+    fetchMandis,
+    fetchRates,
+    fetchCommoditySearch,
+    fetchDashboardStats,
+    fetchHighlights,
+    fetchComparison,
+    fetchPriceHistory,
 };
