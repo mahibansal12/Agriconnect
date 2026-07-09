@@ -146,13 +146,7 @@ function DonationDetail() {
             ))}
           </div>
 
-          {/* Trust note */}
-          <div style={{ background:"#f0fdf4", border:"1.5px solid #86efac", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"flex-start", gap:"10px" }}>
-            <span style={{ fontSize:"18px" }}>🔒</span>
-            <p style={{ margin:0, fontSize:"11px", color:"#4b7a5c", lineHeight:1.6 }}>
-              Donations are processed securely via Razorpay. Your payment details are encrypted and never stored on our servers.
-            </p>
-          </div>
+
 
           {/* Back to campaigns */}
           <div style={{ textAlign:"center" }}>

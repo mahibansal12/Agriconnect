@@ -253,7 +253,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
 //  Donations 
 // GET /api/v1/admin/donations
 const getAllDonations = asyncHandler(async (req, res) => {
-    const donations = await Donation.find({ status: "completed" })
+    const donations = await Donation.find({ status: { $in: ["completed", "pending", "failed"] } })
         .populate("donorId", "name email")
         .sort({ createdAt: -1 })
 
