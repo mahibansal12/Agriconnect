@@ -17,9 +17,9 @@ export const fetchStats = createAsyncThunk(
 
 export const fetchHighlights = createAsyncThunk(
     "mandi/fetchHighlights",
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const { data } = await axiosInstance.get("/v1/mandi/highlights");
+            const { data } = await axiosInstance.get("/v1/mandi/highlights", { params });
             return data.data;
         } catch (err) {
             return rejectWithValue(

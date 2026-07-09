@@ -140,7 +140,7 @@ const fetchDashboardStats = asyncHandler(async (req, res) => {
 
 const fetchHighlights = asyncHandler(async (req, res) => {
 
-    const highlights = await getTodayHighlights();
+    const highlights = await getTodayHighlights(req.query);
 
     return res.status(200).json(
         new ApiResponse(
