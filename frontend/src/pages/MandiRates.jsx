@@ -93,12 +93,20 @@ const MandiRates = () => {
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [compareCommodity, setCompareCommodity] = useState('Wheat');
 
-  // Fetch initial dashboard stats, highlights, and states on mount
+  // Fetch initial dashboard stats and states on mount
   useEffect(() => {
     dispatch(fetchStats());
-    dispatch(fetchHighlights());
     dispatch(fetchStates());
   }, [dispatch]);
+
+  // Fetch highlights dynamically when location selection changes
+  useEffect(() => {
+    const params = {};
+    if (reduxState) params.state = reduxState;
+    if (reduxDistrict) params.district = reduxDistrict;
+    if (reduxMandi) params.mandi = reduxMandi;
+    dispatch(fetchHighlights(params));
+  }, [reduxState, reduxDistrict, reduxMandi, dispatch]);
 
   // Set up socket listener for live mandi rate updates
   useEffect(() => {
@@ -202,15 +210,22 @@ const MandiRates = () => {
   const handleRefresh = () => {
     if (reduxState && reduxDistrict && reduxMandi) {
       dispatch(fetchRates({ state: reduxState, district: reduxDistrict, mandi: reduxMandi }));
-      dispatch(fetchHighlights());
+      dispatch(fetchHighlights({ state: reduxState, district: reduxDistrict, mandi: reduxMandi }));
     }
   };
 
-  // Highlights calculated values
-  const highCrop = highlights?.highestPrice?.commodityName || 'Mustard';
-  const highPrice = highlights?.highestPrice?.maxPrice || 7510;
-  const lowCrop = highlights?.lowestPrice?.commodityName || 'Onion';
-  const lowPrice = highlights?.lowestPrice?.minPrice || 1120;
+  // Highlights calculated values with local table data as fallback
+  const highPriceItem = sourceRates.length
+    ? [...sourceRates].sort((a, b) => b.maxPrice - a.maxPrice)[0]
+    : null;
+  const lowPriceItem = sourceRates.length
+    ? [...sourceRates].sort((a, b) => a.minPrice - b.minPrice)[0]
+    : null;
+
+  const highCrop = highlights?.highestPrice?.commodityName || highPriceItem?.crop || 'Mustard';
+  const highPrice = highlights?.highestPrice?.maxPrice || highPriceItem?.maxPrice || 7510;
+  const lowCrop = highlights?.lowestPrice?.commodityName || lowPriceItem?.crop || 'Onion';
+  const lowPrice = highlights?.lowestPrice?.minPrice || lowPriceItem?.minPrice || 1120;
 
   // Comparison mapped list
   const comparisonList = comparison && comparison.length
