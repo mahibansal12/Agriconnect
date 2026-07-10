@@ -397,7 +397,7 @@ import { useState, useEffect } from "react";
     <div className="adm-stats-grid">
               <StatCard icon={<Icon.users width={18} height={18} />} label="Total Users" value={users.length} accent="green" />
               <StatCard icon={<Icon.listings width={18} height={18} />} label="Pending Listings" value={listings.filter(l => l.status === "pending").length} accent="amber" />
-              <StatCard icon={<Icon.donations width={18} height={18} />} label="Active Donations" value={donations.filter(d => d.status === "completed").length} accent="forest" />
+              <StatCard icon={<Icon.donations width={18} height={18} />} label="Donations Received" value={donations.filter(d => d.status === "completed").length} accent="forest" />
               <StatCard icon={<Icon.orders width={18} height={18} />} label="Total Orders" value={orders.length} accent="gold" />
             </div>
  
