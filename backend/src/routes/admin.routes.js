@@ -16,7 +16,8 @@ import {
     rejectDonationRequest,
     deleteDonationRequest,
     getPendingPayouts,
-    markPayoutPaid
+    markPayoutPaid,
+    getPayoutHistory
 } from "../controllers/admin.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
@@ -52,6 +53,7 @@ router.route("/donation-requests/:id/reject").patch(rejectDonationRequest);
 router.route("/donation-requests/:id").delete(deleteDonationRequest);
 
 router.route("/payouts").get(getPendingPayouts);
+router.route("/payouts/history").get(getPayoutHistory);
 router.route("/payouts/:farmerId/mark-paid").patch(markPayoutPaid);
 
 export default router;
