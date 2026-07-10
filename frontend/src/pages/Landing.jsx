@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "../components/common/Navbar";
+import axiosInstance from "../utils/axiosInstance";
 import Footer from "../components/common/Footer";
 import { formatPrice, formatChange } from "../utils/formatters";
-import axiosInstance from "../utils/axiosInstance";
 
 const MOCK_MANDI = [
   { crop: "Wheat",        mandi: "Jaipur Mandi",     price: 2450, change: 2.5  },
@@ -47,11 +47,29 @@ const CAT_COLORS = {
 };
 
 export default function Landing() {
-  const [weather, setWeather]           = useState(null);
+    const [weather, setWeather] = useState(null);
   const [locationName, setLocationName] = useState("Detecting location...");
   const [weatherLoading, setWeatherLoading] = useState(true);
 
   useEffect(() => {
+    const fetchWeatherByIP = async () => {
+      try {
+        const ipRes = await fetch("https://ipapi.co/json/");
+        const ipData = await ipRes.json();
+        const city = ipData.city || "Delhi";
+        const state = ipData.region || "India";
+        setLocationName(`${city}, ${state}`);
+        const res = await axiosInstance.get(
+          `/v1/weather/coords?lat=${ipData.latitude}&lon=${ipData.longitude}`
+        );
+        setWeather(res.data.data);
+      } catch (e) {
+        console.error("IP weather failed:", e);
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -61,44 +79,30 @@ export default function Landing() {
               `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
             );
             const geoData = await geoRes.json();
-            const city =
-              geoData.address?.city ||
-              geoData.address?.town ||
-              geoData.address?.village ||
-              geoData.address?.county ||
-              "Your Location";
+            const city = geoData.address?.city
+              || geoData.address?.town
+              || geoData.address?.village
+              || "Your Location";
             const state = geoData.address?.state || "";
             setLocationName(`${city}, ${state}`);
-            const res = await axiosInstance.get(`/v1/weather/coords?lat=${latitude}&lon=${longitude}`);
-setWeather(res.data.data);
-setLocationName(`${res.data.data.city}, ${state}`);
-          } catch (err) {
-            console.error("Weather fetch error:", err);
-            try {
-              const res = await axiosInstance.get("/v1/weather/current?city=Delhi");
-              setWeather(res.data.data);
-              setLocationName("Delhi, India");
-            } catch (e) {
-              console.error("Fallback weather failed:", e);
-            }
-          } finally {
-            setWeatherLoading(false);
-          }
-        },
-        async () => {
-          try {
-            const res = await axiosInstance.get("/v1/weather/current?city=Delhi");
+            const res = await axiosInstance.get(
+              `/v1/weather/coords?lat=${latitude}&lon=${longitude}`
+            );
             setWeather(res.data.data);
-            setLocationName("Delhi, India");
-          } catch (e) {
-            console.error("Fallback weather failed:", e);
-          } finally {
-            setWeatherLoading(false);
+          } catch (err) {
+            console.error("GPS weather failed:", err);
+            fetchWeatherByIP();
+            return;
           }
+          setWeatherLoading(false);
+        },
+        () => {
+          // user denied GPS — use IP
+          fetchWeatherByIP();
         }
       );
     } else {
-      setWeatherLoading(false);
+      fetchWeatherByIP();
     }
   }, []);
 
@@ -112,7 +116,6 @@ setLocationName(`${res.data.data.city}, ${state}`);
     if (d.includes("mist") || d.includes("haze") || d.includes("fog")) return "🌫️";
     return "🌤️";
   };
-
   return (
     <div className="lp">
       <Navbar />
@@ -151,42 +154,40 @@ setLocationName(`${res.data.data.city}, ${state}`);
         </div>
 
         {/* Weather widget */}
-        <div className="lp-weather">
-          <div className="lp-weather-location">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            {locationName}
-          </div>
+     <div className="lp-weather">
+  <div className="lp-weather-location">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+    {locationName}
+  </div>
 
-          {weatherLoading ? (
-            <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
-              Detecting your location...
-            </div>
-          ) : weather ? (
-            <>
-              <div className="lp-weather-main">
-                <span className="lp-weather-icon">{getWeatherIcon(weather.description)}</span>
-                <div>
-                  <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
-                  <div className="lp-weather-desc" style={{ textTransform:"capitalize" }}>
-                    {weather.description} · Humidity {weather.humidity}%
-                  </div>
-                  <div className="lp-weather-desc">
-                    Wind {Math.round(weather.windSpeed * 3.6)} km/h
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
-              Weather unavailable
-            </div>
-          )}
-
-          <Link to="/weather" className="lp-weather-link">View full forecast →</Link>
+  {weatherLoading ? (
+    <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
+      Detecting your location...
+    </div>
+  ) : weather ? (
+    <div className="lp-weather-main">
+      <span className="lp-weather-icon">{getWeatherIcon(weather.description)}</span>
+      <div>
+        <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
+        <div className="lp-weather-desc" style={{ textTransform:"capitalize" }}>
+          {weather.description} · Humidity {weather.humidity}%
         </div>
+        <div className="lp-weather-desc">
+          Wind {Math.round(weather.windSpeed * 3.6)} km/h
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
+      Weather unavailable
+    </div>
+  )}
+
+  <Link to="/weather" className="lp-weather-link">View full forecast →</Link>
+</div>
       </section>
 
       {/* ── Quick links grid ── */}
