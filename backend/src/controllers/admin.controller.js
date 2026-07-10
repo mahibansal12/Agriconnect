@@ -6,6 +6,7 @@ import { CropListing } from "../models/cropListing.model.js";
 import { Order } from "../models/order.model.js";
 import { Donation } from "../models/donation.model.js";
 import { DonationRequest } from "../models/donationRequest.model.js";
+import { Payout } from "../models/payout.model.js";
 import { News } from "../models/news.model.js";
 import { Scheme } from "../models/scheme.model.js";
 
@@ -329,30 +330,82 @@ const getPendingPayouts = asyncHandler(async (req, res) => {
 const markPayoutPaid = asyncHandler(async (req, res) => {
     const { farmerId } = req.params;
 
-    // 1. Mark orders as paid
-    const orderResult = await Order.updateMany(
-        { farmer: farmerId, paymentStatus: "paid", orderStatus: "delivered", payoutStatus: "pending" },
-        { payoutStatus: "paid", payoutDate: new Date() }
-    );
+    const farmerUser = await User.findById(farmerId);
+    if (!farmerUser) throw new ApiError(404, "Farmer not found");
 
-    // 2. Mark donations as paid
+    // 1. Find the orders that are about to be settled (need the amounts
+    //    BEFORE we flip payoutStatus, otherwise the total is lost)
+    const duePayoutOrders = await Order.find({
+        farmer: farmerId,
+        paymentStatus: "paid",
+        orderStatus: "delivered",
+        payoutStatus: "pending",
+    });
+    const ordersAmount = duePayoutOrders.reduce((sum, o) => sum + (o.farmerPayoutAmount || 0), 0);
+
+    // 2. Find the completed donations for this farmer's campaigns that are due
     const myCampaigns = await DonationRequest.find({ farmer: farmerId });
     const myCampaignIds = myCampaigns.map(c => c._id);
 
-    const donationResult = await Donation.updateMany(
-        { campaignId: { $in: myCampaignIds }, status: "completed", payoutStatus: { $ne: "paid" } },
-        { payoutStatus: "paid", payoutDate: new Date() }
+    const dueDonations = await Donation.find({
+        campaignId: { $in: myCampaignIds },
+        status: "completed",
+        payoutStatus: { $ne: "paid" },
+    });
+    const donationsAmount = dueDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+    const totalAmount = ordersAmount + donationsAmount;
+
+    if (duePayoutOrders.length === 0 && dueDonations.length === 0) {
+        throw new ApiError(400, "Nothing pending to pay out for this farmer");
+    }
+
+    const paidAt = new Date();
+
+    // 3. Mark orders as paid
+    const orderResult = await Order.updateMany(
+        { _id: { $in: duePayoutOrders.map(o => o._id) } },
+        { payoutStatus: "paid", payoutDate: paidAt }
     );
+
+    // 4. Mark donations as paid
+    const donationResult = await Donation.updateMany(
+        { _id: { $in: dueDonations.map(d => d._id) } },
+        { payoutStatus: "paid", payoutDate: paidAt }
+    );
+
+    // 5. Write a permanent payout history record
+    const payoutRecord = await Payout.create({
+        farmer: farmerId,
+        farmerName: farmerUser.name,
+        upiId: farmerUser.payoutDetails?.upiId || "",
+        orderCount: duePayoutOrders.length,
+        ordersAmount,
+        donationCount: dueDonations.length,
+        donationsAmount,
+        totalAmount,
+        paidAt,
+    });
 
     return res.status(200).json(
         new ApiResponse(
-            200, 
-            { 
-                ordersModified: orderResult.modifiedCount, 
-                donationsModified: donationResult.modifiedCount 
-            }, 
+            200,
+            {
+                ordersModified: orderResult.modifiedCount,
+                donationsModified: donationResult.modifiedCount,
+                payout: payoutRecord,
+            },
             "Payout marked as paid"
         )
+    );
+});
+
+// GET /admin/payouts/history — full record of every payout ever made
+const getPayoutHistory = asyncHandler(async (req, res) => {
+    const history = await Payout.find().sort({ paidAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, history, "Payout history fetched")
     );
 });
 
@@ -431,4 +484,5 @@ export {
     deleteDonationRequest,
     getPendingPayouts,
     markPayoutPaid,
+    getPayoutHistory,
 }

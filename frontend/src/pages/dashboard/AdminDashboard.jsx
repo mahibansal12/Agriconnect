@@ -95,6 +95,7 @@ import { useState, useEffect } from "react";
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [payouts, setPayouts] = useState([]);
+    const [payoutHistory, setPayoutHistory] = useState([]);
     const [rejectNote, setRejectNote] = useState({});  // { [id]: noteText }
  
     // User detail drawer state
@@ -114,7 +115,7 @@ import { useState, useEffect } from "react";
         setLoading(true);
         setError(null);
  
-        const [usersRes, listingsRes, donationsRes, newsRes, ordersRes, payoutsRes, donReqRes] = await Promise.all([
+        const [usersRes, listingsRes, donationsRes, newsRes, ordersRes, payoutsRes, donReqRes, payoutHistoryRes] = await Promise.all([
           axiosInstance.get("/v1/admin/users"),
           axiosInstance.get("/v1/admin/listings"), // fetch ALL listings (not just pending) so approved/rejected stay visible for admin history
           axiosInstance.get("/v1/admin/donations"),
@@ -122,6 +123,7 @@ import { useState, useEffect } from "react";
           axiosInstance.get("/v1/admin/orders"),
           axiosInstance.get("/v1/admin/payouts"),
           axiosInstance.get("/v1/admin/donation-requests"),
+          axiosInstance.get("/v1/admin/payouts/history"),
         ]);
  
         setUsers(usersRes.data.data?.users || []);
@@ -131,6 +133,7 @@ import { useState, useEffect } from "react";
         setOrders(ordersRes.data.data?.orders || []);
         setPayouts(payoutsRes.data.data || []);
         setDonationRequests(donReqRes.data.data || []);
+        setPayoutHistory(payoutHistoryRes.data.data || []);
  
       } catch (err) {
         console.error("Error fetching admin data:", err);
@@ -394,7 +397,7 @@ import { useState, useEffect } from "react";
     <div className="adm-stats-grid">
               <StatCard icon={<Icon.users width={18} height={18} />} label="Total Users" value={users.length} accent="green" />
               <StatCard icon={<Icon.listings width={18} height={18} />} label="Pending Listings" value={listings.filter(l => l.status === "pending").length} accent="amber" />
-              <StatCard icon={<Icon.donations width={18} height={18} />} label="Active Donations" value={donations.length} accent="forest" />
+              <StatCard icon={<Icon.donations width={18} height={18} />} label="Active Donations" value={donations.filter(d => d.status === "completed").length} accent="forest" />
               <StatCard icon={<Icon.orders width={18} height={18} />} label="Total Orders" value={orders.length} accent="gold" />
             </div>
  
@@ -425,11 +428,11 @@ import { useState, useEffect } from "react";
                     </div>
                     <div className="adm-quick-item adm-quick-item--gold">
                       <span className="adm-quick-label">Pending Approvals</span>
-                      <span className="adm-quick-value">{listings.length}</span>
+                      <span className="adm-quick-value">{listings.filter(l => l.status === "pending").length}</span>
                     </div>
                     <div className="adm-quick-item adm-quick-item--green">
                       <span className="adm-quick-label">Campaigns</span>
-                      <span className="adm-quick-value">{donations.length}</span>
+                      <span className="adm-quick-value">{donationRequests.filter(r => r.status === "approved").length}</span>
                     </div>
                   </div>
                 </>
@@ -659,6 +662,58 @@ import { useState, useEffect } from "react";
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div style={{ marginTop: "32px" }}>
+                    <SectionHeader title="Payout history" subtitle="Every payout that has been made to farmers so far" />
+                    <div className="adm-table-wrap">
+                      <table className="adm-table">
+                        <thead>
+                          <tr>
+                            <th>Farmer</th>
+                            <th>UPI ID</th>
+                            <th>Orders</th>
+                            <th>Donations</th>
+                            <th>Total Paid</th>
+                            <th>Paid On</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payoutHistory.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
+                                No payouts have been made yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            payoutHistory.map((p) => (
+                              <tr key={p._id}>
+                                <td className="adm-td-strong">{p.farmerName}</td>
+                                <td className="adm-td-muted">{p.upiId || "Not set"}</td>
+                                <td className="adm-td-muted">
+                                  {p.orderCount || 0} orders
+                                  <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
+                                    ₹{(p.ordersAmount || 0).toLocaleString("en-IN")}
+                                  </span>
+                                </td>
+                                <td className="adm-td-muted">
+                                  {p.donationCount || 0} donations
+                                  <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
+                                    ₹{(p.donationsAmount || 0).toLocaleString("en-IN")}
+                                  </span>
+                                </td>
+                                <td className="adm-td-strong" style={{ color: "#16A34A" }}>
+                                  ₹{(p.totalAmount || 0).toLocaleString("en-IN")}
+                                </td>
+                                <td className="adm-td-muted">
+                                  {new Date(p.paidAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </>
               )}

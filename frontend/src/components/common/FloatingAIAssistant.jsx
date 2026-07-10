@@ -109,10 +109,10 @@ export default function FloatingAIAssistant() {
           z-index: 200;
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
           border: none;
           cursor: pointer;
-          padding: 8px 20px 8px 8px;
+          padding: 6px 16px 6px 6px;
           border-radius: 999px;
           background: linear-gradient(135deg, #9A3412, #6B1D1D);
           box-shadow: 0 14px 34px rgba(107, 29, 29, 0.4), 0 4px 10px rgba(0,0,0,0.16);
@@ -128,9 +128,9 @@ export default function FloatingAIAssistant() {
 
         .faa-fab-icon {
           position: relative;
-          width: 68px;
-          height: 68px;
-          min-width: 68px;
+          width: 50px;
+          height: 50px;
+          min-width: 50px;
           border-radius: 50%;
           background: #FFF3E0;
           display: flex;
@@ -139,7 +139,7 @@ export default function FloatingAIAssistant() {
           overflow: hidden;
           box-shadow: inset 0 0 0 2.5px rgba(154, 52, 18, 0.3);
         }
-        .faa-fab-icon svg { width: 62px; height: 62px; }
+        .faa-fab-icon svg { width: 44px; height: 44px; }
 
         .faa-fab-ring {
           position: absolute;
@@ -150,7 +150,7 @@ export default function FloatingAIAssistant() {
         }
         .faa-fab-label {
           font-family: inherit;
-          font-size: 16px;
+          font-size: 13px;
           font-weight: 700;
           color: #FFF3E0;
           white-space: nowrap;
@@ -169,10 +169,10 @@ export default function FloatingAIAssistant() {
 
         /* Slightly smaller on narrow phones so it doesn't crowd the screen */
         @media (max-width: 480px) {
-          .faa-fab { padding: 6px 16px 6px 6px; gap: 9px; }
-          .faa-fab-icon { width: 52px; height: 52px; min-width: 52px; }
-          .faa-fab-icon svg { width: 46px; height: 46px; }
-          .faa-fab-label { font-size: 13px; }
+          .faa-fab { padding: 5px 13px 5px 5px; gap: 8px; }
+          .faa-fab-icon { width: 40px; height: 40px; min-width: 40px; }
+          .faa-fab-icon svg { width: 34px; height: 34px; }
+          .faa-fab-label { font-size: 11px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
