@@ -1,13 +1,18 @@
 // src/pages/auth/Register.jsx
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import RegisterForm from "../../components/auth/RegisterForm";
  
 export default function Register() {
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
-  const [accountType, setAccountType] = useState("farmer");
+  const [searchParams] = useSearchParams();
+  // Pre-select role from URL param (?role=buyer or ?role=farmer)
+  const roleParam = searchParams.get('role');
+  const [accountType, setAccountType] = useState(
+    roleParam === 'buyer' || roleParam === 'farmer' ? roleParam : 'farmer'
+  );
  
   useEffect(() => {
     if (user) {

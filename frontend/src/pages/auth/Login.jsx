@@ -1,59 +1,78 @@
 // src/pages/auth/Login.jsx
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
- 
+
 export default function Login() {
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
- 
+  const [searchParams] = useSearchParams();
+  const roleHint = searchParams.get('role'); // 'buyer' | 'farmer' | null
+
   // If already logged in redirect to dashboard
   useEffect(() => {
     if (user) {
       navigate(
         user.role === "farmer" ? "/farmer/dashboard" :
-        user.role === "buyer"  ? "/buyer/dashboard"  : "/admin/dashboard",
+          user.role === "buyer" ? "/buyer/dashboard" : "/admin/dashboard",
         { replace: true }
       );
     }
   }, [user, navigate]);
- 
+
   return (
     <div className="login-pg">
- 
+
       {/* Top bar */}
       <div className="login-topbar">
         <Link to="/" className="login-home-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
           Back to home
         </Link>
         <span className="login-topbar-help">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
           </svg>
           Help: 1800-123-4567
         </span>
       </div>
- 
+
+      {/* Role-switch context banner */}
+      {roleHint && (
+        <div className="login-role-banner">
+          <span className="login-role-banner-icon">
+            {roleHint === 'buyer' ? '🛒' : '🌾'}
+          </span>
+          <div>
+            <strong>Signing in as {roleHint === 'buyer' ? 'Buyer' : 'Farmer'}</strong>
+            <span> — use your {roleHint} account credentials, or{' '}
+              <Link to={`/register?role=${roleHint}`} className="login-role-banner-link">
+                create a {roleHint} account
+              </Link>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Split layout */}
       <div className="login-body">
- 
+
         {/* Left: form */}
         <div className="login-left">
           <LoginForm />
         </div>
- 
+
         {/* Right: brand panel */}
         <div className="login-right">
           <div className="login-right-inner">
             <div className="login-right-tag">Government recognised platform</div>
             <h2 className="login-right-h">India's most trusted agriculture platform</h2>
             <p className="login-right-p">Join thousands of farmers, buyers and agri-experts who use AgriConnect every day to grow smarter and earn better.</p>
- 
+
             <div className="login-panel-title">Core AgriConnect capabilities</div>
             <div className="login-feats">
               {[
@@ -75,14 +94,14 @@ export default function Login() {
           </div>
         </div>
       </div>
- 
+
       {/* Footer */}
       <div className="login-footer">
         © 2026 AgriConnect Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare &nbsp;·&nbsp;
         <Link to="/privacy" className="login-fl">Privacy Policy</Link> &nbsp;·&nbsp;
         <Link to="/terms" className="login-fl">Terms of Use</Link>
       </div>
- 
+
       <style>{`
         .login-pg {
   min-height: 100vh; display: flex; flex-direction: column;
@@ -195,6 +214,23 @@ export default function Login() {
   .login-body { grid-template-columns: 1fr; }
   .login-right { display: none; }
 }
+
+.login-role-banner {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 1100px; margin: 16px auto 0; width: calc(100% - 48px);
+  padding: 12px 18px;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  border-left: 4px solid #1B5E20;
+  font-size: 13.5px; color: #2E3A2E;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+.login-role-banner-icon { font-size: 22px; line-height: 1; }
+.login-role-banner-link {
+  color: #1B5E20; font-weight: 600; text-decoration: none;
+}
+.login-role-banner-link:hover { text-decoration: underline; }
         }
       `}</style>
     </div>

@@ -2,14 +2,66 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 
-// ─── Async Thunks ─────────────────────────────────────────────
+// ─── Per-role session storage helpers ─────────────────────────
+
+/** Decode JWT payload without verifying signature */
+function getTokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 : null; // ms
+  } catch {
+    return null;
+  }
+}
+
+/** Returns true if the token exists and has not expired yet */
+function isTokenValid(token) {
+  if (!token) return false;
+  const exp = getTokenExpiry(token);
+  return exp ? Date.now() < exp : true; // if no exp claim, assume valid
+}
+
+const ROLE_SESSION_KEY = (role) => `agriconnect_session_${role}`;
+
+/** Save a full session object under its role key */
+function saveRoleSession(role, { user, accessToken }) {
+  if (!role || !accessToken) return;
+  try {
+    localStorage.setItem(
+      ROLE_SESSION_KEY(role),
+      JSON.stringify({ user, accessToken })
+    );
+  } catch { /* storage full / private mode */ }
+}
+
+/** Load and return a session for a role if the token is still valid */
+function loadRoleSession(role) {
+  try {
+    const raw = localStorage.getItem(ROLE_SESSION_KEY(role));
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    if (!isTokenValid(session.accessToken)) {
+      localStorage.removeItem(ROLE_SESSION_KEY(role)); // clean up expired
+      return null;
+    }
+    return session; // { user, accessToken }
+  } catch {
+    return null;
+  }
+}
+
+// ─── Main session helpers (active slot) ───────────────────────
 
 const normalizeAuthData = (payload) => payload?.data ?? payload ?? {};
 
 const persistSession = ({ user, accessToken }) => {
   if (accessToken) localStorage.setItem("agriconnect_token", accessToken);
-  if (user) localStorage.setItem("agriconnect_user", JSON.stringify(user));
+  if (user)        localStorage.setItem("agriconnect_user", JSON.stringify(user));
+  // Also cache under the role-specific key so we can restore without login
+  if (user?.role)  saveRoleSession(user.role, { user, accessToken });
 };
+
+// ─── Async Thunks ─────────────────────────────────────────────
 
 // POST /api/v1/user/register
 export const registerUser = createAsyncThunk(
@@ -64,6 +116,37 @@ export const loadUserFromStorage = createAsyncThunk(
   }
 );
 
+/**
+ * switchToRole(targetRole)
+ *
+ * 1. Saves the current session under the current role's cache slot.
+ * 2. Looks up the target role's cached session.
+ *    - If valid → restores it (no login needed), returns { session, needsLogin: false }
+ *    - If missing/expired → returns { needsLogin: true, targetRole }
+ */
+export const switchToRole = createAsyncThunk(
+  "auth/switchToRole",
+  async (targetRole, { getState }) => {
+    const { user, token } = getState().auth;
+
+    // 1. Persist the current session so we can come back to it later
+    if (user?.role && token) {
+      saveRoleSession(user.role, { user, accessToken: token });
+    }
+
+    // 2. Try restoring the target role's cached session
+    const cached = loadRoleSession(targetRole);
+    if (cached) {
+      // Update the active slot
+      localStorage.setItem("agriconnect_token", cached.accessToken);
+      localStorage.setItem("agriconnect_user", JSON.stringify(cached.user));
+      return { session: cached, needsLogin: false };
+    }
+
+    return { needsLogin: true, targetRole };
+  }
+);
+
 // ─── Slice ────────────────────────────────────────────────────
 const authSlice = createSlice({
   name: "auth",
@@ -82,6 +165,20 @@ const authSlice = createSlice({
       state.loading = false;
       localStorage.removeItem("agriconnect_token");
       localStorage.removeItem("agriconnect_user");
+      // Note: role-specific caches are intentionally kept so switching back works
+    },
+
+    // Clear all role caches (used on explicit "Sign out from all")
+    logoutAllRoles(state) {
+      state.user    = null;
+      state.token   = null;
+      state.error   = null;
+      state.loading = false;
+      localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_user");
+      ["farmer", "buyer", "admin"].forEach((r) =>
+        localStorage.removeItem(ROLE_SESSION_KEY(r))
+      );
     },
 
     // Clear error when user starts retyping in form
@@ -94,6 +191,13 @@ const authSlice = createSlice({
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
         localStorage.setItem("agriconnect_user", JSON.stringify(state.user));
+        // Keep role cache in sync too
+        if (state.user.role && state.token) {
+          saveRoleSession(state.user.role, {
+            user: state.user,
+            accessToken: state.token,
+          });
+        }
       }
     },
   },
@@ -144,8 +248,20 @@ const authSlice = createSlice({
         state.user  = null;
         state.token = null;
       });
+
+    // ── Switch role ───────────────────────────────────────────
+    builder
+      .addCase(switchToRole.fulfilled, (state, action) => {
+        if (!action.payload.needsLogin) {
+          const { session } = action.payload;
+          state.user  = session.user;
+          state.token = session.accessToken;
+          state.error = null;
+        }
+        // If needsLogin=true, state is unchanged; Navbar will navigate to /login
+      });
   },
 });
 
-export const { logoutUser, clearAuthError, updateUserInfo } = authSlice.actions;
+export const { logoutUser, logoutAllRoles, clearAuthError, updateUserInfo } = authSlice.actions;
 export default authSlice.reducer;

@@ -3,38 +3,59 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import useAuth from "../../hooks/useAuth";
-import { logoutUser } from "../../redux/slices/authSlice";
+import { logoutUser, logoutAllRoles, switchToRole } from "../../redux/slices/authSlice";
 
 // ── Nav links visible to everyone ──────────────────────────────
 const PUBLIC_LINKS = [
-  { to: "/marketplace",         label: "Marketplace" },
-  { to: "/crop-knowledge",      label: "Crop Knowledge" },
-  { to: "/mandi",               label: "Mandi Rates" },
-  { to: "/recommendations/crop",label: "Crop Advisor" },
-  { to: "/schemes",             label: "Schemes" },
-  { to: "/news",                label: "News" },
-  { to: "/shops",               label: "Shops" },
-  { to: "/community",           label: "Community" },
-  { to: "/calculators",         label: "Calculators" },
+  { to: "/marketplace", label: "Marketplace" },
+  { to: "/crop-knowledge", label: "Crop Knowledge" },
+  { to: "/mandi", label: "Mandi Rates" },
+  { to: "/recommendations/crop", label: "Crop Advisor" },
+  { to: "/schemes", label: "Schemes" },
+  { to: "/news", label: "News" },
+  { to: "/shops", label: "Shops" },
+  { to: "/community", label: "Community" },
+  { to: "/calculators", label: "Calculators" },
 ];
 
 // ── Extra links shown only when logged in (by role) ────────────
 const ROLE_LINKS = {
   farmer: { to: "/farmer/dashboard", label: "My Dashboard" },
-  buyer:  { to: "/buyer/dashboard",  label: "My Dashboard" },
-  admin:  { to: "/admin/dashboard",  label: "Admin Panel"  },
+  buyer: { to: "/buyer/dashboard", label: "My Dashboard" },
+  admin: { to: "/admin/dashboard", label: "Admin Panel" },
 };
 
 export default function Navbar() {
-  const dispatch   = useDispatch();
-  const navigate   = useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { isLoggedIn, user, role } = useAuth();
-  const [menuOpen, setMenuOpen]    = useState(false);
-  const [dropOpen, setDropOpen]    = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [dropOpen, setDropOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
+  // Sign out clears ALL role caches so the user must log in fresh
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch(logoutAllRoles());
     navigate("/login");
+  };
+
+  // Smart switch: restores cached session if token still valid,
+  // otherwise redirects to /login?role=<target> for fresh login.
+  const handleSwitchRole = async () => {
+    const targetRole = role === "farmer" ? "buyer" : "farmer";
+    setSwitching(true);
+    setDropOpen(false);
+    const result = await dispatch(switchToRole(targetRole));
+    setSwitching(false);
+    if (result.payload?.needsLogin) {
+      // No valid cached session — clear active session first so Login.jsx
+      // doesn't bounce the user back to their current dashboard.
+      dispatch(logoutUser());
+      navigate(`/login?role=${targetRole}`, { replace: true });
+    } else {
+      // Session restored — go straight to the dashboard
+      navigate(`/${targetRole}/dashboard`, { replace: true });
+    }
   };
 
   const initials = user?.name
@@ -63,8 +84,8 @@ export default function Navbar() {
           <Link to="/" className="nb-logo">
             <div className="nb-logo-box">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2C12 2 6 7 6 14a6 6 0 0 0 12 0c0-7-6-12-6-12Z"/>
-                <path d="M12 14v6"/>
+                <path d="M12 2C12 2 6 7 6 14a6 6 0 0 0 12 0c0-7-6-12-6-12Z" />
+                <path d="M12 14v6" />
               </svg>
             </div>
             <div>
@@ -95,7 +116,8 @@ export default function Navbar() {
                 {/* Dashboard quick link */}
                 {role && ROLE_LINKS[role] && (
                   <Link to={ROLE_LINKS[role].to} className="nb-dash-link">
-                    {ROLE_LINKS[role].label}
+                    <span className="nb-dash-label">My Dashboard</span>
+                    <span className="nb-dash-role">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
                   </Link>
                 )}
 
@@ -112,28 +134,40 @@ export default function Navbar() {
 
                   {dropOpen && (
                     <>
-                      <div className="nb-drop-overlay" onClick={() => setDropOpen(false)}/>
+                      <div className="nb-drop-overlay" onClick={() => setDropOpen(false)} />
                       <div className="nb-drop">
                         <div className="nb-drop-header">
                           <div className="nb-drop-name">{user?.name}</div>
                           <div className="nb-drop-role">{role} · {user?.state || "India"}</div>
                         </div>
-                        <div className="nb-drop-divider"/>
+                        <div className="nb-drop-divider" />
                         <Link to={ROLE_LINKS[role]?.to} className="nb-drop-item" onClick={() => setDropOpen(false)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
                           Dashboard
                         </Link>
                         <Link to="/ai-assistant" className="nb-drop-item" onClick={() => setDropOpen(false)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10H12V2Z" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>
                           AI Assistant
                         </Link>
                         <Link to="/calculators" className="nb-drop-item" onClick={() => setDropOpen(false)}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="8" y1="6" x2="16" y2="6" /><line x1="8" y1="10" x2="16" y2="10" /><line x1="8" y1="14" x2="12" y2="14" /></svg>
                           Calculators
                         </Link>
-                        <div className="nb-drop-divider"/>
+
+                        {(role === "farmer" || role === "buyer") && (
+                          <button
+                            className="nb-drop-item"
+                            onClick={handleSwitchRole}
+                            disabled={switching}
+                            style={{ opacity: switching ? 0.6 : 1 }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
+                            {switching ? "Switching…" : `Switch to ${role === "farmer" ? "Buyer" : "Farmer"}`}
+                          </button>
+                        )}
+                        <div className="nb-drop-divider" />
                         <button className="nb-drop-item nb-drop-logout" onClick={handleLogout}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                           Sign out
                         </button>
                       </div>
@@ -154,9 +188,9 @@ export default function Navbar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
             >
               {menuOpen ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
               )}
             </button>
           </div>
@@ -175,7 +209,7 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <div className="nb-mobile-divider"/>
+            <div className="nb-mobile-divider" />
             {isLoggedIn ? (
               <>
                 <Link to={ROLE_LINKS[role]?.to} className="nb-mobile-link" onClick={() => setMenuOpen(false)}>
@@ -268,13 +302,21 @@ export default function Navbar() {
         .nb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
         .nb-dash-link {
-          font-size: 15px; font-weight: 500; color: #1B5E20;
-          text-decoration: none; padding: 6px 12px;
-          border: 1px solid #C5E1A5; border-radius: 6px;
+          display: flex; flex-direction: column; align-items: center;
+          text-decoration: none; padding: 5px 14px;
+          border: 1px solid #C5E1A5; border-radius: 8px;
           background: #F1F8E9; white-space: nowrap;
           transition: background 0.15s;
+          line-height: 1.2;
         }
         .nb-dash-link:hover { background: #E8F5E9; }
+        .nb-dash-label {
+          font-size: 14px; font-weight: 600; color: #1B5E20;
+        }
+        .nb-dash-role {
+          font-size: 10.5px; color: #7DAA6A; letter-spacing: 0.04em;
+          text-transform: capitalize;
+        }
 
         .nb-login-btn {
           font-size: 15px; font-weight: 500; color: #fff;

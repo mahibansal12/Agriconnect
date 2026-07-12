@@ -3,22 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import { formatPrice, formatDate } from "../../utils/formatters";
 import useAuth from "../../hooks/useAuth";
 import axiosInstance from "../../utils/axiosInstance";
- 
+import RoleSwitcher from '../../components/common/RoleSwitcher';
 // ── Status badge config (unchanged — same colors/labels/logic) ──────────────
 const ORDER_STATUS = {
   delivered: { label: "Delivered", bg: "#dcfce7", color: "#166534", border: "#86efac", icon: "✅" },
-  shipped:   { label: "Shipped",   bg: "#dbeafe", color: "#1e40af", border: "#93c5fd", icon: "🚚" },
+  shipped: { label: "Shipped", bg: "#dbeafe", color: "#1e40af", border: "#93c5fd", icon: "🚚" },
   confirmed: { label: "Confirmed", bg: "#fef3c7", color: "#92400e", border: "#fcd34d", icon: "📋" },
-  placed:    { label: "Placed",    bg: "#f3f4f6", color: "#374151", border: "#d1d5db", icon: "🛒" },
+  placed: { label: "Placed", bg: "#f3f4f6", color: "#374151", border: "#d1d5db", icon: "🛒" },
   cancelled: { label: "Cancelled", bg: "#fee2e2", color: "#991b1b", border: "#fca5a5", icon: "❌" },
 };
- 
+
 const PAYMENT_STATUS = {
-  paid:    { label: "Paid",    bg: "#dcfce7", color: "#166534", border: "#86efac" },
+  paid: { label: "Paid", bg: "#dcfce7", color: "#166534", border: "#86efac" },
   pending: { label: "Pending", bg: "#fef3c7", color: "#92400e", border: "#fcd34d" },
-  failed:  { label: "Failed",  bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" },
+  failed: { label: "Failed", bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" },
 };
- 
+
 // ── StatusBadge (unchanged) ──────────────────────────────────────────────────
 function StatusBadge({ status, map }) {
   const cfg = map[status] || map[Object.keys(map)[0]];
@@ -36,7 +36,7 @@ function StatusBadge({ status, map }) {
     </span>
   );
 }
- 
+
 // ── Small inline icons — same convention as FarmerDashboard.jsx ─────────────
 const Icon = {
   leaf: (p) => (
@@ -66,7 +66,7 @@ const Icon = {
     </svg>
   ),
 };
- 
+
 // ── Small reusable stat card (same shape as FarmerDashboard's StatCard) ──────
 const StatCard = ({ icon, label, value, sub, accent = 'green' }) => (
   <div className="bd-stat-card">
@@ -78,7 +78,7 @@ const StatCard = ({ icon, label, value, sub, accent = 'green' }) => (
     {sub && <p className="bd-stat-sub">{sub}</p>}
   </div>
 );
- 
+
 // ── Empty state (same shape as FarmerDashboard's empty state) ───────────────
 function EmptyState({ icon, title, sub, ctaTo, ctaLabel }) {
   return (
@@ -92,7 +92,7 @@ function EmptyState({ icon, title, sub, ctaTo, ctaLabel }) {
     </div>
   );
 }
- 
+
 // ── Loader ────────────────────────────────────────────────────────────────────
 function Loader() {
   return (
@@ -102,32 +102,32 @@ function Loader() {
     </div>
   );
 }
- 
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function BuyerDashboard() {
-  const [activeTab, setActiveTab]       = useState("orders");
-  const [orders, setOrders]             = useState([]);
-  const [wishlist, setWishlist]         = useState([]);
+  const [activeTab, setActiveTab] = useState("orders");
+  const [orders, setOrders] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [myDonations, setMyDonations]   = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
+  const [myDonations, setMyDonations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const [removingWishlistId, setRemovingWishlistId] = useState(null);
   const navigate = useNavigate();
-  const { name, user }           = useAuth();
- 
+  const { name, user } = useAuth();
+
   // ── Fetch all data on mount ─────────────────────────────────────────────
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
- 
+
       // 1. My real orders from backend
       const ordersRes = await axiosInstance.get("/v1/orders/my").catch(() => ({ data: { data: [] } }));
       const fetchedOrders = ordersRes.data.data || [];
       setOrders(fetchedOrders);
- 
+
       // 2. Wishlist — fetch all listings, filter by wishlistedBy containing current user
       const listingsRes = await axiosInstance.get("/v1/listing?limit=1000").catch(() => ({ data: { data: { listings: [] } } }));
       const allListings = listingsRes.data.data?.listings || listingsRes.data.data || [];
@@ -136,19 +136,19 @@ export default function BuyerDashboard() {
         Array.isArray(item.wishlistedBy) &&
         item.wishlistedBy.some(id => id.toString() === userId)
       ).map(item => ({
-        _id:          item._id,
-        crop:         item.cropName,
-        quantity:     item.quantity,
+        _id: item._id,
+        crop: item.cropName,
+        quantity: item.quantity,
         pricePerUnit: item.pricePerUnit,
-        farmer:       item.farmer?.name || "—",
-        unit:         item.unit || "quintal",
-        location:     item.location,
-        images:       Array.isArray(item.images)
-                        ? item.images.map(img => (typeof img === "string" ? img : img?.url)).filter(Boolean)
-                        : [],
+        farmer: item.farmer?.name || "—",
+        unit: item.unit || "quintal",
+        location: item.location,
+        images: Array.isArray(item.images)
+          ? item.images.map(img => (typeof img === "string" ? img : img?.url)).filter(Boolean)
+          : [],
       }));
       setWishlist(myWishlist);
- 
+
       // 3. Recently viewed — stored in localStorage by CropDetail page
       const recent = JSON.parse(localStorage.getItem("agriconnect_recent_viewed") || "[]");
       setRecentlyViewed(recent);
@@ -156,7 +156,7 @@ export default function BuyerDashboard() {
       // 4. Completed donations from backend
       const donationsRes = await axiosInstance.get("/v1/donations/my/donations").catch(() => ({ data: { data: [] } }));
       setMyDonations(donationsRes.data.data || []);
- 
+
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       setError("Failed to load dashboard data. Please try again.");
@@ -164,11 +164,11 @@ export default function BuyerDashboard() {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     if (user?._id) fetchData();
   }, [user?._id]);
- 
+
   // ── Cancel order ────────────────────────────────────────────────────────
   const handleCancel = async (orderId) => {
     if (!window.confirm("Cancel this order? This cannot be undone.")) return;
@@ -182,7 +182,7 @@ export default function BuyerDashboard() {
       setCancellingId(null);
     }
   };
- 
+
   // ── Remove from wishlist (reuses the same toggle endpoint CropCard uses) ─
   const handleRemoveFromWishlist = async (listingId) => {
     if (removingWishlistId) return;
@@ -196,20 +196,20 @@ export default function BuyerDashboard() {
       setRemovingWishlistId(null);
     }
   };
- 
+
   // ── Derived stats ───────────────────────────────────────────────────────
   const activeOrders = orders.filter(o => !["cancelled", "delivered"].includes(o.orderStatus)).length;
-  const totalSpent   = orders.filter(o => o.paymentStatus === "paid").reduce((s, o) => s + (o.totalPrice || 0), 0);
- 
+  const totalSpent = orders.filter(o => o.paymentStatus === "paid").reduce((s, o) => s + (o.totalPrice || 0), 0);
+
   const navItems = [
-    { key: "orders",          label: "My Orders",       icon: Icon.cart,  count: orders.length },
-    { key: "wishlist",        label: "Saved Wishlist",  icon: Icon.heart, count: wishlist.length },
-    { key: "donations",       label: "My Donations",    icon: Icon.heart, count: myDonations.length },
+    { key: "orders", label: "My Orders", icon: Icon.cart, count: orders.length },
+    { key: "wishlist", label: "Saved Wishlist", icon: Icon.heart, count: wishlist.length },
+    { key: "donations", label: "My Donations", icon: Icon.heart, count: myDonations.length },
     { key: "recently-viewed", label: "Recently Viewed", icon: Icon.clock, count: recentlyViewed.length },
   ];
- 
+
   const activeLabel = navItems.find(t => t.key === activeTab)?.label || "";
- 
+
   return (
     <div className="bd-page">
       <div className="bd-shell">
@@ -224,7 +224,7 @@ export default function BuyerDashboard() {
               <p className="bd-brand-sub">Buyer Console</p>
             </div>
           </Link>
- 
+
           <nav className="bd-nav">
             {navItems.map((item) => {
               const active = activeTab === item.key;
@@ -242,13 +242,13 @@ export default function BuyerDashboard() {
               );
             })}
           </nav>
- 
+
           <div className="bd-sidebar-cta">
             <Link to="/marketplace" className="bd-browse-btn">
               Browse Marketplace
             </Link>
           </div>
- 
+
           <div className="bd-profile-card">
             <p className="bd-profile-label">Signed in as</p>
             <div className="bd-profile-row">
@@ -258,9 +258,10 @@ export default function BuyerDashboard() {
                 <p className="bd-profile-role">Buyer account</p>
               </div>
             </div>
+            <RoleSwitcher currentRole={user.role} />
           </div>
         </aside>
- 
+
         {/* ── Main ── */}
         <div className="bd-main">
           <header className="bd-topbar">
@@ -272,7 +273,7 @@ export default function BuyerDashboard() {
               <Icon.bell width={18} height={18} />
             </button>
           </header>
- 
+
           <main className="bd-content">
             <div className="bd-page-head">
               <h2 className="bd-page-title">🛒 Welcome back, {name || 'Buyer'}</h2>
@@ -280,7 +281,7 @@ export default function BuyerDashboard() {
                 Track your crop purchases, manage your wishlist, and stay updated on your order status.
               </p>
             </div>
- 
+
             {/* Error banner */}
             {error && (
               <div className="bd-error-banner">
@@ -288,9 +289,9 @@ export default function BuyerDashboard() {
                 <button onClick={fetchData} className="bd-retry-btn">Retry</button>
               </div>
             )}
- 
+
             {loading && <Loader />}
- 
+
             {!loading && (
               <>
                 {/* ── Stats row ── */}
@@ -301,7 +302,7 @@ export default function BuyerDashboard() {
                   <StatCard icon="💰" label="Total Spent" value={formatPrice(totalSpent)} sub="from paid orders" accent="gold" />
                   <StatCard icon="🕒" label="Recently Viewed" value={recentlyViewed.length} accent="rose" />
                 </div>
- 
+
                 {/* ── Mobile tab bar (mirrors sidebar) ── */}
                 <div className="bd-mobile-tabs">
                   {navItems.map((item) => (
@@ -314,7 +315,7 @@ export default function BuyerDashboard() {
                     </button>
                   ))}
                 </div>
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: MY ORDERS
                 ═══════════════════════════════════════════════ */}
@@ -332,14 +333,14 @@ export default function BuyerDashboard() {
                       orders.map((order) => {
                         const canCancel = ["placed", "confirmed"].includes(order.orderStatus);
                         const imgSrc = order.listing?.images?.[0]?.url || order.listing?.images?.[0];
- 
+
                         return (
                           <div key={order._id}
-                               className="bd-item-card"
-                               onClick={() => navigate(`/buyer/orders/${order._id}`)}
-                               style ={{ cursor: "pointer" }}
+                            className="bd-item-card"
+                            onClick={() => navigate(`/buyer/orders/${order._id}`)}
+                            style={{ cursor: "pointer" }}
                           >
- 
+
                             <div className="bd-item-top">
                               <div className="bd-thumb">
                                 {imgSrc ? <img src={imgSrc} alt={order.cropName} className="bd-thumb-img" /> : <div className="bd-thumb-fallback">🌾</div>}
@@ -353,7 +354,7 @@ export default function BuyerDashboard() {
                                 <StatusBadge status={order.paymentStatus} map={PAYMENT_STATUS} />
                               </div>
                             </div>
- 
+
                             <div className="bd-meta-grid">
                               <div className="bd-meta-cell">
                                 <p className="bd-meta-label">Quantity</p>
@@ -372,7 +373,7 @@ export default function BuyerDashboard() {
                                 <p className="bd-meta-value">{formatDate(order.createdAt)}</p>
                               </div>
                             </div>
- 
+
                             <div className="bd-item-actions">
                               {canCancel ? (
                                 <button
@@ -395,7 +396,7 @@ export default function BuyerDashboard() {
                     )}
                   </div>
                 )}
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: SAVED WISHLIST
                 ═══════════════════════════════════════════════ */}
@@ -419,7 +420,7 @@ export default function BuyerDashboard() {
                               <p className="bd-item-sub">{item.location?.district}, {item.location?.state}</p>
                             </div>
                           </div>
- 
+
                           <div className="bd-meta-grid">
                             <div className="bd-meta-cell">
                               <p className="bd-meta-label">Quantity</p>
@@ -434,7 +435,7 @@ export default function BuyerDashboard() {
                               <p className="bd-meta-value">{item.farmer}</p>
                             </div>
                           </div>
- 
+
                           <div className="bd-item-actions">
                             <button
                               type="button"
@@ -457,7 +458,7 @@ export default function BuyerDashboard() {
                     )}
                   </div>
                 )}
- 
+
                 {/* ═══════════════════════════════════════════════
                     TAB: RECENTLY VIEWED
                 ═══════════════════════════════════════════════ */}
@@ -480,7 +481,7 @@ export default function BuyerDashboard() {
                               <p className="bd-item-name">{item.cropName || item.name}</p>
                             </div>
                           </div>
- 
+
                           <div className="bd-meta-grid">
                             <div className="bd-meta-cell">
                               <p className="bd-meta-label">Quantity</p>
@@ -524,7 +525,7 @@ export default function BuyerDashboard() {
                                 <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Amount</th>
                                 <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Transaction ID</th>
                                 <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Date</th>
-                                 <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Receipt</th>
+                                <th style={{ padding: "14px 18px", fontSize: "11px", fontWeight: 700, color: "#4b5563" }}>Receipt</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -564,7 +565,7 @@ export default function BuyerDashboard() {
           </main>
         </div>
       </div>
- 
+
       {/* ─────────────────────────────────────────────────────────
           Scoped styles — plain CSS, mirroring FarmerDashboard.jsx's
           structure and tokens exactly (gold/green glass, same
@@ -660,6 +661,7 @@ export default function BuyerDashboard() {
         .bd-browse-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(202,138,4,0.4); }
  
         .bd-profile-card {
+          display: flex; flex-direction: column; gap: 10px;
           margin: 18px 14px 22px; padding: 14px; border-radius: 14px;
           background: rgba(255,255,255,0.5);
           border: 1px solid rgba(234,179,8,0.15);
