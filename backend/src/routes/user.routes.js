@@ -29,5 +29,4 @@ router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updatePayoutDetails);
 router.route("/switch-role").patch(verifyJWT, switchRole);
-
 export default router;

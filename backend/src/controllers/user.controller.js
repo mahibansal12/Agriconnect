@@ -4,8 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-// Optional: import Order model if you have one for pending-order checks
-// import { Order } from "../models/order.model.js";
+import { Order } from "../models/order.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -56,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const allowedRoles = ["farmer", "buyer"];
     if (!allowedRoles.includes(role)) {
-    throw new ApiError(400, "Invalid role");
+        throw new ApiError(400, "Invalid role");
     }
     const user = await User.create({
         name,
@@ -285,38 +284,42 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 });
 
 const switchRole = asyncHandler(async (req, res) => {
-    const { confirm = false } = req.body;
-
+    const { confirm } = req.body;
     const user = await User.findById(req.user?._id);
 
-    if (!user) {
-        throw new ApiError(404, "User not found");
+    if (user.role === "admin") {
+        throw new ApiError(403, "Admin accounts cannot switch roles");
     }
 
-    const newRole = user.role === "farmer" ? "buyer" : "farmer";
+    const targetRole = user.role === "farmer" ? "buyer" : "farmer";
 
-    // If switching away from farmer, optionally check for pending orders.
-    // Uncomment the block below once you have an Order model:
-    // if (user.role === "farmer" && !confirm) {
-    //     const pendingCount = await Order.countDocuments({
-    //         seller: user._id,
-    //         status: { $in: ["pending", "processing"] },
-    //     });
-    //     if (pendingCount > 0) {
-    //         return res.status(409).json(
-    //             new ApiResponse(409, { pendingCount }, "Pending orders exist")
-    //         );
-    //     }
-    // }
+    // Guard: don't let a farmer switch away while orders are still
+    // waiting on them to act (confirmed/shipped but not yet delivered).
+    if (user.role === "farmer" && !confirm) {
+        const pendingCount = await Order.countDocuments({
+            farmer: user._id,
+            orderStatus: { $in: ["placed", "confirmed", "shipped"] },
+        });
 
-    user.role = newRole;
+        if (pendingCount > 0) {
+            return res.status(409).json(
+                new ApiResponse(
+                    409,
+                    { pendingCount },
+                    `You have ${pendingCount} order(s) still in progress. Switch anyway?`
+                )
+            );
+        }
+    }
+
+    user.role = targetRole;
     await user.save({ validateBeforeSave: false });
 
     const updatedUser = await User.findById(user._id).select("-password -refreshToken");
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { user: updatedUser }, `Role switched to ${newRole} successfully`));
+        .json(new ApiResponse(200, updatedUser, `Switched to ${targetRole} mode`));
 });
 
 export {
