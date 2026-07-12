@@ -10,16 +10,19 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const roleHint = searchParams.get('role'); // 'buyer' | 'farmer' | null
 
-  // If already logged in redirect to dashboard
+  // Auto-redirect if already logged in — BUT only when no role-switch is happening.
+  // If ?role=buyer is in the URL and the user is currently a farmer, show the
+  // login form so they can sign into their buyer account.
+  // Navigating away (e.g. Home) while here keeps them logged in as their current role.
   useEffect(() => {
-    if (user) {
+    if (user && (!roleHint || roleHint === user.role)) {
       navigate(
         user.role === "farmer" ? "/farmer/dashboard" :
           user.role === "buyer" ? "/buyer/dashboard" : "/admin/dashboard",
         { replace: true }
       );
     }
-  }, [user, navigate]);
+  }, [user, roleHint, navigate]);
 
   return (
     <div className="login-pg">
