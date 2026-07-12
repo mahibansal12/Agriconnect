@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+// Optional: import Order model if you have one for pending-order checks
+// import { Order } from "../models/order.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -282,6 +284,41 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
+const switchRole = asyncHandler(async (req, res) => {
+    const { confirm = false } = req.body;
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const newRole = user.role === "farmer" ? "buyer" : "farmer";
+
+    // If switching away from farmer, optionally check for pending orders.
+    // Uncomment the block below once you have an Order model:
+    // if (user.role === "farmer" && !confirm) {
+    //     const pendingCount = await Order.countDocuments({
+    //         seller: user._id,
+    //         status: { $in: ["pending", "processing"] },
+    //     });
+    //     if (pendingCount > 0) {
+    //         return res.status(409).json(
+    //             new ApiResponse(409, { pendingCount }, "Pending orders exist")
+    //         );
+    //     }
+    // }
+
+    user.role = newRole;
+    await user.save({ validateBeforeSave: false });
+
+    const updatedUser = await User.findById(user._id).select("-password -refreshToken");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { user: updatedUser }, `Role switched to ${newRole} successfully`));
+});
+
 export {
     registerUser,
     loginUser,
@@ -292,4 +329,5 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updatePayoutDetails,
+    switchRole,
 };

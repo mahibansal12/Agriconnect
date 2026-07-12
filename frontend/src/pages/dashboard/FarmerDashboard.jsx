@@ -6,6 +6,7 @@ import { fetchFarmerOrders, updateOrderStatus } from '../../redux/slices/cartSli
 import useAuth from '../../hooks/useAuth';
 import Loader from '../../components/common/Loader';
 import axiosInstance from '../../utils/axiosInstance';
+import RoleSwitcher from '../../components/common/RoleSwitcher';
 // ─── Status badge styles (now scoped classNames, not Tailwind) ──
 const STATUS_STYLES = {
   placed: 'fd-badge--pending',
@@ -141,9 +142,9 @@ const FarmerDashboard = () => {
 
   // 2. Calculate donations financial stats (where status === "completed")
   const completedDonations = receivedDonations.filter((d) => d.status === 'completed');
-  
+
   const donationsTotal = completedDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
-  
+
   const donationsPaidOut = completedDonations
     .filter((d) => d.payoutStatus === 'paid')
     .reduce((sum, d) => sum + (d.amount || 0), 0);
@@ -304,6 +305,7 @@ const FarmerDashboard = () => {
                 <p className="fd-profile-role">Farmer account</p>
               </div>
             </div>
+            <RoleSwitcher currentRole={user.role} />
           </div>
         </aside>
 
@@ -772,7 +774,7 @@ const FarmerDashboard = () => {
                         <h3 className="fd-card-title">💚 Contributions History</h3>
                         <p style={{ fontSize: 12, color: '#6B5A2E', marginTop: 4 }}>List of donation campaigns you have personally contributed to help other farmers.</p>
                       </div>
-                      
+
                       {myDonationsLoading ? (
                         <div style={{ padding: 40, textAlign: 'center', color: '#78716C' }}>Loading your donations...</div>
                       ) : myDonations.length === 0 ? (
@@ -929,6 +931,7 @@ const FarmerDashboard = () => {
         .fd-add-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(202,138,4,0.4); }
  
         .fd-profile-card {
+          display: flex; flex-direction: column; gap: 10px;
           margin: 18px 14px 22px; padding: 14px; border-radius: 14px;
           background: rgba(255,255,255,0.5);
           border: 1px solid rgba(234,179,8,0.15);

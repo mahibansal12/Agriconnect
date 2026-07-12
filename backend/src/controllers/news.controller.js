@@ -20,93 +20,56 @@ const detectCategory = (title = "", description = "") => {
 const getAllNews = asyncHandler(async (req, res) => {
     const { category } = req.query;
 
-    
     let liveArticles = [];
     try {
-        const response = await axios.get("https://newsapi.org/v2/everything", {
+        // GNews API — free tier allows server-side requests (100 req/day)
+        // NewsAPI free plan blocks server calls (ECONNRESET), so we use GNews instead
+        const response = await axios.get("https://gnews.io/api/v4/search", {
             params: {
-                q: '(agriculture OR farmer OR farmers OR farming OR crop OR crops OR horticulture OR irrigation OR fertilizer OR pesticide OR harvest OR livestock OR dairy OR agri-tech) AND India',
-                searchIn: "title,description",
-                language: "en",
-                sortBy: "publishedAt",
-                pageSize: 30,
-                apiKey: process.env.NEWS_API_KEY,
+                q: "agriculture OR farmer OR farming OR crop OR kisan OR mandi OR MSP OR fertilizer OR irrigation OR harvest",
+                lang: "en",
+                country: "in",
+                max: 20,
+                sortby: "publishedAt",
+                apikey: process.env.GNEWS_API_KEY,
             },
+            timeout: 8000,
         });
 
-            const agricultureKeywords = [
-                "agriculture",
-                "agricultural",
-                "farmer",
-                "farmers",
-                "farming",
-                "crop",
-                "crops",
-                "cultivation",
-                "harvest",
-                "wheat",
-                "rice",
-                "maize",
-                "corn",
-                "cotton",
-                "mustard",
-                "soybean",
-                "sugarcane",
-                "millet",
-                "paddy",
-                "fertilizer",
-                "fertilisers",
-                "pesticide",
-                "seed",
-                "seeds",
-                "irrigation",
-                "monsoon",
-                "mandi",
-                "msp",
-                "horticulture",
-                "livestock",
-                "dairy",
-                "agri",
-                "kisan"
-            ];
+        const agricultureKeywords = [
+            "agriculture", "agricultural", "farmer", "farmers", "farming",
+            "crop", "crops", "cultivation", "harvest", "wheat", "rice",
+            "maize", "corn", "cotton", "mustard", "soybean", "sugarcane",
+            "millet", "paddy", "fertilizer", "fertilisers", "pesticide",
+            "seed", "seeds", "irrigation", "monsoon", "mandi", "msp",
+            "horticulture", "livestock", "dairy", "agri", "kisan"
+        ];
 
-            liveArticles = response.data.articles
-                .filter(article => {
-                    if (!article.title || !article.description || !article.urlToImage)
-                        return false;
-
-                    const text = (
-                        article.title +
-                        " " +
-                        article.description
-                    ).toLowerCase();
-
-                    // Count how many agriculture keywords are present
-                    const matches = agricultureKeywords.filter(keyword =>
-                        text.includes(keyword)
-                    ).length;
-
-                    // Require at least TWO agriculture keywords
-                    return matches >= 2;
-                })
-
+        liveArticles = (response.data.articles || [])
+            .filter(article => {
+                if (!article.title || !article.description || !article.image)
+                    return false;
+                const text = (article.title + " " + article.description).toLowerCase();
+                const matches = agricultureKeywords.filter(kw => text.includes(kw)).length;
+                return matches >= 1; // GNews already filters by query, so 1 match is enough
+            })
             .map((a, index) => ({
                 _id: `live_${index}_${Date.now()}`,
                 title: a.title,
                 content: a.description || a.content || "",
-                image: a.urlToImage,
+                image: a.image,
                 category: detectCategory(a.title, a.description),
                 createdAt: a.publishedAt,
                 sourceUrl: a.url,
                 sourceName: a.source?.name || "News Source",
-                isLive: true, // flag so frontend can show "Live" badge
+                isLive: true,
             }));
     } catch (err) {
-        console.error("NewsAPI fetch failed:", err.message);
-        
+        // GNews unavailable (quota exceeded or network issue) — falling back to DB news
+        console.warn("GNews fetch failed, serving DB news only:", err.message);
     }
 
-    
+
     const filter = {};
     if (category) filter.category = category;
 
@@ -114,7 +77,7 @@ const getAllNews = asyncHandler(async (req, res) => {
         .populate("createdBy", "name email")
         .sort({ createdAt: -1 });
 
-  
+
     let allNews = [...dbNews, ...liveArticles];
 
     // apply category filter to live articles too
