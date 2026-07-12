@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      // NOTE: not globally unique anymore. The same person can hold a
+      // farmer account and a buyer account under the same email — those
+      // are two separate documents. Uniqueness is enforced per (email, role)
+      // via the compound index below instead.
       lowercase: true,
       trim: true,
     },
@@ -49,6 +52,10 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// One account per (email, role) — lets the same person hold both a
+// farmer account and a buyer account under the same email address.
+userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 // hash password before saving, only if it was modified
 userSchema.pre("save", async function () {

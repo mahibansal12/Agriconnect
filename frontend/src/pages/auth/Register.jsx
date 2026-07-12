@@ -14,15 +14,19 @@ export default function Register() {
     roleParam === 'buyer' || roleParam === 'farmer' ? roleParam : 'farmer'
   );
  
+  // Only auto-redirect if we're NOT here to create an account for a
+  // different role than the one currently logged in. Without this check,
+  // a logged-in farmer clicking "create a buyer account" gets bounced
+  // straight back to their farmer dashboard before they can fill the form.
   useEffect(() => {
-    if (user) {
+    if (user && (!roleParam || roleParam === user.role)) {
       navigate(
         user.role === "farmer" ? "/farmer/dashboard" :
         user.role === "buyer"  ? "/buyer/dashboard"  : "/admin/dashboard",
         { replace: true }
       );
     }
-  }, [user, navigate]);
+  }, [user, roleParam, navigate]);
  
   return (
     <div className="reg-pg">

@@ -23,13 +23,39 @@ axiosInstance.interceptors.request.use(
 );
 
 // ─── Response interceptor ─────────────────────────────────────
-// Handles 401 (token expired) globally — logs user out
+// Handles 401 (access token expired) by trying one silent refresh before
+// giving up and logging the user out. Without this, short-lived access
+// tokens would force a fresh login far more often than necessary —
+// especially for a role the user "switched away" from, whose cached token
+// keeps quietly expiring in the background.
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid — clear storage and redirect to login
+  async (error) => {
+    const original = error.config;
+
+    if (error.response?.status === 401 && !original?._retried) {
+      original._retried = true;
+      const refreshToken = localStorage.getItem("agriconnect_refresh");
+
+      if (refreshToken) {
+        try {
+          const { data } = await axios.post("/api/v1/user/refresh-token", { refreshToken });
+          const newAccessToken = data?.data?.accessToken;
+          const newRefreshToken = data?.data?.refreshToken;
+          if (newAccessToken) {
+            localStorage.setItem("agriconnect_token", newAccessToken);
+            if (newRefreshToken) localStorage.setItem("agriconnect_refresh", newRefreshToken);
+            original.headers.Authorization = `Bearer ${newAccessToken}`;
+            return axiosInstance(original);
+          }
+        } catch {
+          // Refresh token expired/invalid too — fall through to logout below.
+        }
+      }
+
+      // No refresh token, or refresh failed — clear storage and redirect to login
       localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_refresh");
       localStorage.removeItem("agriconnect_user");
       window.location.href = "/login";
     }
