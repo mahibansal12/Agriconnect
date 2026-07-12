@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import useAuth from "../../hooks/useAuth";
-import { logoutUser, logoutAllRoles, switchToRole } from "../../redux/slices/authSlice";
+import { logoutAllRoles, switchToRole } from "../../redux/slices/authSlice";
 
 // ── Nav links visible to everyone ──────────────────────────────
 const PUBLIC_LINKS = [
@@ -48,9 +48,11 @@ export default function Navbar() {
     const result = await dispatch(switchToRole(targetRole));
     setSwitching(false);
     if (result.payload?.needsLogin) {
-      // No valid cached session — clear active session first so Login.jsx
-      // doesn't bounce the user back to their current dashboard.
-      dispatch(logoutUser());
+      // No valid cached session for target role.
+      // Keep current session alive — Login.jsx will show the form for the
+      // target role without bouncing the user back to their current dashboard.
+      // If they navigate away without logging in, they stay logged in as their
+      // current role.
       navigate(`/login?role=${targetRole}`, { replace: true });
     } else {
       // Session restored — go straight to the dashboard
