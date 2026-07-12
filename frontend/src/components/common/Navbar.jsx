@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import useAuth from "../../hooks/useAuth";
-import { logoutAllRoles, switchToRole } from "../../redux/slices/authSlice";
+import useRoleSwitch from "../../hooks/useRoleSwitch";
+import { logoutAllRoles } from "../../redux/slices/authSlice";
 
 // ── Nav links visible to everyone ──────────────────────────────
 const PUBLIC_LINKS = [
@@ -31,7 +32,7 @@ export default function Navbar() {
   const { isLoggedIn, user, role } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
+  const { switching, switchRole } = useRoleSwitch(role);
 
   // Sign out clears ALL role caches so the user must log in fresh
   const handleLogout = () => {
@@ -39,25 +40,11 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // Smart switch: restores cached session if token still valid,
-  // otherwise redirects to /login?role=<target> for fresh login.
+  // Smart switch: restores cached session if token still valid (refreshing
+  // it silently if needed), otherwise redirects to /login?role=<target>.
   const handleSwitchRole = async () => {
-    const targetRole = role === "farmer" ? "buyer" : "farmer";
-    setSwitching(true);
     setDropOpen(false);
-    const result = await dispatch(switchToRole(targetRole));
-    setSwitching(false);
-    if (result.payload?.needsLogin) {
-      // No valid cached session for target role.
-      // Keep current session alive — Login.jsx will show the form for the
-      // target role without bouncing the user back to their current dashboard.
-      // If they navigate away without logging in, they stay logged in as their
-      // current role.
-      navigate(`/login?role=${targetRole}`, { replace: true });
-    } else {
-      // Session restored — go straight to the dashboard
-      navigate(`/${targetRole}/dashboard`, { replace: true });
-    }
+    await switchRole();
   };
 
   const initials = user?.name

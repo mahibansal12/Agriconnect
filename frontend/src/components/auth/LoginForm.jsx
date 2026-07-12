@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../../redux/slices/authSlice";
 
-export default function LoginForm() {
+export default function LoginForm({ roleHint = null }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
@@ -17,7 +17,10 @@ export default function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginUser(form));
+    // Include the role hint (if we're here because of a role switch) so the
+    // backend logs into the right account when the email backs more than one.
+    const payload = roleHint ? { ...form, role: roleHint } : form;
+    const result = await dispatch(loginUser(payload));
     if (loginUser.fulfilled.match(result)) {
       const role = result.payload.user.role;
       if (role === "farmer") navigate("/farmer/dashboard");

@@ -5,7 +5,15 @@ import { User } from "../models/user.model.js";
 
 const verifyJWT = asyncHandler(async (req, _, next) => {
     try {
-        const token =req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        // IMPORTANT: check the Authorization header BEFORE the cookie.
+        // The frontend caches a separate access token per role (farmer /
+        // buyer) in localStorage and sends the *active* one as a Bearer
+        // token on every request. The httpOnly cookie, on the other hand,
+        // only ever holds whichever role logged in most recently — there's
+        // only one cookie slot. If the cookie were checked first, switching
+        // roles on the client would have no effect server-side: every
+        // request would keep authenticating as the stale cookie's role.
+        const token = req.header("Authorization")?.replace("Bearer ", "") || req.cookies?.accessToken;
 
         if (!token) {
             throw new ApiError(401, "Unauthorized request");

@@ -66,7 +66,7 @@ export default function Login() {
 
         {/* Left: form */}
         <div className="login-left">
-          <LoginForm />
+          <LoginForm roleHint={roleHint} />
         </div>
 
         {/* Right: brand panel */}

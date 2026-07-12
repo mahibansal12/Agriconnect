@@ -24,14 +24,31 @@ function isTokenValid(token) {
 const ROLE_SESSION_KEY = (role) => `agriconnect_session_${role}`;
 
 /** Save a full session object under its role key */
-function saveRoleSession(role, { user, accessToken }) {
+function saveRoleSession(role, { user, accessToken, refreshToken }) {
   if (!role || !accessToken) return;
   try {
+    // Keep any previously cached refreshToken if this call doesn't pass one
+    // (e.g. updateUserInfo doesn't have it handy), so we don't clobber it.
+    const existing = loadRoleSessionRaw(role);
     localStorage.setItem(
       ROLE_SESSION_KEY(role),
-      JSON.stringify({ user, accessToken })
+      JSON.stringify({
+        user,
+        accessToken,
+        refreshToken: refreshToken ?? existing?.refreshToken ?? null,
+      })
     );
   } catch { /* storage full / private mode */ }
+}
+
+/** Load a role session without validating token expiry (internal use) */
+function loadRoleSessionRaw(role) {
+  try {
+    const raw = localStorage.getItem(ROLE_SESSION_KEY(role));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Load and return a session for a role if the token is still valid */
@@ -54,11 +71,12 @@ function loadRoleSession(role) {
 
 const normalizeAuthData = (payload) => payload?.data ?? payload ?? {};
 
-const persistSession = ({ user, accessToken }) => {
-  if (accessToken) localStorage.setItem("agriconnect_token", accessToken);
-  if (user)        localStorage.setItem("agriconnect_user", JSON.stringify(user));
+const persistSession = ({ user, accessToken, refreshToken }) => {
+  if (accessToken)  localStorage.setItem("agriconnect_token", accessToken);
+  if (refreshToken) localStorage.setItem("agriconnect_refresh", refreshToken);
+  if (user)         localStorage.setItem("agriconnect_user", JSON.stringify(user));
   // Also cache under the role-specific key so we can restore without login
-  if (user?.role)  saveRoleSession(user.role, { user, accessToken });
+  if (user?.role)   saveRoleSession(user.role, { user, accessToken, refreshToken });
 };
 
 // ─── Async Thunks ─────────────────────────────────────────────
@@ -69,9 +87,13 @@ export const registerUser = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       await axiosInstance.post("/v1/user/register", formData);
+      // Pass role so login lands on the account we just created — the same
+      // email can now back both a farmer and a buyer account, so the
+      // backend needs the role to disambiguate.
       const { data } = await axiosInstance.post("/v1/user/login", {
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
       const session = normalizeAuthData(data);
       persistSession(session);
@@ -128,17 +150,25 @@ export const switchToRole = createAsyncThunk(
   "auth/switchToRole",
   async (targetRole, { getState }) => {
     const { user, token } = getState().auth;
+    const currentRefresh = localStorage.getItem("agriconnect_refresh");
 
     // 1. Persist the current session so we can come back to it later
     if (user?.role && token) {
-      saveRoleSession(user.role, { user, accessToken: token });
+      saveRoleSession(user.role, { user, accessToken: token, refreshToken: currentRefresh });
     }
 
-    // 2. Try restoring the target role's cached session
-    const cached = loadRoleSession(targetRole);
+    // 2. Try restoring the target role's cached session. If the cached
+    // access token has expired but we still have a refresh token for it,
+    // try a silent refresh before giving up and asking for a fresh login.
+    let cached = loadRoleSession(targetRole);
+    if (!cached) {
+      cached = await tryRefreshRoleSession(targetRole);
+    }
+
     if (cached) {
       // Update the active slot
       localStorage.setItem("agriconnect_token", cached.accessToken);
+      if (cached.refreshToken) localStorage.setItem("agriconnect_refresh", cached.refreshToken);
       localStorage.setItem("agriconnect_user", JSON.stringify(cached.user));
       return { session: cached, needsLogin: false };
     }
@@ -146,6 +176,33 @@ export const switchToRole = createAsyncThunk(
     return { needsLogin: true, targetRole };
   }
 );
+
+/**
+ * If a cached role session's access token expired, try exchanging its
+ * cached refresh token for a new access token instead of forcing the user
+ * to log in again. Returns a fresh session, or null if that's not possible.
+ */
+async function tryRefreshRoleSession(role) {
+  const raw = loadRoleSessionRaw(role);
+  if (!raw?.refreshToken) return null;
+  try {
+    const { data } = await axiosInstance.post("/v1/user/refresh-token", {
+      refreshToken: raw.refreshToken,
+    });
+    const refreshed = normalizeAuthData(data);
+    const session = {
+      user: raw.user,
+      accessToken: refreshed.accessToken,
+      refreshToken: refreshed.refreshToken || raw.refreshToken,
+    };
+    saveRoleSession(role, session);
+    return session;
+  } catch {
+    // Refresh token itself is expired/invalid — cached session is unusable.
+    localStorage.removeItem(ROLE_SESSION_KEY(role));
+    return null;
+  }
+}
 
 // ─── Slice ────────────────────────────────────────────────────
 const authSlice = createSlice({
@@ -164,6 +221,7 @@ const authSlice = createSlice({
       state.error   = null;
       state.loading = false;
       localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_refresh");
       localStorage.removeItem("agriconnect_user");
       // Note: role-specific caches are intentionally kept so switching back works
     },
@@ -175,6 +233,7 @@ const authSlice = createSlice({
       state.error   = null;
       state.loading = false;
       localStorage.removeItem("agriconnect_token");
+      localStorage.removeItem("agriconnect_refresh");
       localStorage.removeItem("agriconnect_user");
       ["farmer", "buyer", "admin"].forEach((r) =>
         localStorage.removeItem(ROLE_SESSION_KEY(r))

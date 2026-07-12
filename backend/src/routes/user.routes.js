@@ -9,7 +9,7 @@ import {
     updateAccountDetails,
     updateUserAvatar,
     updatePayoutDetails,
-    switchRole,
+    getPendingFarmerOrderCount,
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -28,5 +28,5 @@ router.route("/change-password").patch(verifyJWT, changeCurrentPassword);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updatePayoutDetails);
-router.route("/switch-role").patch(verifyJWT, switchRole);
+router.route("/pending-farmer-orders").get(verifyJWT, getPendingFarmerOrderCount);
 export default router;

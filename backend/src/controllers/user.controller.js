@@ -39,10 +39,21 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid email format");
     }
 
-    const existedUser = await User.findOne({ email });
+    const allowedRoles = ["farmer", "buyer"];
+    if (!allowedRoles.includes(role)) {
+        throw new ApiError(400, "Invalid role");
+    }
+
+    // A person can hold one account per role (e.g. a farmer account AND a
+    // buyer account under the same email) — so the duplicate check must be
+    // scoped to (email, role), not email alone.
+    const existedUser = await User.findOne({ email, role });
 
     if (existedUser) {
-        throw new ApiError(409, "User with this email already exists");
+        throw new ApiError(
+            409,
+            `You already have a ${role} account with this email. Please log in instead.`
+        );
     }
 
     let avatarUrl = "";
@@ -51,11 +62,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (avatarLocalPath) {
         const avatar = await uploadOnCloudinary(avatarLocalPath);
         avatarUrl = avatar?.url || "";
-    }
-
-    const allowedRoles = ["farmer", "buyer"];
-    if (!allowedRoles.includes(role)) {
-        throw new ApiError(400, "Invalid role");
     }
     const user = await User.create({
         name,
@@ -80,17 +86,36 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
         throw new ApiError(400, "Email and password are required");
     }
 
-    const user = await User.findOne({ email });
+    // Since one email can now back multiple accounts (one per role), we
+    // need `role` to know which account to log into whenever more than one
+    // exists. If the caller didn't send a role (e.g. plain email/password
+    // login from a bookmark), fall back to email-only lookup — but if that
+    // turns out to be ambiguous, ask the client to specify a role instead
+    // of silently picking one.
+    const query = role ? { email, role } : { email };
+    const matches = await User.find(query).limit(role ? 1 : 2);
 
-    if (!user) {
-        throw new ApiError(404, "User does not exist");
+    if (matches.length === 0) {
+        throw new ApiError(
+            404,
+            role ? `No ${role} account exists with this email` : "User does not exist"
+        );
     }
+
+    if (matches.length > 1) {
+        throw new ApiError(
+            409,
+            "Multiple accounts exist for this email. Please specify which role you're signing in as."
+        );
+    }
+
+    const user = matches[0];
 
     const isPasswordValid = await user.isPasswordCorrect(password);
 
@@ -283,43 +308,26 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
-const switchRole = asyncHandler(async (req, res) => {
-    const { confirm } = req.body;
-    const user = await User.findById(req.user?._id);
-
-    if (user.role === "admin") {
-        throw new ApiError(403, "Admin accounts cannot switch roles");
+// Farmer/buyer are separate accounts now (one per role, same email allowed),
+// so "switching" happens by logging into/restoring the other account rather
+// than mutating this account's role in place. Kept here only so a farmer
+// can check whether they're safe to log out of/away from their farmer
+// account (pending orders waiting on them).
+const getPendingFarmerOrderCount = asyncHandler(async (req, res) => {
+    if (req.user.role !== "farmer") {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { pendingCount: 0 }, "Not a farmer account"));
     }
 
-    const targetRole = user.role === "farmer" ? "buyer" : "farmer";
-
-    // Guard: don't let a farmer switch away while orders are still
-    // waiting on them to act (confirmed/shipped but not yet delivered).
-    if (user.role === "farmer" && !confirm) {
-        const pendingCount = await Order.countDocuments({
-            farmer: user._id,
-            orderStatus: { $in: ["placed", "confirmed", "shipped"] },
-        });
-
-        if (pendingCount > 0) {
-            return res.status(409).json(
-                new ApiResponse(
-                    409,
-                    { pendingCount },
-                    `You have ${pendingCount} order(s) still in progress. Switch anyway?`
-                )
-            );
-        }
-    }
-
-    user.role = targetRole;
-    await user.save({ validateBeforeSave: false });
-
-    const updatedUser = await User.findById(user._id).select("-password -refreshToken");
+    const pendingCount = await Order.countDocuments({
+        farmer: req.user._id,
+        orderStatus: { $in: ["placed", "confirmed", "shipped"] },
+    });
 
     return res
         .status(200)
-        .json(new ApiResponse(200, updatedUser, `Switched to ${targetRole} mode`));
+        .json(new ApiResponse(200, { pendingCount }, "Pending order count fetched"));
 });
 
 export {
@@ -332,5 +340,5 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updatePayoutDetails,
-    switchRole,
+    getPendingFarmerOrderCount,
 };

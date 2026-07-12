@@ -1,23 +1,11 @@
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { logoutUser } from '../../redux/slices/authSlice';
+import useRoleSwitch from '../../hooks/useRoleSwitch';
 
 export default function RoleSwitcher({ currentRole }) {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-
-    const targetRole = currentRole === 'farmer' ? 'buyer' : 'farmer';
-
-    const handleSwitch = () => {
-        // Log out the current session and send user to login page
-        // with a ?role= hint so Login/Register can pre-select the correct role
-        dispatch(logoutUser());
-        navigate(`/login?role=${targetRole}`, { replace: true });
-    };
+    const { targetRole, switching, switchRole } = useRoleSwitch(currentRole);
 
     return (
-        <button onClick={handleSwitch} className="role-switcher-btn">
-            Switch to {targetRole === 'buyer' ? 'Buyer' : 'Farmer'}
+        <button onClick={switchRole} className="role-switcher-btn" disabled={switching}>
+            {switching ? 'Switching…' : `Switch to ${targetRole === 'buyer' ? 'Buyer' : 'Farmer'}`}
         </button>
     );
-}
+}
