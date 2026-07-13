@@ -134,19 +134,19 @@ useEffect(() => {
             <Link to="/marketplace" className="lp-btn-outline">View marketplace</Link>
           </div>
 
-          <div className="lp-stats">
-            {[
-              ["12,400+", "Registered farmers"],
-              ["₹2.8Cr+", "Crops traded"],
-              ["500+",    "Mandis covered"],
-              ["18",      "States active"],
-            ].map(([val, label]) => (
-              <div key={label} className="lp-stat">
-                <div className="lp-stat-val">{val}</div>
-                <div className="lp-stat-label">{label}</div>
-              </div>
-            ))}
-          </div>
+ <div className="lp-stats">
+  {[
+    ["15+",  "Crops available"],
+    ["Free", "Access to schemes"],
+    ["Live", "Mandi rates"],
+    ["24/7", "AI assistance"],
+  ].map(([val, label]) => (
+    <div key={label} className="lp-stat">
+      <div className="lp-stat-val">{val}</div>
+      <div className="lp-stat-label">{label}</div>
+    </div>
+  ))}
+</div>
         </div>
 
         {/* Weather widget */}
