@@ -100,24 +100,61 @@ const CropCard = ({ crop }) => {
           )}
         </div>
 
-        <div className="p-5">
-          <h3 className="truncate text-lg font-black text-emerald-950">{name}</h3>
-          <p className="mt-1 truncate text-sm font-medium text-emerald-900/55">
-            {district}, {state}
-          </p>
+          <div style={{ padding:"16px 20px 20px" }}>
 
-          <div className="mt-5 flex items-center justify-between gap-3 border-t border-emerald-50 pt-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-emerald-800/50">
-                Price
-              </p>
-              <p className="text-xl font-black text-emerald-700">₹{price}/qtl</p>
-            </div>
-            <span className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-orange-500/20">
-              View
-            </span>
-          </div>
-        </div>
+  {/* Crop name */}
+  <h3 style={{
+    margin:"0 0 4px",
+    fontSize:"17px",
+    fontWeight:800,
+    color:"#052e16",
+    whiteSpace:"nowrap",
+    overflow:"hidden",
+    textOverflow:"ellipsis",
+    textTransform:"capitalize",
+  }}>
+    {name}
+  </h3>
+
+  {/* Location */}
+  <p style={{
+    margin:"0 0 14px",
+    fontSize:"12px",
+    color:"#6b7280",
+    fontWeight:500,
+    display:"flex",
+    alignItems:"center",
+    gap:"4px",
+  }}>
+    📍 {district}, {state}
+  </p>
+
+  {/* Divider */}
+  <div style={{ height:"1px", background:"linear-gradient(90deg,#bbf7d0,transparent)", marginBottom:"14px" }} />
+
+  {/* Price + View button */}
+  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+    <div>
+      <p style={{ margin:"0 0 2px", fontSize:"10px", fontWeight:700, color:"#9ca3af", letterSpacing:"1px", textTransform:"uppercase" }}>
+        Price
+      </p>
+      <p style={{ margin:0, fontSize:"20px", fontWeight:900, color:"#15803d" }}>
+        ₹{price?.toLocaleString("en-IN")}<span style={{ fontSize:"12px", fontWeight:600, color:"#6b7280" }}>/qtl</span>
+      </p>
+    </div>
+    <span style={{
+      padding:"8px 18px",
+      borderRadius:"999px",
+      background:"linear-gradient(135deg,#f59e0b,#ef4444)",
+      color:"#fff",
+      fontSize:"12px",
+      fontWeight:800,
+      boxShadow:"0 4px 12px rgba(245,158,11,0.3)",
+    }}>
+      View →
+    </span>
+  </div>
+</div>
       </article>
     </Link>
   );
