@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "../components/common/Navbar";
-import axiosInstance from "../utils/axiosInstance";
 import Footer from "../components/common/Footer";
 import { formatPrice, formatChange } from "../utils/formatters";
+import axiosInstance from "../utils/axiosInstance";
 
 const MOCK_MANDI = [
   { crop: "Wheat",        mandi: "Jaipur Mandi",     price: 2450, change: 2.5  },
@@ -47,24 +47,31 @@ const CAT_COLORS = {
 };
 
 export default function Landing() {
-    const [weather, setWeather] = useState(null);
+  const [weather, setWeather]           = useState(null);
   const [locationName, setLocationName] = useState("Detecting location...");
   const [weatherLoading, setWeatherLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchWeatherByIP = async () => {
+useEffect(() => {
+    const getWeatherByCoords = async (lat, lon) => {
       try {
-        const ipRes = await fetch("https://ipapi.co/json/");
-        const ipData = await ipRes.json();
-        const city = ipData.city || "Delhi";
-        const state = ipData.region || "India";
-        setLocationName(`${city}, ${state}`);
-        const res = await axiosInstance.get(
-          `/v1/weather/coords?lat=${ipData.latitude}&lon=${ipData.longitude}`
+        // call OpenWeatherMap directly from frontend
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=7ea1a387eddc4306145926f9a6eec184&units=metric`
         );
-        setWeather(res.data.data);
-      } catch (e) {
-        console.error("IP weather failed:", e);
+        const data = await res.json();
+        if (data.cod !== 200) throw new Error("Weather API error");
+        setWeather({
+          city: data.name,
+          country: data.sys.country,
+          temperature: data.main.temp,
+          feelsLike: data.main.feels_like,
+          humidity: data.main.humidity,
+          description: data.weather[0].description,
+          windSpeed: data.wind.speed,
+        });
+        setLocationName(`${data.name}, ${data.sys.country}`);
+      } catch (err) {
+        console.error("Weather fetch failed:", err);
       } finally {
         setWeatherLoading(false);
       }
@@ -72,37 +79,25 @@ export default function Landing() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const geoRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-            );
-            const geoData = await geoRes.json();
-            const city = geoData.address?.city
-              || geoData.address?.town
-              || geoData.address?.village
-              || "Your Location";
-            const state = geoData.address?.state || "";
-            setLocationName(`${city}, ${state}`);
-            const res = await axiosInstance.get(
-              `/v1/weather/coords?lat=${latitude}&lon=${longitude}`
-            );
-            setWeather(res.data.data);
-          } catch (err) {
-            console.error("GPS weather failed:", err);
-            fetchWeatherByIP();
-            return;
-          }
-          setWeatherLoading(false);
+        (position) => {
+          getWeatherByCoords(
+            position.coords.latitude,
+            position.coords.longitude
+          );
         },
-        () => {
-          // user denied GPS — use IP
-          fetchWeatherByIP();
+        async () => {
+          // GPS denied — use ipapi to get their location
+          try {
+            const ipRes = await fetch("https://ipapi.co/json/");
+            const ipData = await ipRes.json();
+            await getWeatherByCoords(ipData.latitude, ipData.longitude);
+          } catch (e) {
+            setWeatherLoading(false);
+          }
         }
       );
     } else {
-      fetchWeatherByIP();
+      setWeatherLoading(false);
     }
   }, []);
 
@@ -116,6 +111,7 @@ export default function Landing() {
     if (d.includes("mist") || d.includes("haze") || d.includes("fog")) return "🌫️";
     return "🌤️";
   };
+
   return (
     <div className="lp">
       <Navbar />
@@ -154,40 +150,42 @@ export default function Landing() {
         </div>
 
         {/* Weather widget */}
-     <div className="lp-weather">
-  <div className="lp-weather-location">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/>
-      <circle cx="12" cy="10" r="3"/>
-    </svg>
-    {locationName}
-  </div>
+        <div className="lp-weather">
+          <div className="lp-weather-location">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            {locationName}
+          </div>
 
-  {weatherLoading ? (
-    <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
-      Detecting your location...
-    </div>
-  ) : weather ? (
-    <div className="lp-weather-main">
-      <span className="lp-weather-icon">{getWeatherIcon(weather.description)}</span>
-      <div>
-        <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
-        <div className="lp-weather-desc" style={{ textTransform:"capitalize" }}>
-          {weather.description} · Humidity {weather.humidity}%
-        </div>
-        <div className="lp-weather-desc">
-          Wind {Math.round(weather.windSpeed * 3.6)} km/h
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
-      Weather unavailable
-    </div>
-  )}
+          {weatherLoading ? (
+            <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
+              Detecting your location...
+            </div>
+          ) : weather ? (
+            <>
+              <div className="lp-weather-main">
+                <span className="lp-weather-icon">{getWeatherIcon(weather.description)}</span>
+                <div>
+                  <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
+                  <div className="lp-weather-desc" style={{ textTransform:"capitalize" }}>
+                    {weather.description} · Humidity {weather.humidity}%
+                  </div>
+                  <div className="lp-weather-desc">
+                    Wind {Math.round(weather.windSpeed * 3.6)} km/h
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign:"center", padding:"20px 0", color:"rgba(255,255,255,0.6)", fontSize:"14px" }}>
+              Weather unavailable
+            </div>
+          )}
 
-  <Link to="/weather" className="lp-weather-link">View full forecast →</Link>
-</div>
+          <Link to="/weather" className="lp-weather-link">View full forecast →</Link>
+        </div>
       </section>
 
       {/* ── Quick links grid ── */}
