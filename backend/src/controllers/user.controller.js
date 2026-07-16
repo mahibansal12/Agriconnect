@@ -1,10 +1,21 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Order } from "../models/order.model.js";
+import { sendOTPSms } from "../services/sms.service.js";
+import { sendWelcomeEmail } from "../services/email.service.js";
+import { OTP_EXPIRY_MINUTES, OTP_MAX_VERIFY_ATTEMPTS, OTP_RESEND_COOLDOWN_SECONDS } from "../constants.js";
+
+// OTP is 6 digits, e.g. 483920
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// we never store the raw OTP in the DB — only its SHA-256 hash — so that a
+// DB read (or leak) can't hand out live OTPs
+const hashOtp = (otp) => crypto.createHash("sha256").update(otp).digest("hex");
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -78,6 +89,28 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering the user");
+    }
+
+    // fire off the first OTP right away so the frontend can move straight
+    // into the "verify your phone" step. Don't fail registration if the
+    // SMS provider hiccups — the user can always hit "resend OTP".
+    try {
+        const otp = generateOtp();
+        user.phoneOtp = hashOtp(otp);
+        user.phoneOtpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+        user.phoneOtpAttempts = 0;
+        user.phoneOtpLastSentAt = new Date();
+        await user.save({ validateBeforeSave: false });
+        await sendOTPSms(user.phone, otp);
+    } catch (err) {
+        console.error("Failed to send registration OTP:", err.message);
+    }
+
+    // Welcome email — purely a nice-to-have, never block registration on it
+    try {
+        await sendWelcomeEmail(user.email, user.name);
+    } catch (err) {
+        console.error("Failed to send welcome email:", err.message);
     }
 
     return res
@@ -330,6 +363,121 @@ const getPendingFarmerOrderCount = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, { pendingCount }, "Pending order count fetched"));
 });
 
+// ── Send Phone OTP ──
+// POST /api/v1/user/send-otp
+// Private — requires a valid access token (issued at register/login).
+// Uses req.user._id, NOT a body-supplied userId — accepting an arbitrary
+// id here would let anyone spam OTP SMS to any phone number in the DB.
+const sendPhoneOtp = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select(
+        "+phoneOtpLastSentAt +phoneOtpAttempts"
+    );
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (user.isPhoneVerified) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { alreadyVerified: true }, "Phone is already verified"));
+    }
+
+    // Server-side cooldown — the frontend's 30s timer is just UX, this is
+    // the real enforcement so hammering the endpoint directly doesn't work.
+    if (user.phoneOtpLastSentAt) {
+        const secondsSinceLastSend = (Date.now() - user.phoneOtpLastSentAt.getTime()) / 1000;
+        if (secondsSinceLastSend < OTP_RESEND_COOLDOWN_SECONDS) {
+            const wait = Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - secondsSinceLastSend);
+            throw new ApiError(429, `Please wait ${wait}s before requesting another OTP`);
+        }
+    }
+
+    const otp = generateOtp();
+
+    user.phoneOtp = hashOtp(otp);
+    user.phoneOtpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    user.phoneOtpAttempts = 0;
+    user.phoneOtpLastSentAt = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    // Twilio call — SMS actually leaves the building here. A trial-mode
+    // Twilio number, an unverified destination number, or any provider
+    // hiccup throws here — surface it as a clear, actionable error instead
+    // of a raw 500, since this endpoint's whole job is sending the SMS.
+    try {
+        await sendOTPSms(user.phone, otp);
+    } catch (err) {
+        console.error("Twilio send failed:", err.message);
+        throw new ApiError(
+            502,
+            "Could not send OTP right now. Please check your number and try again in a moment."
+        );
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { phone: user.phone, expiresInMinutes: OTP_EXPIRY_MINUTES },
+            "OTP sent successfully"
+        )
+    );
+});
+
+// ── Verify Phone OTP ──
+// POST /api/v1/user/verify-otp
+// Private — requires a valid access token. Body: { otp }
+const verifyPhoneOtp = asyncHandler(async (req, res) => {
+    const { otp } = req.body;
+
+    if (!otp) {
+        throw new ApiError(400, "otp is required");
+    }
+
+    const user = await User.findById(req.user._id).select(
+        "+phoneOtp +phoneOtpExpiry +phoneOtpAttempts"
+    );
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (user.isPhoneVerified) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { alreadyVerified: true }, "Phone is already verified"));
+    }
+
+    if (!user.phoneOtp || !user.phoneOtpExpiry) {
+        throw new ApiError(400, "No OTP was requested for this account. Please request a new OTP.");
+    }
+
+    if (user.phoneOtpExpiry.getTime() < Date.now()) {
+        throw new ApiError(400, "OTP has expired. Please request a new one.");
+    }
+
+    if (user.phoneOtpAttempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+        throw new ApiError(429, "Too many incorrect attempts. Please request a new OTP.");
+    }
+
+    if (hashOtp(otp) !== user.phoneOtp) {
+        user.phoneOtpAttempts += 1;
+        await user.save({ validateBeforeSave: false });
+        throw new ApiError(400, "Incorrect OTP");
+    }
+
+    // success — mark verified and clear OTP fields
+    user.isPhoneVerified = true;
+    user.phoneOtp = undefined;
+    user.phoneOtpExpiry = undefined;
+    user.phoneOtpAttempts = 0;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { isPhoneVerified: true }, "Phone number verified successfully"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -341,4 +489,6 @@ export {
     updateUserAvatar,
     updatePayoutDetails,
     getPendingFarmerOrderCount,
+    sendPhoneOtp,
+    verifyPhoneOtp,
 };

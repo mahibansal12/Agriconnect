@@ -1,0 +1,113 @@
+diff --git a/backend/src/controllers/admin.controller.js b/backend/src/controllers/admin.controller.js
+index 88ff147..595f80f 100644
+--- a/backend/src/controllers/admin.controller.js
++++ b/backend/src/controllers/admin.controller.js
+@@ -9,6 +9,7 @@ import { DonationRequest } from "../models/donationRequest.model.js";
+ import { Payout } from "../models/payout.model.js";
+ import { News } from "../models/news.model.js";
+ import { Scheme } from "../models/scheme.model.js";
++import { sendPayoutConfirmationSms } from "../services/sms.service.js";
+ 
+ // Dashboard Stats 
+ // GET /api/v1/admin/stats
+@@ -387,6 +388,16 @@ const markPayoutPaid = asyncHandler(async (req, res) => {
+         paidAt,
+     });
+ 
++    // Notify the farmer their money is on the way — never let a Twilio
++    // hiccup fail the payout record that was already written above.
++    try {
++        if (farmerUser.phone) {
++            await sendPayoutConfirmationSms(farmerUser.phone, farmerUser.name, totalAmount);
++        }
++    } catch (err) {
++        console.error("Payout SMS notification failed:", err.message);
++    }
++
+     return res.status(200).json(
+         new ApiResponse(
+             200,
+diff --git a/backend/src/controllers/order.controller.js b/backend/src/controllers/order.controller.js
+index 4300455..2608483 100644
+--- a/backend/src/controllers/order.controller.js
++++ b/backend/src/controllers/order.controller.js
+@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
+ import { ApiResponse } from "../utils/ApiResponse.js";
+ import { Order } from "../models/order.model.js";
+ import { CropListing } from "../models/cropListing.model.js";
++import { User } from "../models/user.model.js";
+ import {
+     createRazorpayOrder,
+     verifyPaymentSignature,
+@@ -11,6 +12,7 @@ import { PLATFORM_COMMISSION_PERCENT } from "../constants.js";
+ import {
+     sendOrderNotificationSms,
+     sendPaymentConfirmationSms,
++    sendOrderStatusSms,
+ } from "../services/sms.service.js";
+ 
+ //  Create Order 
+@@ -251,6 +253,17 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
+     if (orderStatus === "delivered") order.deliveredAt = new Date();
+     await order.save({ validateBeforeSave: false });
+ 
++    // Notify the buyer of the status change — never let a Twilio hiccup
++    // fail the status update itself.
++    try {
++        const buyer = await User.findById(order.buyer).select("name phone");
++        if (buyer?.phone) {
++            await sendOrderStatusSms(buyer.phone, buyer.name, order.cropName, orderStatus);
++        }
++    } catch (err) {
++        console.error("Order status SMS notification failed:", err.message);
++    }
++
+     return res
+         .status(200)
+         .json(new ApiResponse(200, order, "Order status updated successfully"));
+diff --git a/backend/src/services/sms.service.js b/backend/src/services/sms.service.js
+index 5c52289..3239bb7 100644
+--- a/backend/src/services/sms.service.js
++++ b/backend/src/services/sms.service.js
+@@ -47,9 +47,40 @@ const sendPaymentConfirmationSms = async (toPhone, userName, amount) => {
+     });
+ };
+ 
++// notify buyer as their order moves through confirmed -> shipped -> delivered
++const ORDER_STATUS_MESSAGES = {
++    confirmed: (buyerName, cropName) =>
++        `Hi ${buyerName}, your order for ${cropName} on AgriConnect has been confirmed by the farmer and is being prepared.`,
++    shipped: (buyerName, cropName) =>
++        `Hi ${buyerName}, your order for ${cropName} on AgriConnect has been shipped and is on its way!`,
++    delivered: (buyerName, cropName) =>
++        `Hi ${buyerName}, your order for ${cropName} on AgriConnect has been delivered. Enjoy!`,
++};
++
++const sendOrderStatusSms = async (toPhone, buyerName, cropName, status) => {
++    const buildMessage = ORDER_STATUS_MESSAGES[status];
++    if (!buildMessage) return; // unknown status — nothing to send
++    await client.messages.create({
++        body: buildMessage(buyerName, cropName),
++        from: process.env.TWILIO_PHONE_NUMBER,
++        to: toE164(toPhone),
++    });
++};
++
++// notify farmer once admin has paid out their pending order/donation earnings
++const sendPayoutConfirmationSms = async (toPhone, farmerName, amount) => {
++    await client.messages.create({
++        body: `Hi ${farmerName}, your AgriConnect payout of Rs.${amount} has been sent. Check your UPI/bank account.`,
++        from: process.env.TWILIO_PHONE_NUMBER,
++        to: toE164(toPhone),
++    });
++};
++
+ export {
+     sendOTPSms,
+     sendOrderNotificationSms,
+     sendPaymentConfirmationSms,
++    sendOrderStatusSms,
++    sendPayoutConfirmationSms,
+     toE164,
+ };
+\ No newline at end of file

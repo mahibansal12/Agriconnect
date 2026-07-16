@@ -1,0 +1,409 @@
+diff --git a/backend/src/controllers/user.controller.js b/backend/src/controllers/user.controller.js
+index e65f2d7..23a1047 100644
+--- a/backend/src/controllers/user.controller.js
++++ b/backend/src/controllers/user.controller.js
+@@ -7,7 +7,7 @@ import { User } from "../models/user.model.js";
+ import { uploadOnCloudinary } from "../utils/cloudinary.js";
+ import { Order } from "../models/order.model.js";
+ import { sendOTPSms } from "../services/sms.service.js";
+-import { OTP_EXPIRY_MINUTES, OTP_MAX_VERIFY_ATTEMPTS } from "../constants.js";
++import { OTP_EXPIRY_MINUTES, OTP_MAX_VERIFY_ATTEMPTS, OTP_RESEND_COOLDOWN_SECONDS } from "../constants.js";
+ 
+ // OTP is 6 digits, e.g. 483920
+ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+@@ -98,6 +98,7 @@ const registerUser = asyncHandler(async (req, res) => {
+         user.phoneOtp = hashOtp(otp);
+         user.phoneOtpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+         user.phoneOtpAttempts = 0;
++        user.phoneOtpLastSentAt = new Date();
+         await user.save({ validateBeforeSave: false });
+         await sendOTPSms(user.phone, otp);
+     } catch (err) {
+@@ -356,19 +357,13 @@ const getPendingFarmerOrderCount = asyncHandler(async (req, res) => {
+ 
+ // ── Send Phone OTP ──
+ // POST /api/v1/user/send-otp
+-// Public — used right after registration (and can be reused any time a
+-// phone number needs (re)verification, e.g. from account settings).
+-// Body: { userId } OR { phone } — we look the user up either way.
++// Private — requires a valid access token (issued at register/login).
++// Uses req.user._id, NOT a body-supplied userId — accepting an arbitrary
++// id here would let anyone spam OTP SMS to any phone number in the DB.
+ const sendPhoneOtp = asyncHandler(async (req, res) => {
+-    const { userId, phone } = req.body;
+-
+-    if (!userId && !phone) {
+-        throw new ApiError(400, "userId or phone is required");
+-    }
+-
+-    const user = userId
+-        ? await User.findById(userId)
+-        : await User.findOne({ phone });
++    const user = await User.findById(req.user._id).select(
++        "+phoneOtpLastSentAt +phoneOtpAttempts"
++    );
+ 
+     if (!user) {
+         throw new ApiError(404, "User not found");
+@@ -380,20 +375,42 @@ const sendPhoneOtp = asyncHandler(async (req, res) => {
+             .json(new ApiResponse(200, { alreadyVerified: true }, "Phone is already verified"));
+     }
+ 
++    // Server-side cooldown — the frontend's 30s timer is just UX, this is
++    // the real enforcement so hammering the endpoint directly doesn't work.
++    if (user.phoneOtpLastSentAt) {
++        const secondsSinceLastSend = (Date.now() - user.phoneOtpLastSentAt.getTime()) / 1000;
++        if (secondsSinceLastSend < OTP_RESEND_COOLDOWN_SECONDS) {
++            const wait = Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - secondsSinceLastSend);
++            throw new ApiError(429, `Please wait ${wait}s before requesting another OTP`);
++        }
++    }
++
+     const otp = generateOtp();
+ 
+     user.phoneOtp = hashOtp(otp);
+     user.phoneOtpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+     user.phoneOtpAttempts = 0;
++    user.phoneOtpLastSentAt = new Date();
+     await user.save({ validateBeforeSave: false });
+ 
+-    // Twilio call — SMS actually leaves the building here
+-    await sendOTPSms(user.phone, otp);
++    // Twilio call — SMS actually leaves the building here. A trial-mode
++    // Twilio number, an unverified destination number, or any provider
++    // hiccup throws here — surface it as a clear, actionable error instead
++    // of a raw 500, since this endpoint's whole job is sending the SMS.
++    try {
++        await sendOTPSms(user.phone, otp);
++    } catch (err) {
++        console.error("Twilio send failed:", err.message);
++        throw new ApiError(
++            502,
++            "Could not send OTP right now. Please check your number and try again in a moment."
++        );
++    }
+ 
+     return res.status(200).json(
+         new ApiResponse(
+             200,
+-            { userId: user._id, phone: user.phone, expiresInMinutes: OTP_EXPIRY_MINUTES },
++            { phone: user.phone, expiresInMinutes: OTP_EXPIRY_MINUTES },
+             "OTP sent successfully"
+         )
+     );
+@@ -401,15 +418,17 @@ const sendPhoneOtp = asyncHandler(async (req, res) => {
+ 
+ // ── Verify Phone OTP ──
+ // POST /api/v1/user/verify-otp
+-// Public — Body: { userId, otp }
++// Private — requires a valid access token. Body: { otp }
+ const verifyPhoneOtp = asyncHandler(async (req, res) => {
+-    const { userId, otp } = req.body;
++    const { otp } = req.body;
+ 
+-    if (!userId || !otp) {
+-        throw new ApiError(400, "userId and otp are required");
++    if (!otp) {
++        throw new ApiError(400, "otp is required");
+     }
+ 
+-    const user = await User.findById(userId).select("+phoneOtp +phoneOtpExpiry +phoneOtpAttempts");
++    const user = await User.findById(req.user._id).select(
++        "+phoneOtp +phoneOtpExpiry +phoneOtpAttempts"
++    );
+ 
+     if (!user) {
+         throw new ApiError(404, "User not found");
+diff --git a/backend/src/models/user.model.js b/backend/src/models/user.model.js
+index 9d29d95..1bf6e9c 100644
+--- a/backend/src/models/user.model.js
++++ b/backend/src/models/user.model.js
+@@ -72,6 +72,12 @@ const userSchema = new mongoose.Schema(
+       default: 0,
+       select: false,
+     },
++    // Server-side resend cooldown — the frontend timer is just UX, this is
++    // what actually stops someone hitting /send-otp in a loop.
++    phoneOtpLastSentAt: {
++      type: Date,
++      select: false,
++    },
+   },
+   { timestamps: true }
+ );
+diff --git a/backend/src/routes/user.routes.js b/backend/src/routes/user.routes.js
+index b2fc19b..bacad06 100644
+--- a/backend/src/routes/user.routes.js
++++ b/backend/src/routes/user.routes.js
+@@ -23,8 +23,6 @@ const router = Router();
+ router.route("/register").post(upload.single("avatar"), registerUser);
+ router.route("/login").post(loginUser);
+ router.route("/refresh-token").post(refreshAccessToken);
+-router.route("/send-otp").post(otpLimiter, sendPhoneOtp);
+-router.route("/verify-otp").post(otpLimiter, verifyPhoneOtp);
+ 
+ // secured routes
+ router.route("/logout").post(verifyJWT, logoutUser);
+@@ -33,5 +31,11 @@ router.route("/change-password").patch(verifyJWT, changeCurrentPassword);
+ router.route("/update-account").patch(verifyJWT, updateAccountDetails);
+ router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
+ router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updatePayoutDetails);
++// OTP routes need auth too — req.user._id is used to look up the account,
++// never a body-supplied id (that would let anyone spam-SMS any phone
++// number in the DB). registerUser's auto-login and loginUser both already
++// hand back a valid access token before the OTP screen ever renders.
++router.route("/send-otp").post(verifyJWT, otpLimiter, sendPhoneOtp);
++router.route("/verify-otp").post(verifyJWT, otpLimiter, verifyPhoneOtp);
+ router.route("/pending-farmer-orders").get(verifyJWT, getPendingFarmerOrderCount);
+ export default router;
+\ No newline at end of file
+diff --git a/backend/src/scripts/migrate-phone-verified.js b/backend/src/scripts/migrate-phone-verified.js
+new file mode 100644
+index 0000000..618d295
+--- /dev/null
++++ b/backend/src/scripts/migrate-phone-verified.js
+@@ -0,0 +1,44 @@
++// backend/src/scripts/migrate-phone-verified.js
++//
++// One-time migration: the isPhoneVerified field is new. Mongoose applies
++// its `default: false` to every existing document that doesn't have the
++// field yet — which means every account created BEFORE this feature
++// shipped would otherwise be forced through an OTP screen on next login,
++// even though they never signed up expecting phone verification.
++//
++// This grandfathers in all pre-existing accounts by explicitly marking
++// them verified. Only accounts created AFTER this migration runs will go
++// through the real OTP flow.
++//
++// Run once, from the backend/ folder:
++//   node src/scripts/migrate-phone-verified.js
++//
++// Safe to run more than once — it only touches documents that don't
++// already have the field set.
++
++import mongoose from "mongoose";
++import dotenv from "dotenv";
++import { DB_NAME } from "../constants.js";
++
++dotenv.config();
++
++async function run() {
++    const uri = `${process.env.MONGO_URI}/${DB_NAME}`;
++    await mongoose.connect(uri);
++    console.log("Connected to DB:", mongoose.connection.name);
++
++    const result = await mongoose.connection.collection("users").updateMany(
++        { isPhoneVerified: { $exists: false } },
++        { $set: { isPhoneVerified: true } }
++    );
++
++    console.log(`Grandfathered ${result.modifiedCount} existing account(s) as phone-verified.`);
++
++    await mongoose.disconnect();
++    process.exit(0);
++}
++
++run().catch((err) => {
++    console.error("Migration failed:", err);
++    process.exit(1);
++});
+diff --git a/frontend/src/components/auth/LoginForm.jsx b/frontend/src/components/auth/LoginForm.jsx
+index 7c5b447..56d4c62 100644
+--- a/frontend/src/components/auth/LoginForm.jsx
++++ b/frontend/src/components/auth/LoginForm.jsx
+@@ -1,9 +1,8 @@
+ import { useState } from "react";
+ import { useDispatch, useSelector } from "react-redux";
+ import { useNavigate, Link } from "react-router-dom";
+-import { loginUser } from "../../redux/slices/authSlice";
++import { loginUser, sendPhoneOtp } from "../../redux/slices/authSlice";
+ import OtpVerification from "./OtpVerification";
+-import axiosInstance from "../../utils/axiosInstance";
+ 
+ export default function LoginForm({ roleHint = null }) {
+   const dispatch = useDispatch();
+@@ -15,6 +14,7 @@ export default function LoginForm({ roleHint = null }) {
+   // Set once login succeeds for an account whose phone isn't verified yet —
+   // gates the redirect behind an OTP check instead of letting them straight in.
+   const [pendingVerification, setPendingVerification] = useState(null);
++  const [otpSendError, setOtpSendError] = useState("");
+ 
+   const handleChange = (e) => {
+     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+@@ -39,14 +39,16 @@ export default function LoginForm({ roleHint = null }) {
+         return;
+       }
+       // account exists but phone was never verified (e.g. they closed the
+-      // tab mid-registration) — send a fresh OTP and gate the redirect
+-      try {
+-        await axiosInstance.post("/v1/user/send-otp", { userId: user._id });
+-      } catch {
+-        // send-otp already no-ops gracefully if somehow already verified;
+-        // any other failure still lets them use "Resend OTP" on the screen
++      // tab mid-registration) — send a fresh OTP and gate the redirect.
++      // If the send itself fails (bad Twilio config, unverified trial
++      // number, etc.) show that clearly instead of silently landing on an
++      // OTP screen for a code that was never delivered.
++      const otpResult = await dispatch(sendPhoneOtp());
++      if (sendPhoneOtp.rejected.match(otpResult)) {
++        setOtpSendError(otpResult.payload || "Could not send verification code. Please try again.");
++        return;
+       }
+-      setPendingVerification({ id: user._id, phone: user.phone, role: user.role });
++      setPendingVerification({ phone: user.phone, role: user.role });
+     }
+   };
+ 
+@@ -58,7 +60,6 @@ export default function LoginForm({ roleHint = null }) {
+           <span className="lf-brand-name">AgriConnect</span>
+         </div>
+         <OtpVerification
+-          userId={pendingVerification.id}
+           phone={pendingVerification.phone}
+           onVerified={() => goToDashboard(pendingVerification.role)}
+           onCancel={() => setPendingVerification(null)}
+@@ -77,13 +78,13 @@ export default function LoginForm({ roleHint = null }) {
+       <h1 className="lf-heading">Welcome back</h1>
+       <p className="lf-sub">Sign in to your account</p>
+ 
+-      {error && (
++      {(error || otpSendError) && (
+         <div className="lf-error">
+           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+             <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5"/>
+             <path d="M8 5v3M8 11h.01" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round"/>
+           </svg>
+-          {error}
++          {error || otpSendError}
+         </div>
+       )}
+ 
+diff --git a/frontend/src/components/auth/OtpVerification.jsx b/frontend/src/components/auth/OtpVerification.jsx
+index 9f6d2e2..9eabbe1 100644
+--- a/frontend/src/components/auth/OtpVerification.jsx
++++ b/frontend/src/components/auth/OtpVerification.jsx
+@@ -3,15 +3,19 @@
+ // Reusable 6-digit OTP screen. The backend has already sent the first OTP
+ // (registerUser fires one automatically on signup) — this component's job
+ // is to collect the code, verify it, and let the caller resend if needed.
++// Requires the user to already be authenticated (registerUser/loginUser
++// both hand back a valid access token before this ever renders) — the
++// backend identifies which account to verify from that token, not from
++// anything passed in here.
+ //
+ // Props:
+-//   userId   - Mongo _id of the account being verified (required)
+ //   phone    - phone number to display (masked) (required)
+-//   onVerified(userId) - called once the OTP is confirmed
+-//   onCancel()          - optional "back" handler
++//   onVerified() - called once the OTP is confirmed
++//   onCancel()   - optional "back" handler
+ 
+ import { useEffect, useRef, useState } from "react";
+-import axiosInstance from "../../utils/axiosInstance";
++import { useDispatch } from "react-redux";
++import { sendPhoneOtp, verifyPhoneOtp } from "../../redux/slices/authSlice";
+ 
+ const RESEND_COOLDOWN = 30; // seconds
+ 
+@@ -21,7 +25,8 @@ function maskPhone(phone = "") {
+   return `${"•".repeat(digits.length - 4)}${digits.slice(-4)}`;
+ }
+ 
+-export default function OtpVerification({ userId, phone, onVerified, onCancel }) {
++export default function OtpVerification({ phone, onVerified, onCancel }) {
++  const dispatch = useDispatch();
+   const [digits, setDigits] = useState(Array(6).fill(""));
+   const [error, setError] = useState("");
+   const [verifying, setVerifying] = useState(false);
+@@ -75,13 +80,12 @@ export default function OtpVerification({ userId, phone, onVerified, onCancel })
+     }
+     setVerifying(true);
+     setError("");
+-    try {
+-      await axiosInstance.post("/v1/user/verify-otp", { userId, otp });
+-      onVerified?.(userId);
+-    } catch (err) {
+-      setError(err.response?.data?.message || "Incorrect OTP. Please try again.");
+-    } finally {
+-      setVerifying(false);
++    const result = await dispatch(verifyPhoneOtp(otp));
++    setVerifying(false);
++    if (verifyPhoneOtp.fulfilled.match(result)) {
++      onVerified?.();
++    } else {
++      setError(result.payload || "Incorrect OTP. Please try again.");
+     }
+   };
+ 
+@@ -89,15 +93,14 @@ export default function OtpVerification({ userId, phone, onVerified, onCancel })
+     if (cooldown > 0 || resending) return;
+     setResending(true);
+     setError("");
+-    try {
+-      await axiosInstance.post("/v1/user/send-otp", { userId });
++    const result = await dispatch(sendPhoneOtp());
++    setResending(false);
++    if (sendPhoneOtp.fulfilled.match(result)) {
+       setDigits(Array(6).fill(""));
+       setCooldown(RESEND_COOLDOWN);
+       focusInput(0);
+-    } catch (err) {
+-      setError(err.response?.data?.message || "Could not resend OTP. Try again shortly.");
+-    } finally {
+-      setResending(false);
++    } else {
++      setError(result.payload || "Could not resend OTP. Try again shortly.");
+     }
+   };
+ 
+diff --git a/frontend/src/components/auth/RegisterForm.jsx b/frontend/src/components/auth/RegisterForm.jsx
+index f179268..820958d 100644
+--- a/frontend/src/components/auth/RegisterForm.jsx
++++ b/frontend/src/components/auth/RegisterForm.jsx
+@@ -341,7 +341,6 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
+ 
+       {step === 3 && pendingVerification && (
+         <OtpVerification
+-          userId={pendingVerification.id}
+           phone={pendingVerification.phone}
+           onVerified={() => goToDashboard(pendingVerification.role)}
+         />
+diff --git a/frontend/src/redux/slices/authSlice.js b/frontend/src/redux/slices/authSlice.js
+index 3379d69..769c7f7 100644
+--- a/frontend/src/redux/slices/authSlice.js
++++ b/frontend/src/redux/slices/authSlice.js
+@@ -124,14 +124,14 @@ export const loginUser = createAsyncThunk(
+ );
+ 
+ // POST /api/v1/user/send-otp — (re)send the phone-verification OTP.
+-// Takes the user's own id, since this is only ever called for the
+-// currently-registered/logged-in account.
++// No params needed: the backend identifies the account from the access
++// token (req.user._id), not from anything the client claims.
+ export const sendPhoneOtp = createAsyncThunk(
+   "auth/sendPhoneOtp",
+-  async (userId, { rejectWithValue }) => {
++  async (_, { rejectWithValue }) => {
+     try {
+-      const { data } = await axiosInstance.post("/v1/user/send-otp", { userId });
+-      return normalizeAuthData(data);
++      const { data } = await axiosInstance.post("/v1/user/send-otp");
++      return data;
+     } catch (error) {
+       return rejectWithValue(
+         error.response?.data?.message || "Could not send OTP. Please try again."
+@@ -143,10 +143,10 @@ export const sendPhoneOtp = createAsyncThunk(
+ // POST /api/v1/user/verify-otp
+ export const verifyPhoneOtp = createAsyncThunk(
+   "auth/verifyPhoneOtp",
+-  async ({ userId, otp }, { rejectWithValue }) => {
++  async (otp, { rejectWithValue }) => {
+     try {
+-      const { data } = await axiosInstance.post("/v1/user/verify-otp", { userId, otp });
+-      return normalizeAuthData(data);
++      const { data } = await axiosInstance.post("/v1/user/verify-otp", { otp });
++      return data;
+     } catch (error) {
+       return rejectWithValue(
+         error.response?.data?.message || "Incorrect or expired OTP."

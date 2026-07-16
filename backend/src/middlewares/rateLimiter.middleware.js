@@ -11,4 +11,18 @@ const apiLimiter = rateLimit({
     },
 });
 
-export { apiLimiter };
+// OTP endpoints hit Twilio (real money per SMS) and are a classic abuse
+// target (spam-bombing someone else's phone, or brute-forcing a 6-digit
+// code), so they get a much tighter limit than general API traffic.
+const otpLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 8,                    // 8 send/verify attempts per IP per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: "Too many OTP requests. Please wait a bit before trying again.",
+    },
+});
+
+export { apiLimiter, otpLimiter };
