@@ -82,8 +82,28 @@ const sendPasswordResetEmail = async (toEmail, userName, resetLink) => {
     await transporter.sendMail(mailOptions);
 };
 
+// send a numeric verification code — used for both pre-registration email
+// verification and OTP-based login via email
+const sendOtpEmail = async (toEmail, otp) => {
+    const mailOptions = {
+        from: `"AgriConnect" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject: "Your AgriConnect verification code",
+        html: `
+            <h2>Your verification code</h2>
+            <p style="font-size:28px;font-weight:700;letter-spacing:4px;">${otp}</p>
+            <p>This code expires in 10 minutes. Do not share it with anyone.</p>
+            <br/>
+            <p><strong>Team AgriConnect</strong></p>
+        `,
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
 export {
     sendWelcomeEmail,
     sendOrderConfirmationEmail,
     sendPasswordResetEmail,
+    sendOtpEmail,
 };

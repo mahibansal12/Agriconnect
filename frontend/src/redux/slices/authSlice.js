@@ -123,6 +123,69 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// POST /api/v1/user/send-login-otp — request an OTP for login via email or
+// phone (no password). identifier can be either; backend detects which.
+export const sendLoginOtp = createAsyncThunk(
+  "auth/sendLoginOtp",
+  async ({ identifier, role }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/v1/user/send-login-otp", { identifier, role });
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Could not send code. Please try again."
+      );
+    }
+  }
+);
+
+// POST /api/v1/user/login-otp — complete an OTP-based login
+export const loginWithOtp = createAsyncThunk(
+  "auth/loginWithOtp",
+  async ({ identifier, otp, role }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/v1/user/login-otp", { identifier, otp, role });
+      const session = normalizeAuthData(data);
+      persistSession(session);
+      return session;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Incorrect or expired code."
+      );
+    }
+  }
+);
+
+// POST /api/v1/user/forgot-password
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async ({ email, role }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/v1/user/forgot-password", { email, role });
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Something went wrong. Please try again."
+      );
+    }
+  }
+);
+
+// POST /api/v1/user/reset-password/:token
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, password }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post(`/v1/user/reset-password/${token}`, { password });
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Could not reset password. The link may have expired."
+      );
+    }
+  }
+);
+
 // POST /api/v1/user/send-otp — (re)send the phone-verification OTP.
 // No params needed: the backend identifies the account from the access
 // token (req.user._id), not from anything the client claims.
@@ -377,6 +440,63 @@ const authSlice = createSlice({
       .addCase(verifyPhoneOtp.rejected, (state, action) => {
         state.otpLoading = false;
         state.otpError = action.payload;
+      });
+
+    // ── OTP login ─────────────────────────────────────────────
+    builder
+      .addCase(sendLoginOtp.pending, (state) => {
+        state.otpLoading = true;
+        state.otpError = null;
+      })
+      .addCase(sendLoginOtp.fulfilled, (state) => {
+        state.otpLoading = false;
+      })
+      .addCase(sendLoginOtp.rejected, (state, action) => {
+        state.otpLoading = false;
+        state.otpError = action.payload;
+      });
+
+    builder
+      .addCase(loginWithOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginWithOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.accessToken;
+        state.error = null;
+      })
+      .addCase(loginWithOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // ── Forgot / reset password ─────────────────────────────────
+    builder
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
 
     // ── Switch role ───────────────────────────────────────────
