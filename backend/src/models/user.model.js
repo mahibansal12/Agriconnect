@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
     phoneOtp: {
       type: String, // SHA-256 hash of the OTP — never stored in plain text
       select: false,
@@ -75,6 +79,74 @@ const userSchema = new mongoose.Schema(
     // Server-side resend cooldown — the frontend timer is just UX, this is
     // what actually stops someone hitting /send-otp in a loop.
     phoneOtpLastSentAt: {
+      type: Date,
+      select: false,
+    },
+
+    // ── Email OTP ──
+    // Reused for two purposes: (a) re-verifying an email post-account in
+    // case that's ever needed, and (b) login-via-email-OTP. Registration
+    // itself verifies email through PendingVerification, before the
+    // account exists, so these start empty for every new account.
+    emailOtp: {
+      type: String,
+      select: false,
+    },
+    emailOtpExpiry: {
+      type: Date,
+      select: false,
+    },
+    emailOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    emailOtpLastSentAt: {
+      type: Date,
+      select: false,
+    },
+
+    // ── Login-via-OTP (email or phone, no password) ──
+    // Separate from phoneOtp/emailOtp above (those are for *verifying
+    // ownership* of a channel during registration) — this is a distinct
+    // short-lived code issued specifically to authenticate an existing,
+    // already-verified account.
+    loginOtp: {
+      type: String,
+      select: false,
+    },
+    loginOtpExpiry: {
+      type: Date,
+      select: false,
+    },
+    loginOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    loginOtpLastSentAt: {
+      type: Date,
+      select: false,
+    },
+
+    // ── Password reset ──
+    resetPasswordToken: {
+      type: String, // SHA-256 hash of the reset token — never store it raw
+      select: false,
+    },
+    resetPasswordExpiry: {
+      type: Date,
+      select: false,
+    },
+
+    // ── Login lockout ──
+    // Failed *password* attempts (OTP already has its own attempt cap).
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    lockedUntil: {
       type: Date,
       select: false,
     },

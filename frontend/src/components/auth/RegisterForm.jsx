@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../../redux/slices/authSlice";
 import RoleSelector from "./RoleSelector";
-import OtpVerification from "./OtpVerification";
+import InlineOtpField from "./InlineOtpField";
 
 const STATES = [
   "Andhra Pradesh","Assam","Bihar","Chhattisgarh","Gujarat","Haryana",
@@ -30,9 +30,12 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
     district: "",
   });
   const [fieldErrors, setFieldErrors] = useState({});
-  // Holds { id, phone, role } for the account we just created, once
-  // registerUser succeeds, so step 3 (OTP) knows who/where to verify.
-  const [pendingVerification, setPendingVerification] = useState(null);
+  // Email and phone are now verified inline, one field at a time, before
+  // the account is ever created — no more separate "verify phone" step
+  // at the end. Continuing past step 1 requires both to be true.
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,7 +62,13 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
   };
 
   const goNext = () => {
-    if (validateStep1()) setStep(2);
+    if (!validateStep1()) return;
+    if (!emailVerified || !phoneVerified) {
+      setVerifyError("Please verify both your email and phone number before continuing");
+      return;
+    }
+    setVerifyError("");
+    setStep(2);
   };
 
   const handleSubmit = async (e) => {
@@ -68,15 +77,10 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
     const { confirmPassword, ...payload } = form;
     const result = await dispatch(registerUser(payload));
     if (registerUser.fulfilled.match(result)) {
-      const user = result.payload.user;
-      if (user.isPhoneVerified) {
-        goToDashboard(user.role);
-      } else {
-        // backend already fired the first OTP during registerUser — move
-        // straight to the "enter the code" step
-        setPendingVerification({ id: user._id, phone: user.phone, role: user.role });
-        setStep(3);
-      }
+      // Email and phone were already verified before this account was
+      // created, so there's no post-registration OTP step anymore —
+      // go straight to the dashboard.
+      goToDashboard(result.payload.user.role);
     }
   };
 
@@ -100,23 +104,18 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
         </div>
         <div className="rf-step-line" />
         <div className={`rf-step ${step >= 2 ? "rf-step--done" : ""}`}>
-          <span className="rf-step-num">{step > 2 ? "✓" : "2"}</span>
+          <span className="rf-step-num">2</span>
           <span className="rf-step-label">Account setup</span>
-        </div>
-        <div className="rf-step-line" />
-        <div className={`rf-step ${step >= 3 ? "rf-step--done" : ""}`}>
-          <span className="rf-step-num">3</span>
-          <span className="rf-step-label">Verify phone</span>
         </div>
       </div>
 
-      {error && (
+      {(error || verifyError) && (
         <div className="rf-error">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5"/>
             <path d="M8 5v3M8 11h.01" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
-          {error}
+          {error || verifyError}
         </div>
       )}
 
@@ -159,54 +158,35 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
               />
             </Field>
 
-            <Field
+            <InlineOtpField
+              type="email"
               label="Email address"
-              id="rf-email"
-              error={fieldErrors.email}
-              icon={
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                  <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                </svg>
-              }
-            >
-              <input
-                id="rf-email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={handleChange}
-                className={`rf-input ${fieldErrors.email ? "rf-input--err" : ""}`}
-                autoComplete="email"
-              />
-            </Field>
+              value={form.email}
+              onChange={(v) => {
+                setForm((p) => ({ ...p, email: v }));
+                setFieldErrors((p) => ({ ...p, email: "" }));
+              }}
+              verified={emailVerified}
+              onVerifiedChange={setEmailVerified}
+              placeholder="you@example.com"
+            />
+            {fieldErrors.email && <span className="rf-field-err">{fieldErrors.email}</span>}
 
-            <Field
+            <InlineOtpField
+              type="phone"
               label="Mobile number"
-              id="rf-phone"
-              error={fieldErrors.phone}
-              icon={
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="4" y="1" width="8" height="14" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                  <circle cx="8" cy="12" r="0.8" fill="currentColor"/>
-                </svg>
-              }
-            >
-              <input
-                id="rf-phone"
-                name="phone"
-                type="tel"
-                placeholder="9876543210"
-                value={form.phone}
-                onChange={handleChange}
-                className={`rf-input ${fieldErrors.phone ? "rf-input--err" : ""}`}
-                autoComplete="tel"
-                maxLength={10}
-              />
-            </Field>
+              value={form.phone}
+              onChange={(v) => {
+                setForm((p) => ({ ...p, phone: v.replace(/\D/g, "").slice(0, 10) }));
+                setFieldErrors((p) => ({ ...p, phone: "" }));
+              }}
+              verified={phoneVerified}
+              onVerifiedChange={setPhoneVerified}
+              placeholder="9876543210"
+            />
+            {fieldErrors.phone && <span className="rf-field-err">{fieldErrors.phone}</span>}
 
-            <button type="button" className="rf-btn" onClick={goNext}>
+            <button type="button" className="rf-btn" onClick={goNext} disabled={!emailVerified || !phoneVerified}>
               Continue
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M6 12l4-4-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -339,14 +319,7 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
         )}
       </form>
 
-      {step === 3 && pendingVerification && (
-        <OtpVerification
-          phone={pendingVerification.phone}
-          onVerified={() => goToDashboard(pendingVerification.role)}
-        />
-      )}
-
-      {step < 3 && (
+      {step === 1 && (
         <p className="rf-switch">
           Already have an account?{" "}
           <Link to="/login" className="rf-link">Sign in</Link>
