@@ -3,11 +3,18 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Order } from "../models/order.model.js";
 import { CropListing } from "../models/cropListing.model.js";
+import { User } from "../models/user.model.js";
 import {
     createRazorpayOrder,
     verifyPaymentSignature,
 } from "../services/payment.service.js";
 import { PLATFORM_COMMISSION_PERCENT } from "../constants.js";
+import {
+    sendOrderNotificationSms,
+    sendPaymentConfirmationSms,
+    sendOrderStatusSms,
+} from "../services/sms.service.js";
+import { sendOrderConfirmationEmail } from "../services/email.service.js";
 
 //  Create Order 
 // POST /api/v1/orders
@@ -115,7 +122,9 @@ const verifyPayment = asyncHandler(async (req, res) => {
             orderStatus: "placed",
         },
         { new: true }
-    );
+    )
+        .populate("farmer", "name phone")
+        .populate("buyer", "name phone email");
 
     if (!order) {
         throw new ApiError(404, "Order not found");
@@ -125,6 +134,36 @@ const verifyPayment = asyncHandler(async (req, res) => {
     await CropListing.findByIdAndUpdate(order.listing, {
         $inc: { quantity: -order.quantity },
     });
+
+    // Fire SMS notifications — never let a Twilio hiccup fail the order.
+    // Farmer gets notified a new order came in; buyer gets a payment receipt.
+    try {
+        if (order.farmer?.phone) {
+            await sendOrderNotificationSms(
+                order.farmer.phone,
+                order.farmer.name,
+                order.cropName,
+                order.quantity
+            );
+        }
+        if (order.buyer?.phone) {
+            await sendPaymentConfirmationSms(
+                order.buyer.phone,
+                order.buyer.name,
+                order.totalPrice
+            );
+        }
+
+        if (order.buyer?.email) {
+            await sendOrderConfirmationEmail(order.buyer.email, order.buyer.name, {
+                cropName: order.cropName,
+                quantity: order.quantity,
+                totalAmount: order.totalPrice,
+            });
+        }
+    } catch (err) {
+        console.error("Order/payment SMS notification failed:", err.message);
+    }
 
     return res
         .status(200)
@@ -222,6 +261,17 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     if (orderStatus === "shipped")   order.shippedAt   = new Date();
     if (orderStatus === "delivered") order.deliveredAt = new Date();
     await order.save({ validateBeforeSave: false });
+
+    // Notify the buyer of the status change — never let a Twilio hiccup
+    // fail the status update itself.
+    try {
+        const buyer = await User.findById(order.buyer).select("name phone");
+        if (buyer?.phone) {
+            await sendOrderStatusSms(buyer.phone, buyer.name, order.cropName, orderStatus);
+        }
+    } catch (err) {
+        console.error("Order status SMS notification failed:", err.message);
+    }
 
     return res
         .status(200)

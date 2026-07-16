@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUser } from "../../redux/slices/authSlice";
+import { loginUser, sendPhoneOtp } from "../../redux/slices/authSlice";
+import OtpVerification from "./OtpVerification";
 
 export default function LoginForm({ roleHint = null }) {
   const dispatch = useDispatch();
@@ -10,9 +11,19 @@ export default function LoginForm({ roleHint = null }) {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
+  // Set once login succeeds for an account whose phone isn't verified yet —
+  // gates the redirect behind an OTP check instead of letting them straight in.
+  const [pendingVerification, setPendingVerification] = useState(null);
+  const [otpSendError, setOtpSendError] = useState("");
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const goToDashboard = (role) => {
+    if (role === "farmer") navigate("/farmer/dashboard");
+    else if (role === "buyer") navigate("/buyer/dashboard");
+    else navigate("/admin/dashboard");
   };
 
   const handleSubmit = async (e) => {
@@ -22,12 +33,40 @@ export default function LoginForm({ roleHint = null }) {
     const payload = roleHint ? { ...form, role: roleHint } : form;
     const result = await dispatch(loginUser(payload));
     if (loginUser.fulfilled.match(result)) {
-      const role = result.payload.user.role;
-      if (role === "farmer") navigate("/farmer/dashboard");
-      else if (role === "buyer") navigate("/buyer/dashboard");
-      else navigate("/admin/dashboard");
+      const user = result.payload.user;
+      if (user.isPhoneVerified) {
+        goToDashboard(user.role);
+        return;
+      }
+      // account exists but phone was never verified (e.g. they closed the
+      // tab mid-registration) — send a fresh OTP and gate the redirect.
+      // If the send itself fails (bad Twilio config, unverified trial
+      // number, etc.) show that clearly instead of silently landing on an
+      // OTP screen for a code that was never delivered.
+      const otpResult = await dispatch(sendPhoneOtp());
+      if (sendPhoneOtp.rejected.match(otpResult)) {
+        setOtpSendError(otpResult.payload || "Could not send verification code. Please try again.");
+        return;
+      }
+      setPendingVerification({ phone: user.phone, role: user.role });
     }
   };
+
+  if (pendingVerification) {
+    return (
+      <div className="lf-wrap">
+        <div className="lf-brand">
+          <span className="lf-leaf">🌿</span>
+          <span className="lf-brand-name">AgriConnect</span>
+        </div>
+        <OtpVerification
+          phone={pendingVerification.phone}
+          onVerified={() => goToDashboard(pendingVerification.role)}
+          onCancel={() => setPendingVerification(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="lf-wrap">
@@ -39,13 +78,13 @@ export default function LoginForm({ roleHint = null }) {
       <h1 className="lf-heading">Welcome back</h1>
       <p className="lf-sub">Sign in to your account</p>
 
-      {error && (
+      {(error || otpSendError) && (
         <div className="lf-error">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5"/>
             <path d="M8 5v3M8 11h.01" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
-          {error}
+          {error || otpSendError}
         </div>
       )}
 
