@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../../redux/slices/authSlice";
 import RoleSelector from "./RoleSelector";
+import OtpVerification from "./OtpVerification";
 
 const STATES = [
   "Andhra Pradesh","Assam","Bihar","Chhattisgarh","Gujarat","Haryana",
@@ -29,6 +30,9 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
     district: "",
   });
   const [fieldErrors, setFieldErrors] = useState({});
+  // Holds { id, phone, role } for the account we just created, once
+  // registerUser succeeds, so step 3 (OTP) knows who/where to verify.
+  const [pendingVerification, setPendingVerification] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,11 +68,22 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
     const { confirmPassword, ...payload } = form;
     const result = await dispatch(registerUser(payload));
     if (registerUser.fulfilled.match(result)) {
-      const role = result.payload.user.role;
-      if (role === "farmer") navigate("/farmer/dashboard");
-      else if (role === "buyer") navigate("/buyer/dashboard");
-      else navigate("/admin/dashboard");
+      const user = result.payload.user;
+      if (user.isPhoneVerified) {
+        goToDashboard(user.role);
+      } else {
+        // backend already fired the first OTP during registerUser — move
+        // straight to the "enter the code" step
+        setPendingVerification({ id: user._id, phone: user.phone, role: user.role });
+        setStep(3);
+      }
     }
+  };
+
+  const goToDashboard = (role) => {
+    if (role === "farmer") navigate("/farmer/dashboard");
+    else if (role === "buyer") navigate("/buyer/dashboard");
+    else navigate("/admin/dashboard");
   };
 
   return (
@@ -85,8 +100,13 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
         </div>
         <div className="rf-step-line" />
         <div className={`rf-step ${step >= 2 ? "rf-step--done" : ""}`}>
-          <span className="rf-step-num">2</span>
+          <span className="rf-step-num">{step > 2 ? "✓" : "2"}</span>
           <span className="rf-step-label">Account setup</span>
+        </div>
+        <div className="rf-step-line" />
+        <div className={`rf-step ${step >= 3 ? "rf-step--done" : ""}`}>
+          <span className="rf-step-num">3</span>
+          <span className="rf-step-label">Verify phone</span>
         </div>
       </div>
 
@@ -319,10 +339,19 @@ export default function RegisterForm({ initialRole = "farmer", onRoleChange = ()
         )}
       </form>
 
-      <p className="rf-switch">
-        Already have an account?{" "}
-        <Link to="/login" className="rf-link">Sign in</Link>
-      </p>
+      {step === 3 && pendingVerification && (
+        <OtpVerification
+          phone={pendingVerification.phone}
+          onVerified={() => goToDashboard(pendingVerification.role)}
+        />
+      )}
+
+      {step < 3 && (
+        <p className="rf-switch">
+          Already have an account?{" "}
+          <Link to="/login" className="rf-link">Sign in</Link>
+        </p>
+      )}
 
       <style>{`
         .rf-wrap {

@@ -47,6 +47,7 @@ const createListing = asyncHandler(async (req, res) => {
     const imageFiles = req.files || [];
     const uploadedImages = [];
 
+    
     for (const file of imageFiles) {
         const uploaded = await uploadOnCloudinary(file.path);
         if (uploaded) {

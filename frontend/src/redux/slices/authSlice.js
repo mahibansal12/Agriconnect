@@ -123,6 +123,38 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// POST /api/v1/user/send-otp — (re)send the phone-verification OTP.
+// No params needed: the backend identifies the account from the access
+// token (req.user._id), not from anything the client claims.
+export const sendPhoneOtp = createAsyncThunk(
+  "auth/sendPhoneOtp",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/v1/user/send-otp");
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Could not send OTP. Please try again."
+      );
+    }
+  }
+);
+
+// POST /api/v1/user/verify-otp
+export const verifyPhoneOtp = createAsyncThunk(
+  "auth/verifyPhoneOtp",
+  async (otp, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/v1/user/verify-otp", { otp });
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Incorrect or expired OTP."
+      );
+    }
+  }
+);
+
 // Called in App.jsx on every page refresh to restore session
 export const loadUserFromStorage = createAsyncThunk(
   "auth/loadUserFromStorage",
@@ -212,6 +244,8 @@ const authSlice = createSlice({
     token:   null,    // JWT string
     loading: false,
     error:   null,
+    otpLoading: false,   // separate from `loading` so the OTP screen and the
+    otpError:   null,    // register/login form never fight over the same spinner
   },
   reducers: {
     // Call this when logout button is clicked
@@ -306,6 +340,43 @@ const authSlice = createSlice({
       .addCase(loadUserFromStorage.rejected, (state) => {
         state.user  = null;
         state.token = null;
+      });
+
+    // ── Phone OTP ──────────────────────────────────────────────
+    builder
+      .addCase(sendPhoneOtp.pending, (state) => {
+        state.otpLoading = true;
+        state.otpError = null;
+      })
+      .addCase(sendPhoneOtp.fulfilled, (state) => {
+        state.otpLoading = false;
+      })
+      .addCase(sendPhoneOtp.rejected, (state, action) => {
+        state.otpLoading = false;
+        state.otpError = action.payload;
+      });
+
+    builder
+      .addCase(verifyPhoneOtp.pending, (state) => {
+        state.otpLoading = true;
+        state.otpError = null;
+      })
+      .addCase(verifyPhoneOtp.fulfilled, (state) => {
+        state.otpLoading = false;
+        state.otpError = null;
+        // mark the currently-logged-in user (and its cached role session)
+        // as phone-verified so gates elsewhere don't ask again
+        if (state.user) {
+          state.user = { ...state.user, isPhoneVerified: true };
+          localStorage.setItem("agriconnect_user", JSON.stringify(state.user));
+          if (state.user.role && state.token) {
+            saveRoleSession(state.user.role, { user: state.user, accessToken: state.token });
+          }
+        }
+      })
+      .addCase(verifyPhoneOtp.rejected, (state, action) => {
+        state.otpLoading = false;
+        state.otpError = action.payload;
       });
 
     // ── Switch role ───────────────────────────────────────────

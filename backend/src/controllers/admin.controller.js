@@ -9,6 +9,7 @@ import { DonationRequest } from "../models/donationRequest.model.js";
 import { Payout } from "../models/payout.model.js";
 import { News } from "../models/news.model.js";
 import { Scheme } from "../models/scheme.model.js";
+import { sendPayoutConfirmationSms } from "../services/sms.service.js";
 
 // Dashboard Stats 
 // GET /api/v1/admin/stats
@@ -386,6 +387,16 @@ const markPayoutPaid = asyncHandler(async (req, res) => {
         totalAmount,
         paidAt,
     });
+
+    // Notify the farmer their money is on the way — never let a Twilio
+    // hiccup fail the payout record that was already written above.
+    try {
+        if (farmerUser.phone) {
+            await sendPayoutConfirmationSms(farmerUser.phone, farmerUser.name, totalAmount);
+        }
+    } catch (err) {
+        console.error("Payout SMS notification failed:", err.message);
+    }
 
     return res.status(200).json(
         new ApiResponse(

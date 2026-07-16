@@ -19,7 +19,7 @@ export default function Register() {
   // a logged-in farmer clicking "create a buyer account" gets bounced
   // straight back to their farmer dashboard before they can fill the form.
   useEffect(() => {
-    if (user && (!roleParam || roleParam === user.role)) {
+    if (user && user.isPhoneVerified && (!roleParam || roleParam === user.role)) {
       navigate(
         user.role === "farmer" ? "/farmer/dashboard" :
         user.role === "buyer"  ? "/buyer/dashboard"  : "/admin/dashboard",

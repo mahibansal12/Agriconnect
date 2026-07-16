@@ -15,7 +15,7 @@ export default function Login() {
   // login form so they can sign into their buyer account.
   // Navigating away (e.g. Home) while here keeps them logged in as their current role.
   useEffect(() => {
-    if (user && (!roleHint || roleHint === user.role)) {
+    if (user && user.isPhoneVerified && (!roleHint || roleHint === user.role)) {
       navigate(
         user.role === "farmer" ? "/farmer/dashboard" :
           user.role === "buyer" ? "/buyer/dashboard" : "/admin/dashboard",

@@ -48,7 +48,36 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-    }
+    },
+
+    // ── Phone (OTP) verification ──
+    // Kept flat (rather than nested) so `.select("+phoneOtp +phoneOtpExpiry
+    // +phoneOtpAttempts")` in the controller can pull exactly what it needs.
+    // All three are excluded by default so a normal user fetch/`/me` call
+    // never leaks OTP state, hashed or not.
+    isPhoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    phoneOtp: {
+      type: String, // SHA-256 hash of the OTP — never stored in plain text
+      select: false,
+    },
+    phoneOtpExpiry: {
+      type: Date,
+      select: false,
+    },
+    phoneOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    // Server-side resend cooldown — the frontend timer is just UX, this is
+    // what actually stops someone hitting /send-otp in a loop.
+    phoneOtpLastSentAt: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true }
 );
