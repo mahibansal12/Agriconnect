@@ -1,4 +1,5 @@
 // src/components/recommendations/CropRecommendForm.jsx
+import { useState } from 'react';
 
 const SOIL_TYPES = ['Alluvial', 'Black', 'Red', 'Laterite', 'Sandy', 'Loamy', 'Clay'];
 const SEASONS = ['Kharif (Jun-Oct)', 'Rabi (Nov-Mar)', 'Zaid (Mar-Jun)'];
@@ -8,15 +9,45 @@ const STATES = [
   'Tamil Nadu', 'Karnataka', 'West Bengal',
 ];
 
+// India's annual rainfall realistically ranges from near-zero (arid Rajasthan/
+// Ladakh) to ~11,000mm (Mawsynram/Cherrapunji, the wettest places on Earth).
+// 10,000mm comfortably covers every real Indian location while rejecting
+// obviously-mistyped values like "888444844979".
+const RAINFALL_MIN = 0;
+const RAINFALL_MAX = 10000;
+
+const validateRainfall = (raw) => {
+  if (raw === '' || raw === null || raw === undefined) return ''; // optional field
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return 'Enter a valid number.';
+  if (num < RAINFALL_MIN) return 'Rainfall cannot be negative.';
+  if (num > RAINFALL_MAX) return `That's not realistic — enter a value up to ${RAINFALL_MAX.toLocaleString('en-IN')} mm.`;
+  return '';
+};
+
 const CropRecommendForm = ({ onSubmit, loading }) => {
+  const [rainfallError, setRainfallError] = useState('');
+
+  const handleRainfallChange = (e) => {
+    setRainfallError(validateRainfall(e.target.value));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    const rainfallRaw = fd.get('rainfall');
+
+    const err = validateRainfall(rainfallRaw);
+    if (err) {
+      setRainfallError(err);
+      return; // block recommendation generation until corrected
+    }
+
     onSubmit({
       soilType: fd.get('soilType'),
       season: fd.get('season'),
       state: fd.get('state'),
-      rainfall: fd.get('rainfall'),
+      rainfall: rainfallRaw,
       temperature: fd.get('temperature'),
       ph: fd.get('ph'),
     });
@@ -55,8 +86,17 @@ const CropRecommendForm = ({ onSubmit, loading }) => {
           </select>
         </Field>
 
-        <Field label="Annual Rainfall" suffix="mm">
-          <input name="rainfall" type="number" placeholder="800" min="0" />
+        <Field label="Annual Rainfall" suffix="mm" error={rainfallError}>
+          <input
+            name="rainfall"
+            type="number"
+            placeholder="800"
+            min={RAINFALL_MIN}
+            max={RAINFALL_MAX}
+            step="1"
+            onChange={handleRainfallChange}
+            aria-invalid={rainfallError ? 'true' : 'false'}
+          />
         </Field>
 
         <Field label="Avg Temperature" suffix="C">
@@ -174,6 +214,18 @@ const CropRecommendForm = ({ onSubmit, loading }) => {
           background: #fff;
           box-shadow: 0 0 0 4px rgba(22,163,74,0.12);
         }
+        .caf-control-invalid input {
+          border-color: #EF4444 !important;
+          background: #FEF2F2 !important;
+        }
+        .caf-control-invalid input:focus {
+          box-shadow: 0 0 0 4px rgba(239,68,68,0.12) !important;
+        }
+        .caf-field-error {
+          color: #B91C1C;
+          font-size: 12px;
+          font-weight: 700;
+        }
         .caf-suffix {
           position: absolute;
           right: 12px;
@@ -241,14 +293,15 @@ const CropRecommendForm = ({ onSubmit, loading }) => {
   );
 };
 
-function Field({ label, required = false, suffix, children }) {
+function Field({ label, required = false, suffix, error, children }) {
   return (
     <label className="caf-field">
       <span className="caf-label">{label} {required && <em>*</em>}</span>
-      <span className="caf-control">
+      <span className={`caf-control${error ? ' caf-control-invalid' : ''}`}>
         {children}
         {suffix && <span className="caf-suffix">{suffix}</span>}
       </span>
+      {error && <span className="caf-field-error">{error}</span>}
     </label>
   );
 }

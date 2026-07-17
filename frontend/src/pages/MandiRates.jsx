@@ -1,5 +1,5 @@
 // src/pages/MandiRates.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchRates,
@@ -17,6 +17,9 @@ import {
 } from '../redux/slices/mandiSlice';
 import Navbar from '../components/common/Navbar';
 import useSocket from '../hooks/useSocket';
+import { getTrend, getArrivals } from '../utils/mandiDerived';
+import { resolveMandiLocation, haversineDistanceKm, getNearestDistricts } from '../utils/mandiGeo';
+import axiosInstance from '../utils/axiosInstance';
 
 // Modular Sub-Components
 import Hero from '../components/mandi/Hero';
@@ -55,14 +58,19 @@ const DEMO_HISTORY = {
   ],
 };
 
-const getTrend = (crop) => {
-  const seed = (crop.charCodeAt(0) + crop.charCodeAt(crop.length - 1 || 0)) % 7 - 3;
-  const val = seed === 0 ? 1.5 : seed * 1.2;
-  return {
-    value: Math.abs(val).toFixed(1) + '%',
-    isUp: val >= 0
-  };
-};
+// Used only as the candidate pool for "Nearby Mandis" before the user has picked a
+// state/district/mandi (so the section isn't empty on first load). Distances for
+// these are still computed for real via resolveMandiLocation/haversineDistanceKm —
+// only the candidate *names* are a fixed starter list, matching the state/district
+// already used as page-load defaults elsewhere (Rajasthan > Sikar > Sri Madhopur).
+const DEMO_NEARBY_CANDIDATES = [
+  { name: 'Sri Madhopur Mandi', state: 'Rajasthan', district: 'Sikar' },
+  { name: 'Sikar Mandi', state: 'Rajasthan', district: 'Sikar' },
+  { name: 'Neem Ka Thana Mandi', state: 'Rajasthan', district: 'Sikar' },
+  { name: 'Fatehpur Mandi', state: 'Rajasthan', district: 'Sikar' },
+  { name: 'Jaipur Mandi', state: 'Rajasthan', district: 'Jaipur' },
+  { name: 'Bharatpur Mandi', state: 'Rajasthan', district: 'Bharatpur' },
+];
 
 const MandiRates = () => {
   const dispatch = useDispatch();
@@ -160,15 +168,6 @@ const MandiRates = () => {
     }
   }, [reduxMandi, selectedCrop, dispatch]);
 
-  // Fetch comparisons dynamically when comparison config changes
-  useEffect(() => {
-    const targetMandi = reduxMandi || 'Sri Madhopur Mandi';
-    dispatch(compareMandis({
-      commodity: compareCommodity,
-      mandis: [targetMandi, 'Sikar Mandi', 'Jaipur Mandi']
-    }));
-  }, [compareCommodity, reduxMandi, dispatch]);
-
   // Price Trend Chart History mapping
   const chartHistory = history && history.length
     ? history.map((h) => ({ date: h.arrivalDate, price: h.modalPrice }))
@@ -214,32 +213,160 @@ const MandiRates = () => {
     }
   };
 
-  // Highlights calculated values with local table data as fallback
-  const highPriceItem = sourceRates.length
-    ? [...sourceRates].sort((a, b) => b.maxPrice - a.maxPrice)[0]
-    : null;
-  const lowPriceItem = sourceRates.length
-    ? [...sourceRates].sort((a, b) => a.minPrice - b.minPrice)[0]
-    : null;
+  // --- Today's Market Highlights -----------------------------------------
+  // NOTE: the /v1/mandi/highlights endpoint (getTodayHighlights on the backend)
+  // ignores state/district/mandi filters entirely and always aggregates across
+  // every mandi in the DB — that mismatch is exactly why the cards used to show
+  // a commodity/price unrelated to the selected mandi. Since the backend can't
+  // be touched, highlights are instead derived purely from `sourceRates`, i.e.
+  // the exact same mandi-filtered rows already rendered in the table below —
+  // guaranteeing the cards and the table can never disagree.
+  const highlightsComputed = useMemo(() => {
+    if (!sourceRates.length) return null;
 
-  const highCrop = highlights?.highestPrice?.commodityName || highPriceItem?.crop || 'Mustard';
-  const highPrice = highlights?.highestPrice?.maxPrice || highPriceItem?.maxPrice || 7510;
-  const lowCrop = highlights?.lowestPrice?.commodityName || lowPriceItem?.crop || 'Onion';
-  const lowPrice = highlights?.lowestPrice?.minPrice || lowPriceItem?.minPrice || 1120;
+    const withDerived = sourceRates.map((r) => ({
+      ...r,
+      trendInfo: getTrend(r.crop),
+      arrivalsVal: getArrivals(r.crop),
+    }));
+
+    const highest = [...withDerived].sort((a, b) => (b.maxPrice ?? -Infinity) - (a.maxPrice ?? -Infinity))[0];
+    const lowest = [...withDerived].sort((a, b) => (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity))[0];
+    const mostArrivals = [...withDerived].sort((a, b) => b.arrivalsVal - a.arrivalsVal)[0];
+
+    const gainers = withDerived.filter((r) => r.trendInfo.isUp);
+    const topGainer = gainers.length
+      ? [...gainers].sort((a, b) => b.trendInfo.signedValue - a.trendInfo.signedValue)[0]
+      : null;
+
+    return {
+      highest: highest ? { crop: highest.crop, price: highest.maxPrice, change: highest.trendInfo } : null,
+      lowest: lowest ? { crop: lowest.crop, price: lowest.minPrice, change: lowest.trendInfo } : null,
+      mostArrivals: mostArrivals ? { crop: mostArrivals.crop, qty: mostArrivals.arrivalsVal } : null,
+      topGainer: topGainer ? { crop: topGainer.crop, change: topGainer.trendInfo } : null,
+    };
+  }, [sourceRates]);
+
+  // --- Nearby Mandis -------------------------------------------------------
+  // The MandiRate schema has no lat/lng, and there's no "all mandis" endpoint —
+  // only mandis scoped to a chosen state+district (the existing /v1/mandi/mandis
+  // endpoint). So each mandi's position is approximated from its own (real)
+  // state/district via resolveMandiLocation, and ordered by real haversine
+  // distance from the user's actual device location (falling back to the
+  // selected mandi's location if geolocation is denied/unavailable).
+  //
+  // To avoid restricting results to a single district, the candidate pool is
+  // widened to the selected district PLUS its 2-3 nearest real neighbouring
+  // districts (via getNearestDistricts). Those neighbour mandis are fetched
+  // with the exact same existing endpoint the app already uses for the
+  // "Choose Mandi" dropdown — called directly here (not dispatched through
+  // redux) so it doesn't overwrite the dropdown's own `mandis` list, and
+  // cached per district so re-renders/selection changes never re-fetch a
+  // district we've already loaded.
+  const [userCoords, setUserCoords] = useState(null);
+  const [geoStatus, setGeoStatus] = useState('idle'); // idle | granted | denied | unsupported
+  const [neighborDistrictMandis, setNeighborDistrictMandis] = useState({}); // "State|District" -> [{name}]
+
+  useEffect(() => {
+    if (!('geolocation' in navigator)) {
+      setGeoStatus('unsupported');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoStatus('granted');
+      },
+      () => {
+        setGeoStatus('denied');
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
+
+  const effectiveState = reduxState || 'Rajasthan';
+  const effectiveDistrict = reduxDistrict || 'Sikar';
+  const effectiveMandi = reduxMandi || 'Sri Madhopur Mandi';
+
+  const nearestDistricts = useMemo(
+    () => getNearestDistricts(effectiveState, effectiveDistrict, 3),
+    [effectiveState, effectiveDistrict]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    nearestDistricts.forEach(({ state, district }) => {
+      const key = `${state}|${district}`;
+      if (neighborDistrictMandis[key]) return; // already cached — no duplicate request
+      axiosInstance
+        .get('/v1/mandi/mandis', { params: { state, district } })
+        .then(({ data }) => {
+          if (cancelled) return;
+          setNeighborDistrictMandis((prev) => (prev[key] ? prev : { ...prev, [key]: data.data || [] }));
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setNeighborDistrictMandis((prev) => (prev[key] ? prev : { ...prev, [key]: [] }));
+        });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearestDistricts]);
+
+  const nearbyMandis = useMemo(() => {
+    const currentDistrictCandidates = (reduxMandi && mandis?.length)
+      ? mandis.map((m) => ({ name: m.name, state: reduxState, district: reduxDistrict }))
+      : DEMO_NEARBY_CANDIDATES;
+
+    const neighborCandidates = nearestDistricts.flatMap(({ state, district }) => {
+      const list = neighborDistrictMandis[`${state}|${district}`] || [];
+      return list.map((m) => ({ name: m.name, state, district }));
+    });
+
+    const candidates = [...currentDistrictCandidates, ...neighborCandidates];
+    const referenceCoords = userCoords || resolveMandiLocation(effectiveState, effectiveDistrict, effectiveMandi);
+
+    return candidates
+      .filter((c) => c.name !== effectiveMandi)
+      .map((c) => {
+        const loc = resolveMandiLocation(c.state, c.district, c.name);
+        const distanceKm = haversineDistanceKm(referenceCoords, loc);
+        return { name: c.name, district: c.district, distanceKm };
+      })
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, 6);
+  }, [mandis, reduxState, reduxDistrict, reduxMandi, userCoords, effectiveState, effectiveDistrict, effectiveMandi, nearestDistricts, neighborDistrictMandis]);
+
+  // --- Compare Mandis --------------------------------------------------------
+  // Compare against the real nearby mandis computed above instead of a
+  // hardcoded ['Sikar Mandi', 'Jaipur Mandi'] pair.
+  const compareTargets = useMemo(
+    () => [effectiveMandi, ...nearbyMandis.slice(0, 2).map((n) => n.name)],
+    [effectiveMandi, nearbyMandis]
+  );
 
   // Comparison mapped list
   const comparisonList = comparison && comparison.length
-    ? comparison.map((c) => ({
-        name: c.mandi,
-        price: c.modalPrice,
-        trend: getTrend(c.commodityName || 'Wheat').value,
-        isUp: getTrend(c.commodityName || 'Wheat').isUp,
-      }))
-    : [
-        { name: reduxMandi || 'Sri Madhopur Mandi', price: 7510, trend: '↑ 3.4%', isUp: true },
-        { name: 'Sikar Mandi', price: 7380, trend: '↑ 2.8%', isUp: true },
-        { name: 'Jaipur Mandi', price: 7200, trend: '↑ 1.6%', isUp: true },
-      ];
+    ? comparison.map((c) => {
+        const trendInfo = getTrend(c.commodityName || compareCommodity);
+        return {
+          name: c.mandi,
+          price: c.modalPrice,
+          trend: `${trendInfo.isUp ? '↑' : '↓'} ${trendInfo.value}`,
+          isUp: trendInfo.isUp,
+        };
+      })
+    : compareTargets.map((name) => ({ name, price: 'No data', trend: '—', isUp: null }));
+
+  // Fetch comparisons dynamically whenever the crop or the (dynamic) nearby-mandi
+  // targets change, rather than always comparing against hardcoded mandi names.
+  useEffect(() => {
+    if (!compareTargets.length) return;
+    dispatch(compareMandis({
+      commodity: compareCommodity,
+      mandis: compareTargets
+    }));
+  }, [compareCommodity, compareTargets, dispatch]);
 
   return (
     <div style={{
@@ -278,12 +405,8 @@ const MandiRates = () => {
 
         {/* Highlights Section Component */}
         <Highlights
-          highlights={highlights}
+          data={highlightsComputed}
           reduxMandi={reduxMandi}
-          highPrice={highPrice}
-          highCrop={highCrop}
-          lowPrice={lowPrice}
-          lowCrop={lowCrop}
         />
 
         {/* Main Grid Layout */}
@@ -314,6 +437,7 @@ const MandiRates = () => {
               selectedCrop={selectedCrop}
               chartHistory={chartHistory}
               historyLoading={historyLoading}
+              seedKey={`${effectiveMandi}-${selectedCrop}`}
             />
 
             {/* Nearby Mandis */}
@@ -333,14 +457,14 @@ const MandiRates = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {[
-                  { name: 'Sikar Mandi', dist: '22 km' },
-                  { name: 'Neem Ka Thana', dist: '41 km' },
-                  { name: 'Fatehpur Mandi', dist: '55 km' },
-                  { name: 'Jaipur Mandi', dist: '98 km' },
-                ].map(({ name, dist }) => (
+                {nearbyMandis.length === 0 && (
+                  <p style={{ margin: '4px 0', fontSize: '11px', color: '#9ca3af' }}>
+                    No nearby mandis found for this selection.
+                  </p>
+                )}
+                {nearbyMandis.map(({ name, district, distanceKm }) => (
                   <div
-                    key={name}
+                    key={`${name}-${district}`}
                     onClick={() => setTableSearch(name.split(' ')[0])}
                     style={{
                       display: 'flex',
@@ -354,14 +478,26 @@ const MandiRates = () => {
                     onMouseEnter={(e) => { e.currentTarget.style.background = '#f0fdf4'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{name}</span>
+                    <span style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{name}</span>
+                      {district && (
+                        <span style={{ fontSize: '10px', color: '#9ca3af', fontWeight: 600 }}>{district}</span>
+                      )}
+                    </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 700 }}>{dist}</span>
+                      <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 700 }}>
+                        {typeof distanceKm === 'number' ? `${Math.max(1, Math.round(distanceKm))} km` : '—'}
+                      </span>
                       <span className="mandi-dist-arrow" style={{ fontSize: '11px', color: '#16a34a', transition: 'all 0.15s' }}>❯</span>
                     </div>
                   </div>
                 ))}
               </div>
+              {geoStatus === 'denied' && (
+                <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af' }}>
+                  Location access denied — showing distances from {effectiveMandi} instead.
+                </p>
+              )}
             </div>
 
             {/* Market Insights */}

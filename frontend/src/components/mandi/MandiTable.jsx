@@ -1,19 +1,6 @@
 // src/components/mandi/MandiTable.jsx
 import React, { useState } from 'react';
-
-const getTrend = (crop) => {
-  const seed = (crop.charCodeAt(0) + crop.charCodeAt(crop.length - 1 || 0)) % 7 - 3;
-  const val = seed === 0 ? 1.5 : seed * 1.2;
-  return {
-    value: Math.abs(val).toFixed(1) + '%',
-    isUp: val >= 0
-  };
-};
-
-const getArrivals = (crop) => {
-  const seed = (crop.charCodeAt(1) || 5) * 7 % 450 + 80;
-  return seed;
-};
+import { getTrend, getArrivals } from '../../utils/mandiDerived';
 
 const formatTime = (dateVal) => {
   if (!dateVal) return '10:30 AM';
