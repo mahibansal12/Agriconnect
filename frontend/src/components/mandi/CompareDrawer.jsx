@@ -62,7 +62,7 @@ const CompareDrawer = ({
               <strong style={{ fontSize: '16px', fontWeight: 800, color: '#111827' }}>
                 {typeof price === 'number' ? `₹${price.toLocaleString()}` : price}
               </strong>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: isUp ? '#16a34a' : '#ef4444' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: isUp === null || isUp === undefined ? '#9ca3af' : (isUp ? '#16a34a' : '#ef4444') }}>
                 {trend}
               </span>
             </div>

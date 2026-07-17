@@ -3,6 +3,7 @@ import CropRecommendForm from '../../components/recommendations/CropRecommendFor
 import CropResultCard from '../../components/recommendations/CropResultCard';
 import Navbar from '../../components/common/Navbar';
 import axiosInstance from '../../utils/axiosInstance';
+import { rankCrops } from '../../utils/cropRecommendationEngine';
  
 const LOCAL_RECOMMENDATIONS = {
   Alluvial: [
@@ -29,22 +30,6 @@ const getLocalRecommendations = ({ soilType }) => {
   return LOCAL_RECOMMENDATIONS[key] || LOCAL_RECOMMENDATIONS.Alluvial;
 };
  
-const toCropCards = (payload) => {
-  const recommendations = payload?.recommendations ?? payload;
-  if (!Array.isArray(recommendations)) return [];
-  return recommendations.map((crop) => ({
-    name: crop.name ?? crop.cropName,
-    confidence: crop.confidence ?? 85,
-    season: crop.season,
-    waterNeed: crop.waterNeed ?? crop.waterRequirement,
-    duration: crop.duration,
-    avgYield: crop.avgYield ?? crop.expectedYield,
-    marketPrice: crop.marketPrice ?? crop.estimatedProfit,
-    tips: crop.tips ?? [crop.why, payload?.rotationReason].filter(Boolean),
-    emoji: crop.emoji ?? '🌾',
-  }));
-};
- 
 const CropRecommendation = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +40,15 @@ const CropRecommendation = () => {
     setLoading(true);
     setError('');
     setSubmitted(true);
- 
+
+    // The backend /v1/recommend/crop endpoint only accepts previousCrop,
+    // soilType, season and waterAvailability — it has no way to factor in
+    // state, rainfall, temperature or soil pH, and doesn't produce a real
+    // weighted ranking (see cropRecommendationEngine.js for details). Since
+    // the backend can't be changed, the actual displayed ranking always comes
+    // from the frontend engine below, which uses every field the form
+    // collects. The existing backend call is preserved unchanged (same
+    // request, same error handling) so nothing already wired to it breaks.
     try {
       const payload = {
         previousCrop: formData.previousCrop || 'wheat',
@@ -64,10 +57,16 @@ const CropRecommendation = () => {
         waterAvailability: formData.waterAvailability || 'medium',
         landSize: formData.landSize || 1,
       };
-      const { data } = await axiosInstance.post('/v1/recommend/crop', payload);
-      const cards = toCropCards(data.data);
-      setResults(cards.length ? cards : getLocalRecommendations(formData));
+      await axiosInstance.post('/v1/recommend/crop', payload);
     } catch {
+      // Non-fatal: the frontend engine below doesn't depend on this response.
+    }
+
+    try {
+      const ranked = rankCrops(formData);
+      setResults(ranked.length ? ranked : getLocalRecommendations(formData));
+    } catch {
+      setError('Could not generate recommendations. Please check your inputs.');
       setResults(getLocalRecommendations(formData));
     } finally {
       setLoading(false);

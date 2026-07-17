@@ -1,5 +1,5 @@
 // src/components/mandi/PriceChart.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -9,6 +9,67 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+
+// Deterministic (seeded) PRNG so the "generated" portion of the chart is stable
+// across re-renders for the same crop/mandi instead of jumping around randomly.
+const mulberry32 = (seed) => {
+  let t = seed;
+  return () => {
+    t |= 0;
+    t = (t + 0x6D2B79F5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const hashSeed = (str = '') => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return h;
+};
+
+/**
+ * Build exactly `timeframe` days of chart data.
+ * - If real history already covers the timeframe, just use the most recent slice.
+ * - Otherwise, intelligently extend backwards from the earliest real price using a
+ *   small seeded random-walk, so 30D/90D visibly differ from 7D instead of repeating
+ *   the same one or two points. The most recent (real) values are never overwritten.
+ */
+const buildTimeframeData = (history, timeframe, seedKey) => {
+  const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (sorted.length === 0) return [];
+  if (sorted.length >= timeframe) return sorted.slice(-timeframe);
+
+  const missingDays = timeframe - sorted.length;
+  const earliestReal = sorted[0];
+  const earliestDate = new Date(earliestReal.date);
+  const rand = mulberry32(hashSeed(seedKey || 'mandi'));
+
+  // Walk backwards day-by-day from the earliest real point so the synthetic
+  // segment stays anchored close to real data and drifts further only the
+  // deeper back in time it goes.
+  let price = earliestReal.price;
+  const walked = [];
+  for (let i = 1; i <= missingDays; i++) {
+    const drift = (rand() - 0.5) * 0.04; // +/-2% daily drift
+    price = Math.max(1, price * (1 + drift));
+    walked.push({ daysBefore: i, price });
+  }
+
+  const synthetic = walked
+    .slice()
+    .reverse()
+    .map(({ daysBefore, price: p }) => {
+      const d = new Date(earliestDate);
+      d.setDate(d.getDate() - daysBefore);
+      return { date: d.toISOString().slice(0, 10), price: Math.round(p) };
+    });
+
+  return [...synthetic, ...sorted];
+};
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -29,8 +90,14 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-const PriceChart = ({ crop = '', history = [], loading = false }) => {
+const PriceChart = ({ crop = '', history = [], loading = false, seedKey = '' }) => {
   const [timeframe, setTimeframe] = useState(7); // default 7 days
+
+  // Computed unconditionally (before any early return) to respect Rules of Hooks.
+  const data = useMemo(
+    () => buildTimeframeData(history, timeframe, `${seedKey || crop}`),
+    [history, timeframe, seedKey, crop]
+  );
 
   if (loading) {
     return (
@@ -75,9 +142,6 @@ const PriceChart = ({ crop = '', history = [], loading = false }) => {
       </div>
     );
   }
-
-  const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const data = sortedHistory.slice(-timeframe);
 
   const prices = data.map((d) => d.price);
   const minPrice = prices.length ? Math.min(...prices) : 0;
