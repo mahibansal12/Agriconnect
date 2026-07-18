@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import ShopCard from "../components/shop-finder/ShopCard";
 import ShopMap from "../components/shop-finder/ShopMap";
@@ -15,12 +15,8 @@ const categoryMeta = {
   general:    { label: "General",     icon: "🏪", activeBg: "linear-gradient(135deg,#4c1d95,#7c3aed)", activeText: "#fff", chip: "#7c3aed" },
 };
 
-const howItWorks = [
-  { icon: "🛡️", title: "Verified Shops", desc: "Every shop is verified before listing." },
-  { icon: "🌱", title: "Wide Range",    desc: "Seeds, fertilizers, pesticides & equipment." },
-  { icon: "💰", title: "Best Prices",   desc: "Compare prices and get the best deals." },
-  { icon: "⚡", title: "Save Time",     desc: "Find everything in one place, fast." },
-];
+
+
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -34,21 +30,64 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
 }
 
-function ShopFinder() {
-  const [userLocation, setUserLocation]     = useState(null);
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeShop, setActiveShop]         = useState(null);
-  const [search, setSearch]                 = useState("");
-  const [shops, setShops]                   = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [error, setError]                   = useState(null);
+// ── Nominatim geocoding (free, no API key) ────────────────────────────────
+async function geocodeLocation(query) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=in&addressdetails=1`;
+  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  const data = await res.json();
+  return data.map((d) => ({
+    displayName: d.display_name,
+    shortName: [d.address?.city || d.address?.town || d.address?.village || d.address?.county, d.address?.state].filter(Boolean).join(", "),
+    lat: parseFloat(d.lat),
+    lon: parseFloat(d.lon),
+  }));
+}
 
-  // ── Fetch shops from database ───────────────────────────────────────────
-  const fetchShops = async () => {
+function ShopFinder() {
+  const [userLocation, setUserLocation]         = useState(null);
+  const [locationLoading, setLocationLoading]   = useState(true);
+  const [categoryFilter, setCategoryFilter]     = useState("all");
+  const [activeShop, setActiveShop]             = useState(null);
+
+  // ── Location search state ─────────────────────────────────────────────────
+  const [locationQuery, setLocationQuery]       = useState("");   // text in search box
+  const [suggestions, setSuggestions]           = useState([]);   // Nominatim suggestions
+  const [suggestLoading, setSuggestLoading]     = useState(false);
+  const [searchedLocation, setSearchedLocation] = useState(null); // { lat, lon, name } after geocoding
+  const [showSuggestions, setShowSuggestions]   = useState(false);
+  const suggestTimer                            = useRef(null);
+  const searchRef                               = useRef(null);
+
+  // ── Secondary name/district filter (applied on top of fetched shops) ──────
+  const [nameFilter, setNameFilter]             = useState("");
+
+  const [shops, setShops]                       = useState([]);
+  const [loading, setLoading]                   = useState(false);
+  const [error, setError]                       = useState(null);
+  const [radiusKm, setRadiusKm]                 = useState(15);
+
+  // ── Fetch nearby shops using any lat/lon ────────────────────────────────
+  const fetchNearbyShops = useCallback(async (lat, lon, radius = radiusKm) => {
     try {
       setLoading(true);
       setError(null);
-      // GET /api/v1/shops — public route
+      const maxDistance = radius * 1000;
+      const res = await axiosInstance.get(
+        `/v1/shops/nearby?latitude=${lat}&longitude=${lon}&maxDistance=${maxDistance}`
+      );
+      setShops(res.data.data || []);
+    } catch (err) {
+      console.error("Nearby shops fetch error:", err);
+      setError("Failed to load nearby shops. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [radiusKm]);
+
+  const fetchAllShops = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
       const res = await axiosInstance.get("/v1/shops");
       setShops(res.data.data || []);
     } catch (err) {
@@ -57,30 +96,125 @@ function ShopFinder() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // ── GPS detection on mount ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationLoading(false);
+      fetchAllShops();
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation([latitude, longitude]);
+        setLocationLoading(false);
+        fetchNearbyShops(latitude, longitude, radiusKm);
+      },
+      () => {
+        setUserLocation(null);
+        setLocationLoading(false);
+        fetchAllShops();
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Radius change (re-fetch for active location) ──────────────────────────
+  const handleRadiusChange = (newRadius) => {
+    setRadiusKm(newRadius);
+    const loc = searchedLocation
+      ? [searchedLocation.lat, searchedLocation.lon]
+      : userLocation;
+    if (loc) fetchNearbyShops(loc[0], loc[1], newRadius);
   };
 
-  useEffect(() => {
-    fetchShops();
-  }, []);
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-        () => setUserLocation(null)
-      );
+  // ── Debounced Nominatim suggestions while typing ──────────────────────────
+  const handleLocationInput = (val) => {
+    setLocationQuery(val);
+    clearTimeout(suggestTimer.current);
+    if (val.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
+    suggestTimer.current = setTimeout(async () => {
+      setSuggestLoading(true);
+      try {
+        const results = await geocodeLocation(val);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+      } catch { /* ignore */ }
+      finally { setSuggestLoading(false); }
+    }, 400);
+  };
+
+  // ── Pick a suggestion → geocode → fetch shops ────────────────────────────
+  const handleSuggestionSelect = (suggestion) => {
+    setLocationQuery(suggestion.shortName || suggestion.displayName);
+    setSearchedLocation({ lat: suggestion.lat, lon: suggestion.lon, name: suggestion.shortName || suggestion.displayName });
+    setShowSuggestions(false);
+    setNameFilter("");
+    fetchNearbyShops(suggestion.lat, suggestion.lon, radiusKm);
+  };
+
+  // ── Enter key or search button ────────────────────────────────────────────
+  const handleSearchSubmit = async () => {
+    if (!locationQuery.trim()) return;
+    setSuggestLoading(true);
+    setShowSuggestions(false);
+    try {
+      const results = await geocodeLocation(locationQuery);
+      if (results.length > 0) {
+        handleSuggestionSelect(results[0]);
+      } else {
+        setError(`No location found for "${locationQuery}". Try a city name like "Delhi" or "Lucknow".`);
+      }
+    } catch {
+      setError("Location search failed. Please try again.");
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
+
+  // ── Reset to GPS location ─────────────────────────────────────────────────
+  const resetToMyLocation = () => {
+    setSearchedLocation(null);
+    setLocationQuery("");
+    setNameFilter("");
+    if (userLocation) fetchNearbyShops(userLocation[0], userLocation[1], radiusKm);
+    else fetchAllShops();
+  };
+
+  // ── Close suggestions on outside click ───────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ── Client-side name/district filter on top of fetched list ─────────────
   const filteredShops = shops.filter((shop) => {
     const matchCat = categoryFilter === "all" || shop.category === categoryFilter;
-    const matchSearch =
-      !search ||
-      shop.name.toLowerCase().includes(search.toLowerCase()) ||
-      shop.address.toLowerCase().includes(search.toLowerCase()) ||
-      shop.district.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    const matchName =
+      !nameFilter ||
+      shop.name.toLowerCase().includes(nameFilter.toLowerCase()) ||
+      (shop.address || "").toLowerCase().includes(nameFilter.toLowerCase()) ||
+      (shop.district || "").toLowerCase().includes(nameFilter.toLowerCase());
+    return matchCat && matchName;
   });
+
+  const isLocating   = locationLoading;
+  const hasLocation  = !!userLocation;
+  const activeCenter = searchedLocation
+    ? [searchedLocation.lat, searchedLocation.lon]
+    : userLocation;
 
   return (
     <div style={{
@@ -126,29 +260,91 @@ function ShopFinder() {
             </div>
           </div>
 
-          {/* Right: search */}
-          <div style={{ position:"relative", width:"340px", flexShrink:0 }}>
-            <span style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontSize:"15px" }}>🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search shops, products or locations..."
-              style={{
-                width:"100%", boxSizing:"border-box",
-                paddingLeft:"44px", paddingRight:"16px", paddingTop:"13px", paddingBottom:"13px",
-                borderRadius:"14px",
-                background:"rgba(255,255,255,0.10)",
-                border:"1.5px solid rgba(134,239,172,0.35)",
-                color:"#fff",
-                fontSize:"13px",
-                outline:"none",
-                backdropFilter:"blur(8px)",
-                transition:"border 0.2s",
-              }}
-              onFocus={e => e.target.style.border = "1.5px solid rgba(134,239,172,0.75)"}
-              onBlur={e => e.target.style.border = "1.5px solid rgba(134,239,172,0.35)"}
-            />
+          {/* Right: location search box */}
+          <div ref={searchRef} style={{ position:"relative", width:"380px", flexShrink:0 }}>
+            <div style={{ display:"flex", gap:"8px" }}>
+              {/* Input */}
+              <div style={{ position:"relative", flex:1 }}>
+                <span style={{ position:"absolute", left:"14px", top:"50%", transform:"translateY(-50%)", fontSize:"15px", pointerEvents:"none" }}>
+                  {suggestLoading ? "⏳" : "🔍"}
+                </span>
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => handleLocationInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  placeholder="Search city or location…"
+                  style={{
+                    width:"100%", boxSizing:"border-box",
+                    paddingLeft:"42px", paddingRight:"12px",
+                    paddingTop:"12px", paddingBottom:"12px",
+                    borderRadius:"12px",
+                    background:"rgba(255,255,255,0.10)",
+                    border:"1.5px solid rgba(134,239,172,0.35)",
+                    color:"#fff",
+                    fontSize:"13px",
+                    outline:"none",
+                    backdropFilter:"blur(8px)",
+                  }}
+                />
+              </div>
+              {/* Search button */}
+              <button
+                onClick={handleSearchSubmit}
+                style={{
+                  padding:"0 18px",
+                  borderRadius:"12px",
+                  background:"linear-gradient(135deg,#22c55e,#16a34a)",
+                  color:"#fff",
+                  border:"none",
+                  cursor:"pointer",
+                  fontSize:"13px",
+                  fontWeight:700,
+                  whiteSpace:"nowrap",
+                  boxShadow:"0 2px 8px rgba(22,163,74,0.4)",
+                }}
+              >
+                Search
+              </button>
+            </div>
+
+            {/* Autocomplete suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div style={{
+                position:"absolute", top:"calc(100% + 6px)", left:0, right:0,
+                background:"#fff", borderRadius:"12px",
+                boxShadow:"0 8px 30px rgba(0,0,0,0.18)",
+                border:"1.5px solid #d1fae5",
+                zIndex:999, overflow:"hidden",
+              }}>
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSuggestionSelect(s)}
+                    style={{
+                      display:"block", width:"100%", textAlign:"left",
+                      padding:"11px 16px",
+                      background:"transparent",
+                      border:"none",
+                      borderBottom: i < suggestions.length - 1 ? "1px solid #f0fdf4" : "none",
+                      cursor:"pointer",
+                      fontSize:"13px",
+                      color:"#111827",
+                      transition:"background 0.1s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f0fdf4"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <span style={{ marginRight:"8px" }}>📍</span>
+                    <strong>{s.shortName}</strong>
+                    <span style={{ fontSize:"11px", color:"#9ca3af", marginLeft:"6px", display:"block", paddingLeft:"22px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      {s.displayName}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -160,9 +356,9 @@ function ShopFinder() {
         }}>
           <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"10px 48px", display:"flex", gap:"36px", alignItems:"center" }}>
             {[
-              { val: loading ? "—" : shops.length, label: "Listed Shops" },
+              { val: loading || isLocating ? "—" : shops.length, label: "Nearby Shops" },
               { val: "5", label: "Categories" },
-              { val: "Jaipur", label: "Serving" },
+              { val: hasLocation ? `${radiusKm} km` : "—", label: "Search Radius" },
               { val: "Free", label: "Directory Access" },
             ].map(s => (
               <div key={s.label} style={{ display:"flex", alignItems:"center", gap:"8px" }}>
@@ -177,11 +373,97 @@ function ShopFinder() {
       {/* ── Body ── */}
       <div style={{ maxWidth:"1440px", margin:"0 auto", padding:"28px 48px 48px" }}>
 
+        {/* Location status bar */}
+        <div style={{
+          marginBottom:"18px",
+          padding:"12px 18px",
+          borderRadius:"12px",
+          background: searchedLocation ? "linear-gradient(135deg,#eff6ff,#dbeafe)" : hasLocation ? "linear-gradient(135deg,#f0fdf4,#dcfce7)" : isLocating ? "linear-gradient(135deg,#fffbeb,#fef3c7)" : "#f9fafb",
+          border: `1.5px solid ${searchedLocation ? "#93c5fd" : hasLocation ? "#86efac" : isLocating ? "#fbbf24" : "#e5e7eb"}`,
+          display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px",
+          flexWrap:"wrap",
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"10px", flex:1, minWidth:0 }}>
+            <span style={{ fontSize:"18px", flexShrink:0 }}>
+              {isLocating ? "⏳" : searchedLocation ? "🔍" : hasLocation ? "📍" : "⚠️"}
+            </span>
+            <div style={{ minWidth:0 }}>
+              <span style={{ fontSize:"13px", fontWeight:600, color: searchedLocation ? "#1d4ed8" : hasLocation ? "#166534" : isLocating ? "#92400e" : "#374151" }}>
+                {isLocating
+                  ? "Detecting your location…"
+                  : searchedLocation
+                    ? `Showing shops near "${searchedLocation.name}" within ${radiusKm} km`
+                    : hasLocation
+                      ? `Your location detected — showing shops within ${radiusKm} km`
+                      : "Location unavailable — showing all listed shops"}
+              </span>
+              {/* Name filter pill */}
+              <div style={{ marginTop:"4px", display:"flex", alignItems:"center", gap:"8px" }}>
+                <span style={{ fontSize:"11px", color:"#6b7280" }}>Filter by name:</span>
+                <input
+                  type="text"
+                  value={nameFilter}
+                  onChange={e => setNameFilter(e.target.value)}
+                  placeholder="e.g. Beej, Krishi…"
+                  style={{
+                    padding:"3px 10px", borderRadius:"999px",
+                    border:"1.5px solid #d1fae5",
+                    fontSize:"11px", outline:"none",
+                    width:"130px",
+                  }}
+                />
+                {searchedLocation && (
+                  <button
+                    onClick={resetToMyLocation}
+                    style={{
+                      padding:"3px 10px", borderRadius:"999px",
+                      background:"#dbeafe", color:"#1d4ed8",
+                      border:"1.5px solid #93c5fd",
+                      fontSize:"11px", fontWeight:700,
+                      cursor:"pointer",
+                    }}
+                  >
+                    ↩ Back to my location
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Radius selector */}
+          {(hasLocation || searchedLocation) && (
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
+              <span style={{ fontSize:"12px", color:"#4b7a5c", fontWeight:600 }}>Radius:</span>
+              {[5, 10, 15, 25, 50].map(km => (
+                <button
+                  key={km}
+                  onClick={() => handleRadiusChange(km)}
+                  style={{
+                    padding:"4px 12px",
+                    borderRadius:"999px",
+                    fontSize:"12px", fontWeight:700,
+                    cursor:"pointer",
+                    border: radiusKm === km ? "1.5px solid #16a34a" : "1.5px solid #d1fae5",
+                    background: radiusKm === km ? "#16a34a" : "#fff",
+                    color: radiusKm === km ? "#fff" : "#166534",
+                    transition:"all 0.15s",
+                  }}
+                >
+                  {km} km
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Error banner */}
         {error && (
           <div style={{ marginBottom:"24px", padding:"14px 20px", borderRadius:"12px", background:"#fee2e2", border:"1.5px solid #fca5a5", color:"#991b1b", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
             <span style={{ fontWeight:600, fontSize:"14px" }}>⚠️ {error}</span>
-            <button onClick={fetchShops} style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}>
+            <button
+              onClick={() => userLocation ? fetchNearbyShops(userLocation[0], userLocation[1]) : fetchAllShops()}
+              style={{ padding:"6px 14px", borderRadius:"8px", background:"#991b1b", color:"#fff", border:"none", cursor:"pointer", fontSize:"12px", fontWeight:700 }}
+            >
               Retry
             </button>
           </div>
@@ -230,7 +512,7 @@ function ShopFinder() {
               padding:"6px 16px", borderRadius:"999px",
               fontSize:"12px", fontWeight:700,
             }}>
-              📍 {loading ? "..." : filteredShops.length} shop{filteredShops.length !== 1 ? "s" : ""} found
+              📍 {loading || isLocating ? "..." : filteredShops.length} shop{filteredShops.length !== 1 ? "s" : ""} found
             </span>
           </div>
         </div>
@@ -238,9 +520,9 @@ function ShopFinder() {
         {/* ── Main Grid: Map + Cards ── */}
         <div style={{
           display:"grid",
-          gridTemplateColumns:"1fr 420px",
-          gap:"24px",
-          alignItems:"start",
+          gridTemplateColumns: "1fr 400px",
+          gap: "24px",
+          alignItems: "stretch",
         }}>
 
           {/* ── Map Panel ── */}
@@ -277,13 +559,14 @@ function ShopFinder() {
                 padding:"4px 12px", borderRadius:"999px",
                 boxShadow:"0 1px 4px rgba(0,0,0,0.05)",
               }}>
-                {loading ? "..." : filteredShops.length} pins
+                {loading || isLocating ? "..." : filteredShops.length} pins
               </span>
             </div>
 
             <ShopMap
               shops={filteredShops}
               userLocation={userLocation}
+              searchedCenter={searchedLocation ? [searchedLocation.lat, searchedLocation.lon] : null}
               selectedShop={activeShop}
             />
 
@@ -295,20 +578,28 @@ function ShopFinder() {
               display:"flex", alignItems:"center", gap:"16px",
             }}>
               <span style={{ fontSize:"11px", color:"#6b7280" }}>📡 Powered by OpenStreetMap</span>
-              {userLocation && (
+              {isLocating && (
+                <span style={{ fontSize:"11px", color:"#92400e", fontWeight:600, marginLeft:"auto" }}>⏳ Getting location…</span>
+              )}
+              {!isLocating && hasLocation && (
                 <span style={{ fontSize:"11px", color:"#16a34a", fontWeight:600, marginLeft:"auto" }}>✅ Location detected</span>
+              )}
+              {!isLocating && !hasLocation && (
+                <span style={{ fontSize:"11px", color:"#9ca3af", fontWeight:600, marginLeft:"auto" }}>📡 Real data via OpenStreetMap</span>
               )}
             </div>
           </div>
 
           {/* ── Shop Cards Panel ── */}
           <div style={{
-            borderRadius:"22px",
-            border:"2.5px solid #86efac",
-            boxShadow:"0 8px 40px rgba(0,0,0,0.10)",
-            background:"#fff",
-            overflow:"hidden",
-            display:"flex", flexDirection:"column",
+            borderRadius: "22px",
+            border: "2.5px solid #86efac",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
+            background: "#fff",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            height: "540px",  /* Fixed height so scroll area fills it */
           }}>
             {/* Panel header */}
             <div style={{
@@ -327,6 +618,7 @@ function ShopFinder() {
                 <div style={{ fontWeight:800, color:"#14532d", fontSize:"15px" }}>Shops Near You</div>
                 <div style={{ fontSize:"11px", color:"#4b7a5c", marginTop:"1px" }}>
                   {categoryFilter === "all" ? "All categories" : categoryMeta[categoryFilter].label}
+                  {hasLocation ? ` • within ${radiusKm} km` : ""}
                 </div>
               </div>
               <div style={{
@@ -335,47 +627,72 @@ function ShopFinder() {
                 padding:"4px 12px", borderRadius:"999px",
                 boxShadow:"0 2px 8px rgba(22,163,74,0.35)",
               }}>
-                {loading ? "..." : filteredShops.length}
+                {loading || isLocating ? "..." : filteredShops.length}
               </div>
             </div>
 
-            {/* Scroll area */}
+            {/* Scroll area — block flow so cards render at natural height */}
             <div style={{
-              maxHeight:"490px", overflowY:"auto",
-              padding:"16px", display:"flex", flexDirection:"column", gap:"14px",
-              scrollbarWidth:"thin", scrollbarColor:"#86efac #f0fdf4",
+              flex: 1,
+              overflowY: "scroll",
+              padding: "14px",
+              scrollbarWidth: "auto",
+              scrollbarColor: "#86efac #f0fdf4",
             }}>
-              {loading ? (
+              {loading || isLocating ? (
                 [1, 2, 3].map(n => (
-                  <div key={n} style={{ background: "#fff", borderRadius: "18px", padding: "20px", border: "1.5px solid #d1fae5" }} className="animate-pulse">
-                    <div style={{ height: "16px", background: "#f0fdf4", width: "60%", marginBottom: "10px", borderRadius: "8px" }} />
-                    <div style={{ height: "12px", background: "#f0fdf4", width: "80%", marginBottom: "6px", borderRadius: "8px" }} />
-                    <div style={{ height: "12px", background: "#f0fdf4", width: "40%", borderRadius: "8px" }} />
+                  <div key={n} style={{ background: "#fff", borderRadius: "18px", padding: "20px", border: "1.5px solid #d1fae5" }}>
+                    <div style={{ height: "16px", background: "#f0fdf4", width: "60%", marginBottom: "10px", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+                    <div style={{ height: "12px", background: "#f0fdf4", width: "80%", marginBottom: "6px", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+                    <div style={{ height: "12px", background: "#f0fdf4", width: "40%", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
                   </div>
                 ))
               ) : filteredShops.length === 0 ? (
                 <div style={{ textAlign:"center", padding:"60px 20px", color:"#9ca3af" }}>
                   <div style={{ fontSize:"48px", marginBottom:"10px" }}>🔍</div>
-                  <p style={{ fontSize:"14px", fontWeight:600, color:"#6b7280" }}>No shops found</p>
-                  <p style={{ fontSize:"12px", color:"#9ca3af", marginTop:"4px" }}>Try a different category or search term</p>
+                  <p style={{ fontSize:"14px", fontWeight:600, color:"#6b7280" }}>No shops found nearby</p>
+                  <p style={{ fontSize:"12px", color:"#9ca3af", marginTop:"4px" }}>
+                    {hasLocation
+                      ? `Try increasing the search radius (currently ${radiusKm} km)`
+                      : "Try a different category or search term"}
+                  </p>
+                  {hasLocation && radiusKm < 50 && (
+                    <button
+                      onClick={() => handleRadiusChange(radiusKm === 5 ? 10 : radiusKm === 10 ? 15 : radiusKm === 15 ? 25 : 50)}
+                      style={{
+                        marginTop:"14px",
+                        padding:"8px 20px",
+                        borderRadius:"999px",
+                        background:"#16a34a",
+                        color:"#fff",
+                        border:"none",
+                        cursor:"pointer",
+                        fontSize:"13px",
+                        fontWeight:700,
+                      }}
+                    >
+                      Expand to {radiusKm === 5 ? 10 : radiusKm === 10 ? 15 : radiusKm === 15 ? 25 : 50} km
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredShops.map((shop, idx) => (
-                  <ShopCard
-                    key={shop._id}
-                    shop={shop}
-                    index={idx}
-                    isActive={activeShop?._id === shop._id}
-                    onSelect={setActiveShop}
-                    distance={
-                      userLocation
-                        ? getDistanceKm(
-                            userLocation[0], userLocation[1],
-                            shop.location.coordinates[1], shop.location.coordinates[0]
-                          )
-                        : null
-                    }
-                  />
+                  <div key={shop._id} style={{ marginBottom: "12px" }}>
+                    <ShopCard
+                      shop={shop}
+                      index={idx}
+                      isActive={activeShop?._id === shop._id}
+                      onSelect={setActiveShop}
+                      distance={
+                        userLocation
+                          ? getDistanceKm(
+                              userLocation[0], userLocation[1],
+                              shop.location.coordinates[1], shop.location.coordinates[0]
+                            )
+                          : null
+                      }
+                    />
+                  </div>
                 ))
               )}
             </div>
@@ -394,39 +711,6 @@ function ShopFinder() {
           </div>
         </div>
 
-        {/* ── Info Features Grid ── */}
-        <div style={{
-          marginTop:"36px",
-          display:"grid",
-          gridTemplateColumns:"repeat(4,1fr)",
-          gap:"20px",
-        }}>
-          {howItWorks.map((step) => (
-            <div
-              key={step.title}
-              style={{
-                background:"#fff",
-                borderRadius:"16px",
-                border:"2px solid #d1fae5",
-                boxShadow:"0 4px 16px rgba(22,163,74,0.06)",
-                padding:"18px 18px 20px",
-              }}
-            >
-              <div style={{
-                width:"40px", height:"40px",
-                background:"#f0fdf4",
-                border:"1.5px solid #86efac",
-                borderRadius:"12px",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:"18px", marginBottom:"12px",
-              }}>
-                {step.icon}
-              </div>
-              <p style={{ margin:0, fontWeight:700, color:"#14532d", fontSize:"13.5px" }}>{step.title}</p>
-              <p style={{ margin:"6px 0 0", color:"#4b7a5c", fontSize:"12px", lineHeight:1.6 }}>{step.desc}</p>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

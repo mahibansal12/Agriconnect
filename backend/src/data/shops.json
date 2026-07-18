@@ -1,0 +1,183 @@
+[
+  { "name": "Ram Krishi Beej Kendra", "ownerName": "Ramesh Kumar", "phone": "9415123456", "address": "Mumfordganj Market, Civil Lines", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "seeds", "latitude": 25.4420, "longitude": 81.8510 },
+  { "name": "Shiv Agro Fertilizer Store", "ownerName": "Shiv Shankar Gupta", "phone": "9839234567", "address": "Chowk Bazar, Prayagraj", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "fertilizer", "latitude": 25.4280, "longitude": 81.8640 },
+  { "name": "Kisan Seva Kendra Prayagraj", "ownerName": "Manoj Yadav", "phone": "9935345678", "address": "Zero Road, Prayagraj", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "general", "latitude": 25.4460, "longitude": 81.8340 },
+  { "name": "Bharat Pesticide Center", "ownerName": "Suresh Verma", "phone": "9415456789", "address": "Kareli Area, Prayagraj", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "pesticide", "latitude": 25.4190, "longitude": 81.8710 },
+  { "name": "Modern Farm Equipment Prayagraj", "ownerName": "Anil Singh", "phone": "9935567890", "address": "Naini Industrial Area, Prayagraj", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "equipment", "latitude": 25.3960, "longitude": 81.9010 },
+  { "name": "Pawan Agro Kendra", "ownerName": "Pawan Kumar Yadav", "phone": "9554112233", "address": "Tagore Town, Prayagraj", "state": "Uttar Pradesh", "district": "Prayagraj", "category": "seeds", "latitude": 25.4520, "longitude": 81.8430 },
+
+  { "name": "Lucknow Kisan Beej Bhandar", "ownerName": "Vijay Sharma", "phone": "9415678901", "address": "Aliganj Market, Lucknow", "state": "Uttar Pradesh", "district": "Lucknow", "category": "seeds", "latitude": 26.8610, "longitude": 80.9560 },
+  { "name": "UP Agro Fertilizer Store", "ownerName": "Dinesh Kumar", "phone": "9839789012", "address": "Hazratganj, Lucknow", "state": "Uttar Pradesh", "district": "Lucknow", "category": "fertilizer", "latitude": 26.8467, "longitude": 80.9462 },
+  { "name": "Krishi Rasayan Kendra Lucknow", "ownerName": "Rakesh Pandey", "phone": "9415890123", "address": "Chowk, Lucknow", "state": "Uttar Pradesh", "district": "Lucknow", "category": "pesticide", "latitude": 26.8380, "longitude": 80.9350 },
+  { "name": "Modern Agri Equipment Lucknow", "ownerName": "Santosh Yadav", "phone": "9935901234", "address": "Alambagh, Lucknow", "state": "Uttar Pradesh", "district": "Lucknow", "category": "equipment", "latitude": 26.8270, "longitude": 80.9270 },
+
+  { "name": "Kashi Krishi Seva Kendra", "ownerName": "Shivnath Mishra", "phone": "9415201122", "address": "Sigra Market, Varanasi", "state": "Uttar Pradesh", "district": "Varanasi", "category": "general", "latitude": 25.3210, "longitude": 82.9800 },
+  { "name": "Ganga Beej Bhandar", "ownerName": "Vijay Kumar Gupta", "phone": "9839302233", "address": "Maidagin, Varanasi", "state": "Uttar Pradesh", "district": "Varanasi", "category": "seeds", "latitude": 25.3100, "longitude": 82.9700 },
+  { "name": "Varanasi Khad Urvarak Kendra", "ownerName": "Umesh Yadav", "phone": "9935403344", "address": "Lanka, Varanasi", "state": "Uttar Pradesh", "district": "Varanasi", "category": "fertilizer", "latitude": 25.2820, "longitude": 82.9900 },
+  { "name": "BHU Agro Pesticide Store", "ownerName": "Pradeep Tiwari", "phone": "9454504455", "address": "Assi Road, Varanasi", "state": "Uttar Pradesh", "district": "Varanasi", "category": "pesticide", "latitude": 25.2650, "longitude": 82.9980 },
+
+  { "name": "Kanpur Krishi Kendra", "ownerName": "Mahesh Patel", "phone": "9415605566", "address": "Naveen Market, Kanpur", "state": "Uttar Pradesh", "district": "Kanpur", "category": "general", "latitude": 26.4600, "longitude": 80.3420 },
+  { "name": "Jai Kisan Beej Store", "ownerName": "Rajeev Singh", "phone": "9839706677", "address": "Birhana Road, Kanpur", "state": "Uttar Pradesh", "district": "Kanpur", "category": "seeds", "latitude": 26.4380, "longitude": 80.3220 },
+  { "name": "Swadeshi Fertilizer Depot Kanpur", "ownerName": "Vinod Sharma", "phone": "9935807788", "address": "Swaroop Nagar, Kanpur", "state": "Uttar Pradesh", "district": "Kanpur", "category": "fertilizer", "latitude": 26.4700, "longitude": 80.3550 },
+  { "name": "Kanpur Yantra Bhandar", "ownerName": "Arun Kumar", "phone": "9554908899", "address": "Kidwai Nagar, Kanpur", "state": "Uttar Pradesh", "district": "Kanpur", "category": "equipment", "latitude": 26.4420, "longitude": 80.3600 },
+
+  { "name": "Agra Kisan Seva Kendra", "ownerName": "Narendra Singh", "phone": "9415109900", "address": "Sanjay Place, Agra", "state": "Uttar Pradesh", "district": "Agra", "category": "general", "latitude": 27.1800, "longitude": 78.0150 },
+  { "name": "Brij Krishi Beej Bhandar", "ownerName": "Sunil Sharma", "phone": "9839200011", "address": "Kamla Nagar, Agra", "state": "Uttar Pradesh", "district": "Agra", "category": "seeds", "latitude": 27.1880, "longitude": 77.9900 },
+  { "name": "Agra Fertilizer Kendra", "ownerName": "Ramesh Gupta", "phone": "9415311122", "address": "Vijay Nagar, Agra", "state": "Uttar Pradesh", "district": "Agra", "category": "fertilizer", "latitude": 27.1650, "longitude": 78.0300 },
+
+  { "name": "Delhi Agri Seed House", "ownerName": "Harpal Singh", "phone": "9811122334", "address": "Azadpur Mandi, Delhi", "state": "Delhi", "district": "North Delhi", "category": "seeds", "latitude": 28.7200, "longitude": 77.1950 },
+  { "name": "Capital Fertilizer Store Delhi", "ownerName": "Suresh Malik", "phone": "9810233445", "address": "Mehrauli, Delhi", "state": "Delhi", "district": "South Delhi", "category": "fertilizer", "latitude": 28.5300, "longitude": 77.1850 },
+  { "name": "Delhi Krishi Yantra Bhandar", "ownerName": "Rajender Kumar", "phone": "9818344556", "address": "Tilak Nagar, Delhi", "state": "Delhi", "district": "West Delhi", "category": "equipment", "latitude": 28.6350, "longitude": 77.0950 },
+  { "name": "East Delhi Kisan Kendra", "ownerName": "Arvind Yadav", "phone": "9899455667", "address": "Shahdara, Delhi", "state": "Delhi", "district": "East Delhi", "category": "general", "latitude": 28.6700, "longitude": 77.2880 },
+  { "name": "Najafgarh Agro Store", "ownerName": "Balbir Singh", "phone": "9811566778", "address": "Najafgarh Market, Delhi", "state": "Delhi", "district": "Southwest Delhi", "category": "pesticide", "latitude": 28.6080, "longitude": 76.9800 },
+
+  { "name": "Mumbai Agro Seeds Center", "ownerName": "Sudhir Patil", "phone": "9820112233", "address": "Dadar Market, Mumbai", "state": "Maharashtra", "district": "Mumbai", "category": "seeds", "latitude": 19.0200, "longitude": 72.8440 },
+  { "name": "Thane Krishi Kendra", "ownerName": "Ganesh Deshmukh", "phone": "9821223344", "address": "Thane West, Mumbai", "state": "Maharashtra", "district": "Thane", "category": "fertilizer", "latitude": 19.2183, "longitude": 72.9781 },
+  { "name": "Vasai Farm Supplies", "ownerName": "Pramod Nair", "phone": "9822334455", "address": "Vasai East Market", "state": "Maharashtra", "district": "Palghar", "category": "general", "latitude": 19.3700, "longitude": 72.8100 },
+  { "name": "Panvel Agri Equipment Hub", "ownerName": "Santosh Rane", "phone": "9823445566", "address": "Panvel Market", "state": "Maharashtra", "district": "Raigad", "category": "equipment", "latitude": 18.9894, "longitude": 73.1175 },
+
+  { "name": "Pune Krishi Seva Kendra", "ownerName": "Vilas Deshmukh", "phone": "9822556677", "address": "Shivajinagar Market, Pune", "state": "Maharashtra", "district": "Pune", "category": "general", "latitude": 18.5304, "longitude": 73.8567 },
+  { "name": "Pune Beej Bhandar", "ownerName": "Dattatray Patil", "phone": "9823667788", "address": "Market Yard, Pune", "state": "Maharashtra", "district": "Pune", "category": "seeds", "latitude": 18.5100, "longitude": 73.8350 },
+  { "name": "Deccan Fertilizer Center", "ownerName": "Ramesh Jagtap", "phone": "9920778899", "address": "Chinchwad, Pimpri", "state": "Maharashtra", "district": "Pune", "category": "fertilizer", "latitude": 18.6280, "longitude": 73.8020 },
+  { "name": "Pune Farm Equipment Store", "ownerName": "Raju Shinde", "phone": "9921889900", "address": "Hadapsar, Pune", "state": "Maharashtra", "district": "Pune", "category": "equipment", "latitude": 18.5018, "longitude": 73.9252 },
+
+  { "name": "Nagpur Agri Seeds Depot", "ownerName": "Prashant Bhende", "phone": "9822990011", "address": "Itwari Market, Nagpur", "state": "Maharashtra", "district": "Nagpur", "category": "seeds", "latitude": 21.1500, "longitude": 79.0920 },
+  { "name": "Vidarbha Fertilizer Kendra", "ownerName": "Sunil Raut", "phone": "9823001122", "address": "Dharampeth, Nagpur", "state": "Maharashtra", "district": "Nagpur", "category": "fertilizer", "latitude": 21.1370, "longitude": 79.0700 },
+  { "name": "Nagpur Pesticide Store", "ownerName": "Ashok Wankhede", "phone": "9960112233", "address": "Sadar, Nagpur", "state": "Maharashtra", "district": "Nagpur", "category": "pesticide", "latitude": 21.1550, "longitude": 79.0800 },
+
+  { "name": "Nashik Krishi Kendra", "ownerName": "Ravindra Dhotre", "phone": "9823223344", "address": "Nashik Road, Nashik", "state": "Maharashtra", "district": "Nashik", "category": "general", "latitude": 19.9975, "longitude": 73.7898 },
+  { "name": "Nashik Beej Bhandar", "ownerName": "Shivaji Patil", "phone": "9823334455", "address": "CBS, Nashik", "state": "Maharashtra", "district": "Nashik", "category": "seeds", "latitude": 20.0150, "longitude": 73.7700 },
+  { "name": "Nasik Grapevine Agro Store", "ownerName": "Kailash Hire", "phone": "9833445566", "address": "Deolali, Nashik", "state": "Maharashtra", "district": "Nashik", "category": "fertilizer", "latitude": 19.9450, "longitude": 73.8300 },
+
+  { "name": "Bangalore Agri Beej Kendra", "ownerName": "Ravi Kumar", "phone": "9901112233", "address": "KR Market, Bangalore", "state": "Karnataka", "district": "Bangalore", "category": "seeds", "latitude": 12.9680, "longitude": 77.5840 },
+  { "name": "Bengaluru Fertilizer Depot", "ownerName": "Suresh Gowda", "phone": "9902223344", "address": "Jayanagar, Bangalore", "state": "Karnataka", "district": "Bangalore", "category": "fertilizer", "latitude": 12.9300, "longitude": 77.5830 },
+  { "name": "South India Agri Equipment", "ownerName": "Mahesh Reddy", "phone": "9901334455", "address": "Peenya Industrial Area, Bangalore", "state": "Karnataka", "district": "Bangalore", "category": "equipment", "latitude": 13.0300, "longitude": 77.5150 },
+  { "name": "Hopcoms Krishi Seva Kendra", "ownerName": "Nagaraj S", "phone": "9945445566", "address": "Rajajinagar, Bangalore", "state": "Karnataka", "district": "Bangalore", "category": "general", "latitude": 12.9900, "longitude": 77.5550 },
+  { "name": "Electronic City Agro Store", "ownerName": "Venkatesh M", "phone": "9945556677", "address": "Electronic City, Bangalore", "state": "Karnataka", "district": "Bangalore", "category": "pesticide", "latitude": 12.8450, "longitude": 77.6640 },
+
+  { "name": "Mysuru Krishi Yantra Bhandar", "ownerName": "Siddaraju K", "phone": "9902667788", "address": "Devaraja Market, Mysuru", "state": "Karnataka", "district": "Mysuru", "category": "equipment", "latitude": 12.3060, "longitude": 76.6520 },
+  { "name": "Mysore Seeds Center", "ownerName": "Ramesh Gowda", "phone": "9902778899", "address": "Sayyaji Rao Road, Mysuru", "state": "Karnataka", "district": "Mysuru", "category": "seeds", "latitude": 12.2950, "longitude": 76.6380 },
+  { "name": "Mysuru Fertilizer Store", "ownerName": "Lokesh Kumar", "phone": "9980889900", "address": "Bannimantap, Mysuru", "state": "Karnataka", "district": "Mysuru", "category": "fertilizer", "latitude": 12.3200, "longitude": 76.6700 },
+
+  { "name": "Hyderabad Agri Beej Kendra", "ownerName": "Naresh Reddy", "phone": "9848112233", "address": "Lalapet, Hyderabad", "state": "Telangana", "district": "Hyderabad", "category": "seeds", "latitude": 17.4000, "longitude": 78.5000 },
+  { "name": "Secunderabad Fertilizer Depot", "ownerName": "Srinivas Rao", "phone": "9849223344", "address": "Trimulgherry, Secunderabad", "state": "Telangana", "district": "Hyderabad", "category": "fertilizer", "latitude": 17.4350, "longitude": 78.5100 },
+  { "name": "TS Agri Pesticide Center", "ownerName": "Ramesh Kumar", "phone": "9866334455", "address": "Kothapet, Hyderabad", "state": "Telangana", "district": "Hyderabad", "category": "pesticide", "latitude": 17.3680, "longitude": 78.5560 },
+  { "name": "Nizamabad Krishi Kendra", "ownerName": "Venkataramaiah", "phone": "9848445566", "address": "Armoor Road, Nizamabad", "state": "Telangana", "district": "Nizamabad", "category": "general", "latitude": 18.6731, "longitude": 78.0941 },
+
+  { "name": "Chennai Agro Seeds Store", "ownerName": "Murugan K", "phone": "9841112233", "address": "Koyambedu Market, Chennai", "state": "Tamil Nadu", "district": "Chennai", "category": "seeds", "latitude": 13.0710, "longitude": 80.2020 },
+  { "name": "Tamil Nadu Fertilizer Hub", "ownerName": "Selvam R", "phone": "9841223344", "address": "Tambaram, Chennai", "state": "Tamil Nadu", "district": "Chennai", "category": "fertilizer", "latitude": 12.9249, "longitude": 80.1000 },
+  { "name": "Chennai Farm Equipment Depot", "ownerName": "Krishnamurthy S", "phone": "9841334455", "address": "Ambattur Industrial Estate", "state": "Tamil Nadu", "district": "Chennai", "category": "equipment", "latitude": 13.1140, "longitude": 80.1620 },
+  { "name": "Avadi Agri Service Center", "ownerName": "Arumugam P", "phone": "9841445566", "address": "Avadi, Chennai", "state": "Tamil Nadu", "district": "Thiruvallur", "category": "general", "latitude": 13.1136, "longitude": 80.0959 },
+
+  { "name": "Coimbatore Krishi Seeds Store", "ownerName": "Palaniswamy R", "phone": "9843112233", "address": "RS Puram, Coimbatore", "state": "Tamil Nadu", "district": "Coimbatore", "category": "seeds", "latitude": 11.0168, "longitude": 76.9558 },
+  { "name": "CBE Fertilizer Center", "ownerName": "Subramanian V", "phone": "9843223344", "address": "Gandhipuram, Coimbatore", "state": "Tamil Nadu", "district": "Coimbatore", "category": "fertilizer", "latitude": 11.0020, "longitude": 76.9650 },
+  { "name": "Coimbatore Agri Equipment", "ownerName": "Senthil Kumar", "phone": "9994334455", "address": "Podanur, Coimbatore", "state": "Tamil Nadu", "district": "Coimbatore", "category": "equipment", "latitude": 10.9750, "longitude": 76.9820 },
+
+  { "name": "Madurai Krishi Kendra", "ownerName": "Arjunan M", "phone": "9943112233", "address": "Anna Nagar, Madurai", "state": "Tamil Nadu", "district": "Madurai", "category": "general", "latitude": 9.9310, "longitude": 78.1250 },
+  { "name": "Madurai Beej Bhandar", "ownerName": "Pandian S", "phone": "9944223344", "address": "Mattuthavani, Madurai", "state": "Tamil Nadu", "district": "Madurai", "category": "seeds", "latitude": 9.9150, "longitude": 78.1100 },
+
+  { "name": "Kolkata Agri Seeds House", "ownerName": "Tapas Dey", "phone": "9831112233", "address": "Burrabazar, Kolkata", "state": "West Bengal", "district": "Kolkata", "category": "seeds", "latitude": 22.5900, "longitude": 88.3700 },
+  { "name": "WB Fertilizer Depot Kolkata", "ownerName": "Ajoy Ghosh", "phone": "9831223344", "address": "Jadavpur, Kolkata", "state": "West Bengal", "district": "Kolkata", "category": "fertilizer", "latitude": 22.5000, "longitude": 88.3710 },
+  { "name": "Howrah Farm Equipment Store", "ownerName": "Ratan Bose", "phone": "9830334455", "address": "Shibpur, Howrah", "state": "West Bengal", "district": "Howrah", "category": "equipment", "latitude": 22.5800, "longitude": 88.3200 },
+  { "name": "Barasat Krishi Kendra", "ownerName": "Subhash Mandal", "phone": "9830445566", "address": "Barasat Bazar, North 24 Parganas", "state": "West Bengal", "district": "North 24 Parganas", "category": "general", "latitude": 22.7200, "longitude": 88.4800 },
+
+  { "name": "Patna Kisan Beej Kendra", "ownerName": "Ramashish Prasad", "phone": "9431112233", "address": "Patna City Market", "state": "Bihar", "district": "Patna", "category": "seeds", "latitude": 25.6100, "longitude": 85.1550 },
+  { "name": "Bihar Agro Fertilizer Store", "ownerName": "Surendra Kumar", "phone": "9431223344", "address": "Boring Road, Patna", "state": "Bihar", "district": "Patna", "category": "fertilizer", "latitude": 25.6000, "longitude": 85.1200 },
+  { "name": "Patna Pesticide Center", "ownerName": "Mukesh Singh", "phone": "8986334455", "address": "Rajendra Nagar, Patna", "state": "Bihar", "district": "Patna", "category": "pesticide", "latitude": 25.5800, "longitude": 85.1100 },
+  { "name": "Muzaffarpur Krishi Kendra", "ownerName": "Birendra Kumar", "phone": "9431445566", "address": "Mithanpura, Muzaffarpur", "state": "Bihar", "district": "Muzaffarpur", "category": "general", "latitude": 26.1218, "longitude": 85.3906 },
+
+  { "name": "Jaipur Krishi Seva Kendra", "ownerName": "Narendra Sharma", "phone": "9414112233", "address": "Chaura Rasta, Jaipur", "state": "Rajasthan", "district": "Jaipur", "category": "general", "latitude": 26.9250, "longitude": 75.8000 },
+  { "name": "Rajasthan Beej Bhandar Jaipur", "ownerName": "Gopal Khatri", "phone": "9414223344", "address": "Mansarovar, Jaipur", "state": "Rajasthan", "district": "Jaipur", "category": "seeds", "latitude": 26.8750, "longitude": 75.8000 },
+  { "name": "Pink City Fertilizer Depot", "ownerName": "Suresh Meena", "phone": "9414334455", "address": "Sitapura Industrial Area, Jaipur", "state": "Rajasthan", "district": "Jaipur", "category": "fertilizer", "latitude": 26.8200, "longitude": 75.8550 },
+  { "name": "Jaipur Farm Equipment Center", "ownerName": "Bhagwat Pareek", "phone": "9414445566", "address": "Sanganer, Jaipur", "state": "Rajasthan", "district": "Jaipur", "category": "equipment", "latitude": 26.8200, "longitude": 75.7900 },
+
+  { "name": "Jodhpur Agri Kendra", "ownerName": "Bhanwar Singh Rathore", "phone": "9414556677", "address": "Sardar Market, Jodhpur", "state": "Rajasthan", "district": "Jodhpur", "category": "general", "latitude": 26.2450, "longitude": 73.0350 },
+  { "name": "Jodhpur Beej Bhandar", "ownerName": "Sugriv Ram", "phone": "9414667788", "address": "Basni, Jodhpur", "state": "Rajasthan", "district": "Jodhpur", "category": "seeds", "latitude": 26.2600, "longitude": 73.0100 },
+
+  { "name": "Ahmedabad Agri Seeds Store", "ownerName": "Haresh Patel", "phone": "9879112233", "address": "Kalupur Market, Ahmedabad", "state": "Gujarat", "district": "Ahmedabad", "category": "seeds", "latitude": 23.0300, "longitude": 72.5850 },
+  { "name": "Gujarat Fertilizer Hub", "ownerName": "Bhavesh Shah", "phone": "9879223344", "address": "Naroda, Ahmedabad", "state": "Gujarat", "district": "Ahmedabad", "category": "fertilizer", "latitude": 23.0680, "longitude": 72.6600 },
+  { "name": "Ahmedabad Farm Equipment", "ownerName": "Mukesh Patel", "phone": "9879334455", "address": "Odhav Industrial Area, Ahmedabad", "state": "Gujarat", "district": "Ahmedabad", "category": "equipment", "latitude": 23.0200, "longitude": 72.6500 },
+  { "name": "Vatva Kisan Kendra Ahmedabad", "ownerName": "Pradip Desai", "phone": "9879445566", "address": "Vatva, Ahmedabad", "state": "Gujarat", "district": "Ahmedabad", "category": "general", "latitude": 22.9850, "longitude": 72.6300 },
+
+  { "name": "Surat Agri Seeds Center", "ownerName": "Harshad Patel", "phone": "9879556677", "address": "Ring Road Market, Surat", "state": "Gujarat", "district": "Surat", "category": "seeds", "latitude": 21.1800, "longitude": 72.8350 },
+  { "name": "Surat Fertilizer Depot", "ownerName": "Nilesh Shah", "phone": "9898667788", "address": "Katargam, Surat", "state": "Gujarat", "district": "Surat", "category": "fertilizer", "latitude": 21.2050, "longitude": 72.8200 },
+  { "name": "Surat Krishi Yantra Kendra", "ownerName": "Dipak Patel", "phone": "9898778899", "address": "Sachin, Surat", "state": "Gujarat", "district": "Surat", "category": "equipment", "latitude": 21.0900, "longitude": 72.8700 },
+
+  { "name": "Rajkot Kisan Agri Store", "ownerName": "Bharat Savaliya", "phone": "9924112233", "address": "Raiya Road, Rajkot", "state": "Gujarat", "district": "Rajkot", "category": "general", "latitude": 22.3120, "longitude": 70.8100 },
+  { "name": "Rajkot Beej Bhandar", "ownerName": "Mahesh Akbari", "phone": "9924223344", "address": "Gondal Road, Rajkot", "state": "Gujarat", "district": "Rajkot", "category": "seeds", "latitude": 22.2900, "longitude": 70.7900 },
+  { "name": "Rajkot Fertilizer Kendra", "ownerName": "Pravin Kathiriya", "phone": "9924334455", "address": "Mavdi, Rajkot", "state": "Gujarat", "district": "Rajkot", "category": "fertilizer", "latitude": 22.3250, "longitude": 70.7850 },
+
+  { "name": "Bhopal Krishi Kendra", "ownerName": "Suresh Patidar", "phone": "9425112233", "address": "New Market, Bhopal", "state": "Madhya Pradesh", "district": "Bhopal", "category": "general", "latitude": 23.2650, "longitude": 77.4200 },
+  { "name": "MP Agro Beej Bhandar Bhopal", "ownerName": "Ramesh Verma", "phone": "9425223344", "address": "Habibganj, Bhopal", "state": "Madhya Pradesh", "district": "Bhopal", "category": "seeds", "latitude": 23.2350, "longitude": 77.4350 },
+  { "name": "Bhopal Fertilizer Store", "ownerName": "Pramod Shakya", "phone": "9425334455", "address": "Kolar Road, Bhopal", "state": "Madhya Pradesh", "district": "Bhopal", "category": "fertilizer", "latitude": 23.2150, "longitude": 77.4600 },
+
+  { "name": "Indore Krishi Seva Kendra", "ownerName": "Vijay Patel", "phone": "9425445566", "address": "Sarafa Bazar, Indore", "state": "Madhya Pradesh", "district": "Indore", "category": "general", "latitude": 22.7250, "longitude": 75.8620 },
+  { "name": "Malwa Beej Bhandar Indore", "ownerName": "Rajesh Patidar", "phone": "9425556677", "address": "Vijay Nagar, Indore", "state": "Madhya Pradesh", "district": "Indore", "category": "seeds", "latitude": 22.7500, "longitude": 75.8900 },
+  { "name": "Indore Fertilizer Center", "ownerName": "Mahesh Kumawat", "phone": "9425667788", "address": "Rau, Indore", "state": "Madhya Pradesh", "district": "Indore", "category": "fertilizer", "latitude": 22.6950, "longitude": 75.8300 },
+  { "name": "Indore Farm Equipment Depot", "ownerName": "Gopal Singh", "phone": "9425778899", "address": "Sanwer Road, Indore", "state": "Madhya Pradesh", "district": "Indore", "category": "equipment", "latitude": 22.7700, "longitude": 75.8100 },
+
+  { "name": "Chandigarh Agro Seeds Store", "ownerName": "Gurmeet Singh", "phone": "9815112233", "address": "Sector 26 Market, Chandigarh", "state": "Chandigarh", "district": "Chandigarh", "category": "seeds", "latitude": 30.7400, "longitude": 76.7900 },
+  { "name": "Chandigarh Fertilizer Kendra", "ownerName": "Balwinder Singh", "phone": "9815223344", "address": "Industrial Area, Chandigarh", "state": "Chandigarh", "district": "Chandigarh", "category": "fertilizer", "latitude": 30.7100, "longitude": 76.8000 },
+
+  { "name": "Ludhiana Krishi Kendra", "ownerName": "Gurpreet Singh", "phone": "9815334455", "address": "Ghumar Mandi, Ludhiana", "state": "Punjab", "district": "Ludhiana", "category": "general", "latitude": 30.9100, "longitude": 75.8650 },
+  { "name": "Punjab Beej Bhandar Ludhiana", "ownerName": "Harjit Singh", "phone": "9815445566", "address": "Sahnewal, Ludhiana", "state": "Punjab", "district": "Ludhiana", "category": "seeds", "latitude": 30.8800, "longitude": 75.8950 },
+  { "name": "Ludhiana Farm Equipment", "ownerName": "Manpreet Singh", "phone": "9815556677", "address": "Focal Point, Ludhiana", "state": "Punjab", "district": "Ludhiana", "category": "equipment", "latitude": 30.8650, "longitude": 75.8300 },
+  { "name": "Ludhiana Fertilizer Depot", "ownerName": "Jaskaran Singh", "phone": "9815667788", "address": "Jagraon Bridge, Ludhiana", "state": "Punjab", "district": "Ludhiana", "category": "fertilizer", "latitude": 30.9300, "longitude": 75.8200 },
+
+  { "name": "Amritsar Agri Kendra", "ownerName": "Kulwant Singh", "phone": "9815778899", "address": "Hall Bazar, Amritsar", "state": "Punjab", "district": "Amritsar", "category": "general", "latitude": 31.6400, "longitude": 74.8780 },
+  { "name": "Golden City Seeds Store", "ownerName": "Sukhdev Singh", "phone": "9815889900", "address": "Sultanwind, Amritsar", "state": "Punjab", "district": "Amritsar", "category": "seeds", "latitude": 31.6200, "longitude": 74.9100 },
+  { "name": "Amritsar Fertilizer Center", "ownerName": "Parminder Singh", "phone": "9855900011", "address": "Chheharta, Amritsar", "state": "Punjab", "district": "Amritsar", "category": "fertilizer", "latitude": 31.6600, "longitude": 74.8450 },
+
+  { "name": "Dehradun Agri Seeds Kendra", "ownerName": "Raman Negi", "phone": "9411112233", "address": "Paltan Bazaar, Dehradun", "state": "Uttarakhand", "district": "Dehradun", "category": "seeds", "latitude": 30.3200, "longitude": 78.0380 },
+  { "name": "Uttarakhand Fertilizer Store", "ownerName": "Mohan Rawat", "phone": "9411223344", "address": "Clement Town, Dehradun", "state": "Uttarakhand", "district": "Dehradun", "category": "fertilizer", "latitude": 30.2950, "longitude": 78.0000 },
+  { "name": "Dehradun Krishi Kendra", "ownerName": "Vinod Juyal", "phone": "9411334455", "address": "Sahastradhara Road, Dehradun", "state": "Uttarakhand", "district": "Dehradun", "category": "general", "latitude": 30.3400, "longitude": 78.0600 },
+
+  { "name": "Bhubaneswar Krishi Kendra", "ownerName": "Subrat Panda", "phone": "9438112233", "address": "Unit 4 Market, Bhubaneswar", "state": "Odisha", "district": "Khordha", "category": "general", "latitude": 20.3050, "longitude": 85.8300 },
+  { "name": "Odisha Beej Bhandar", "ownerName": "Rabi Das", "phone": "9438223344", "address": "Bomikhal, Bhubaneswar", "state": "Odisha", "district": "Khordha", "category": "seeds", "latitude": 20.2750, "longitude": 85.8500 },
+  { "name": "Cuttack Agri Fertilizer Store", "ownerName": "Prasant Mohanty", "phone": "9438334455", "address": "Link Road, Cuttack", "state": "Odisha", "district": "Cuttack", "category": "fertilizer", "latitude": 20.4625, "longitude": 85.8790 },
+
+  { "name": "Guwahati Krishi Seva Kendra", "ownerName": "Biren Deka", "phone": "9954112233", "address": "Fancy Bazar, Guwahati", "state": "Assam", "district": "Kamrup", "category": "general", "latitude": 26.1850, "longitude": 91.7450 },
+  { "name": "Assam Beej Bhandar Guwahati", "ownerName": "Prabin Kalita", "phone": "9954223344", "address": "Sixmile, Guwahati", "state": "Assam", "district": "Kamrup", "category": "seeds", "latitude": 26.1350, "longitude": 91.7800 },
+  { "name": "Northeast Fertilizer Depot", "ownerName": "Dimbeswar Borah", "phone": "9954334455", "address": "Jalukbari, Guwahati", "state": "Assam", "district": "Kamrup", "category": "fertilizer", "latitude": 26.1500, "longitude": 91.6900 },
+
+  { "name": "Visakhapatnam Agri Kendra", "ownerName": "Venkata Rao", "phone": "9849112233", "address": "Dwaraka Nagar, Visakhapatnam", "state": "Andhra Pradesh", "district": "Visakhapatnam", "category": "general", "latitude": 17.7000, "longitude": 83.2300 },
+  { "name": "Vizag Beej Bhandar", "ownerName": "Srinivasa Rao", "phone": "9849223344", "address": "Gajuwaka, Visakhapatnam", "state": "Andhra Pradesh", "district": "Visakhapatnam", "category": "seeds", "latitude": 17.6650, "longitude": 83.2050 },
+  { "name": "Visakha Fertilizer Store", "ownerName": "Appala Raju", "phone": "9849334455", "address": "Pendurthi, Visakhapatnam", "state": "Andhra Pradesh", "district": "Visakhapatnam", "category": "fertilizer", "latitude": 17.7600, "longitude": 83.1900 },
+
+  { "name": "Meerut Krishi Kendra", "ownerName": "Satish Kumar", "phone": "9719112233", "address": "Hapur Road, Meerut", "state": "Uttar Pradesh", "district": "Meerut", "category": "general", "latitude": 28.9900, "longitude": 77.7120 },
+  { "name": "Meerut Beej Bhandar", "ownerName": "Yogesh Tyagi", "phone": "9837223344", "address": "Shastri Nagar, Meerut", "state": "Uttar Pradesh", "district": "Meerut", "category": "seeds", "latitude": 28.9700, "longitude": 77.6900 },
+  { "name": "Meerut Fertilizer Depot", "ownerName": "Rakesh Sharma", "phone": "9837334455", "address": "Modipuram, Meerut", "state": "Uttar Pradesh", "district": "Meerut", "category": "fertilizer", "latitude": 29.0100, "longitude": 77.6850 },
+
+  { "name": "Gorakhpur Kisan Kendra", "ownerName": "Arvind Tripathi", "phone": "9415778900", "address": "Golghar Market, Gorakhpur", "state": "Uttar Pradesh", "district": "Gorakhpur", "category": "general", "latitude": 26.7700, "longitude": 83.3800 },
+  { "name": "Gorakhpur Beej Bhandar", "ownerName": "Ram Awadhesh Yadav", "phone": "9415889011", "address": "Taramandal, Gorakhpur", "state": "Uttar Pradesh", "district": "Gorakhpur", "category": "seeds", "latitude": 26.7500, "longitude": 83.3550 },
+  { "name": "Gorakhpur Fertilizer Store", "ownerName": "Sanjay Pathak", "phone": "9415990122", "address": "Sahjanwa, Gorakhpur", "state": "Uttar Pradesh", "district": "Gorakhpur", "category": "fertilizer", "latitude": 26.7400, "longitude": 83.4200 },
+
+  { "name": "Vadodara Krishi Kendra", "ownerName": "Jayesh Patel", "phone": "9898112233", "address": "Alkapuri, Vadodara", "state": "Gujarat", "district": "Vadodara", "category": "general", "latitude": 22.3120, "longitude": 73.1870 },
+  { "name": "Baroda Beej Bhandar", "ownerName": "Naresh Solanki", "phone": "9898223344", "address": "Waghodia Road, Vadodara", "state": "Gujarat", "district": "Vadodara", "category": "seeds", "latitude": 22.3300, "longitude": 73.2200 },
+  { "name": "Vadodara Fertilizer Store", "ownerName": "Hitesh Patel", "phone": "9898334455", "address": "Gorwa, Vadodara", "state": "Gujarat", "district": "Vadodara", "category": "fertilizer", "latitude": 22.3450, "longitude": 73.1650 },
+
+  { "name": "Ranchi Krishi Kendra", "ownerName": "Rajesh Mahto", "phone": "9431556677", "address": "Lalpur, Ranchi", "state": "Jharkhand", "district": "Ranchi", "category": "general", "latitude": 23.3500, "longitude": 85.3150 },
+  { "name": "Jharkhand Beej Bhandar", "ownerName": "Sunil Sinha", "phone": "9431667788", "address": "Dhurwa, Ranchi", "state": "Jharkhand", "district": "Ranchi", "category": "seeds", "latitude": 23.3300, "longitude": 85.2900 },
+  { "name": "Ranchi Fertilizer Depot", "ownerName": "Amar Oraon", "phone": "8987778899", "address": "Namkum, Ranchi", "state": "Jharkhand", "district": "Ranchi", "category": "fertilizer", "latitude": 23.3200, "longitude": 85.3500 },
+
+  { "name": "Kota Krishi Seva Kendra", "ownerName": "Ramesh Meena", "phone": "9414889900", "address": "Dadabari, Kota", "state": "Rajasthan", "district": "Kota", "category": "general", "latitude": 25.2200, "longitude": 75.8700 },
+  { "name": "Kota Beej Bhandar", "ownerName": "Kishan Gurjar", "phone": "9414990011", "address": "Sangod, Kota", "state": "Rajasthan", "district": "Kota", "category": "seeds", "latitude": 25.2050, "longitude": 75.8500 },
+  { "name": "Hadouti Fertilizer Store", "ownerName": "Banwari Lal", "phone": "9413001122", "address": "Nayapura, Kota", "state": "Rajasthan", "district": "Kota", "category": "fertilizer", "latitude": 25.2300, "longitude": 75.8850 },
+
+  { "name": "Bareilly Krishi Kendra", "ownerName": "Sanjay Patel", "phone": "9411445566", "address": "Subhash Nagar, Bareilly", "state": "Uttar Pradesh", "district": "Bareilly", "category": "general", "latitude": 28.3700, "longitude": 79.4350 },
+  { "name": "Bareilly Beej Bhandar", "ownerName": "Virendra Singh", "phone": "9411556677", "address": "Civil Lines, Bareilly", "state": "Uttar Pradesh", "district": "Bareilly", "category": "seeds", "latitude": 28.3800, "longitude": 79.4100 },
+  { "name": "Rohilkhand Fertilizer Depot", "ownerName": "Ajay Kumar Verma", "phone": "9411667788", "address": "Nawabganj, Bareilly", "state": "Uttar Pradesh", "district": "Bareilly", "category": "fertilizer", "latitude": 28.3500, "longitude": 79.4500 },
+
+  { "name": "Udaipur Agri Seeds Store", "ownerName": "Mahaveer Meena", "phone": "9414112200", "address": "Hiran Magri, Udaipur", "state": "Rajasthan", "district": "Udaipur", "category": "seeds", "latitude": 24.5900, "longitude": 73.7200 },
+  { "name": "Udaipur Fertilizer Kendra", "ownerName": "Fateh Singh Rawal", "phone": "9414223311", "address": "Bhatt Khana, Udaipur", "state": "Rajasthan", "district": "Udaipur", "category": "fertilizer", "latitude": 24.5750, "longitude": 73.7000 },
+
+  { "name": "Noida Agri Seed Store", "ownerName": "Harish Chandra", "phone": "9818112200", "address": "Sector 18 Market, Noida", "state": "Uttar Pradesh", "district": "Gautam Buddh Nagar", "category": "seeds", "latitude": 28.5700, "longitude": 77.3200 },
+  { "name": "Greater Noida Krishi Kendra", "ownerName": "Ramveer Singh", "phone": "9818223311", "address": "Kasna, Greater Noida", "state": "Uttar Pradesh", "district": "Gautam Buddh Nagar", "category": "general", "latitude": 28.4700, "longitude": 77.5000 },
+  { "name": "Noida Extension Fertilizer Store", "ownerName": "Ajit Kumar", "phone": "9818334422", "address": "Bisrakh, Noida Extension", "state": "Uttar Pradesh", "district": "Gautam Buddh Nagar", "category": "fertilizer", "latitude": 28.5950, "longitude": 77.4200 },
+
+  { "name": "Faridabad Krishi Kendra", "ownerName": "Rajpal Singh", "phone": "9811445500", "address": "Old Faridabad Market", "state": "Haryana", "district": "Faridabad", "category": "general", "latitude": 28.4050, "longitude": 77.3120 },
+  { "name": "Gurugram Agri Store", "ownerName": "Mahavir Yadav", "phone": "9811556611", "address": "Sector 14, Gurugram", "state": "Haryana", "district": "Gurugram", "category": "seeds", "latitude": 28.4700, "longitude": 77.0350 },
+  { "name": "Rohtak Kisan Seva Kendra", "ownerName": "Azad Singh Dahiya", "phone": "9812667722", "address": "Model Town, Rohtak", "state": "Haryana", "district": "Rohtak", "category": "general", "latitude": 28.8955, "longitude": 76.6066 },
+  { "name": "Hisar Agri Beej Bhandar", "ownerName": "Balbir Hooda", "phone": "9812778833", "address": "Hansi Road, Hisar", "state": "Haryana", "district": "Hisar", "category": "seeds", "latitude": 29.1500, "longitude": 75.7300 },
+  { "name": "Hisar Fertilizer Store", "ownerName": "Dalbir Singh", "phone": "9812889944", "address": "Urban Estate, Hisar", "state": "Haryana", "district": "Hisar", "category": "fertilizer", "latitude": 29.1650, "longitude": 75.7150 }
+]
