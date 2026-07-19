@@ -45,6 +45,7 @@ export default function OrderDetail() {
   }
 
   const stepIndex = STATUS_STEPS.indexOf(order.orderStatus);
+  const isPaymentPending = order.paymentStatus === 'pending' && order.orderStatus === 'placed';
 
   return (
     <div className="od-wrap">
@@ -60,12 +61,32 @@ export default function OrderDetail() {
           <div>
             <h2>{order.listing?.cropName || 'Crop'}</h2>
             <p className="od-id">Order ID: {order._id}</p>
-            <span className={`od-badge od-badge--${order.orderStatus}`}>{order.orderStatus}</span>
-            <span className={`od-badge od-badge--pay-${order.paymentStatus}`}>{order.paymentStatus}</span>
+            {isPaymentPending ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 14px", borderRadius: "999px", fontSize: "12px", fontWeight: 700, background: "#fef3c7", color: "#92400e", border: "1.5px solid #fcd34d" }}>
+                ⏳ Payment Pending
+              </span>
+            ) : (
+              <>
+                <span className={`od-badge od-badge--${order.orderStatus}`}>{order.orderStatus}</span>
+                <span className={`od-badge od-badge--pay-${order.paymentStatus}`}>{order.paymentStatus}</span>
+              </>
+            )}
           </div>
         </div>
 
-        {order.orderStatus !== 'cancelled' && (
+        {/* Payment pending warning banner */}
+        {isPaymentPending && (
+          <div style={{ margin: "0 0 20px", padding: "14px 18px", borderRadius: "12px", background: "#fffbeb", border: "1.5px solid #fcd34d", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+            <span style={{ fontSize: "20px", flexShrink: 0 }}>⚠️</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: "#92400e", fontSize: "13px" }}>Payment Not Completed</p>
+              <p style={{ margin: "4px 0 0", color: "#b45309", fontSize: "12px" }}>Your payment was not received for this order. The order is currently on hold. Please contact support if money was deducted.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Progress timeline — hidden for payment-pending orders */}
+        {order.orderStatus !== 'cancelled' && !isPaymentPending && (
           <div className="od-timeline">
             {STATUS_STEPS.map((step, i) => {
                 const stepDateMap = {

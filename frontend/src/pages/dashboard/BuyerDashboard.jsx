@@ -331,7 +331,8 @@ export default function BuyerDashboard() {
                       />
                     ) : (
                       orders.map((order) => {
-                        const canCancel = ["placed", "confirmed"].includes(order.orderStatus);
+                        const isPaymentPending = order.paymentStatus === 'pending' && order.orderStatus === 'placed';
+                        const canCancel = ["placed", "confirmed"].includes(order.orderStatus) && !isPaymentPending;
                         const imgSrc = order.listing?.images?.[0]?.url || order.listing?.images?.[0];
 
                         return (
@@ -350,8 +351,16 @@ export default function BuyerDashboard() {
                                 <p className="bd-item-sub">ID: {order._id?.slice(-6)}</p>
                               </div>
                               <div className="bd-item-badges">
-                                <StatusBadge status={order.orderStatus} map={ORDER_STATUS} />
-                                <StatusBadge status={order.paymentStatus} map={PAYMENT_STATUS} />
+                                {isPaymentPending ? (
+                                  <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 12px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#fef3c7", color: "#92400e", border: "1.5px solid #fcd34d", whiteSpace: "nowrap" }}>
+                                    ⏳ Payment Pending
+                                  </span>
+                                ) : (
+                                  <>
+                                    <StatusBadge status={order.orderStatus} map={ORDER_STATUS} />
+                                    <StatusBadge status={order.paymentStatus} map={PAYMENT_STATUS} />
+                                  </>
+                                )}
                               </div>
                             </div>
 
@@ -375,7 +384,11 @@ export default function BuyerDashboard() {
                             </div>
 
                             <div className="bd-item-actions">
-                              {canCancel ? (
+                              {isPaymentPending ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", background: "#fffbeb", border: "1.5px solid #fcd34d", fontSize: "12px", color: "#92400e", fontWeight: 600 }}>
+                                  ⚠️ Payment was not completed. This order is on hold.
+                                </div>
+                              ) : canCancel ? (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

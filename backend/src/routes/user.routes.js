@@ -20,6 +20,7 @@ import {
     loginWithOtp,
     forgotPassword,
     resetPassword,
+    verifyUpiId,
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -58,4 +59,5 @@ router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updat
 router.route("/send-otp").post(verifyJWT, otpLimiter, sendPhoneOtp);
 router.route("/verify-otp").post(verifyJWT, otpLimiter, verifyPhoneOtp);
 router.route("/pending-farmer-orders").get(verifyJWT, getPendingFarmerOrderCount);
+router.route("/verify-upi").post(verifyJWT, verifyUpiId);
 export default router;
