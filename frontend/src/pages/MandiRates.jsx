@@ -30,34 +30,6 @@ import RatesTable from '../components/mandi/RatesTable';
 import HistoryChart from '../components/mandi/HistoryChart';
 import CompareDrawer from '../components/mandi/CompareDrawer';
 
-const DEMO_RATES = [
-  { crop: 'Wheat', market: 'Jaipur Mandi', state: 'Rajasthan', minPrice: 2320, maxPrice: 2510, price: 2440, prevPrice: 2390, date: '2026-07-02', isLive: true },
-  { crop: 'Rice', market: 'Karnal Mandi', state: 'Haryana', minPrice: 1980, maxPrice: 2190, price: 2115, prevPrice: 2140, date: '2026-07-02' },
-  { crop: 'Mustard', market: 'Bharatpur Mandi', state: 'Rajasthan', minPrice: 5480, maxPrice: 5780, price: 5625, prevPrice: 5540, date: '2026-07-02', isLive: true },
-  { crop: 'Soybean', market: 'Indore Mandi', state: 'Madhya Pradesh', minPrice: 4180, maxPrice: 4490, price: 4375, prevPrice: 4310, date: '2026-07-02' },
-  { crop: 'Cotton', market: 'Rajkot Mandi', state: 'Gujarat', minPrice: 6820, maxPrice: 7210, price: 7040, prevPrice: 6960, date: '2026-07-02' },
-  { crop: 'Onion', market: 'Lasalgaon Mandi', state: 'Maharashtra', minPrice: 1550, maxPrice: 1880, price: 1720, prevPrice: 1665, date: '2026-07-02', isLive: true },
-];
-
-const DEMO_HISTORY = {
-  Wheat: [
-    { date: '2026-06-27', price: 2320 },
-    { date: '2026-06-28', price: 2350 },
-    { date: '2026-06-29', price: 2390 },
-    { date: '2026-06-30', price: 2365 },
-    { date: '2026-07-01', price: 2410 },
-    { date: '2026-07-02', price: 2440 },
-  ],
-  Mustard: [
-    { date: '2026-06-27', price: 5400 },
-    { date: '2026-06-28', price: 5480 },
-    { date: '2026-06-29', price: 5520 },
-    { date: '2026-06-30', price: 5575 },
-    { date: '2026-07-01', price: 5540 },
-    { date: '2026-07-02', price: 5625 },
-  ],
-};
-
 // Used only as the candidate pool for "Nearby Mandis" before the user has picked a
 // state/district/mandi (so the section isn't empty on first load). Distances for
 // these are still computed for real via resolveMandiLocation/haversineDistanceKm —
@@ -152,7 +124,10 @@ const MandiRates = () => {
     isLive: true,
   }));
 
-  const sourceRates = mappedRates.length ? mappedRates : DEMO_RATES;
+  // Real backend data only — if there are no rates for the current selection,
+  // sourceRates is simply empty and the table/highlights show their built-in
+  // "no data" states instead of falling back to fake demo numbers.
+  const sourceRates = mappedRates;
 
   // Filter rates locally based on crop, state, and search inputs
   const filteredRates = sourceRates.filter((row) => {
@@ -168,12 +143,10 @@ const MandiRates = () => {
     }
   }, [reduxMandi, selectedCrop, dispatch]);
 
-  // Price Trend Chart History mapping
-  const chartHistory = history && history.length
-    ? history.map((h) => ({ date: h.arrivalDate, price: h.modalPrice }))
-    : DEMO_HISTORY[selectedCrop] || DEMO_RATES
-        .filter((row) => row.crop === selectedCrop)
-        .map((row) => ({ date: row.date, price: row.price }));
+  // Price Trend Chart History mapping — real backend history only. If there's
+  // no history for the selected mandi+crop yet, chartHistory is empty and
+  // PriceChart shows its own "No Price History" state instead of fake data.
+  const chartHistory = (history || []).map((h) => ({ date: h.arrivalDate, price: h.modalPrice }));
 
   // Handle location selector step triggers
   const handleStateSelect = (e) => {
