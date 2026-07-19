@@ -855,6 +855,36 @@ const verifyPhoneOtp = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, { isPhoneVerified: true }, "Phone number verified successfully"));
 });
 
+// ── Mock UPI Verification ──
+const verifyUpiId = asyncHandler(async (req, res) => {
+    const { upiId } = req.body;
+    if (!upiId) {
+        throw new ApiError(400, "UPI ID is required");
+    }
+
+    const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+    if (!upiRegex.test(upiId)) {
+        throw new ApiError(400, "Invalid UPI ID format");
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    if (upiId.endsWith("@invalid")) {
+        throw new ApiError(400, "UPI ID could not be verified. It may be inactive or incorrect.");
+    }
+
+    const prefix = upiId.split('@')[0];
+    const mockName = prefix.replace(/[.\-_0-9]/g, ' ').trim().toUpperCase() || 'VERIFIED USER';
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            vpa: upiId,
+            name: mockName,
+            status: "VALID"
+        }, "UPI ID verified successfully")
+    );
+});
+
 export {
     registerUser,
     loginUser,
@@ -876,4 +906,5 @@ export {
     loginWithOtp,
     forgotPassword,
     resetPassword,
+    verifyUpiId,
 };

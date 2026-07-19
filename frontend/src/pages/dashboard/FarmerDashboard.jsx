@@ -101,6 +101,9 @@ const FarmerDashboard = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const [upiId, setUpiId] = useState(user?.payoutDetails?.upiId || '');
   const [savingUpi, setSavingUpi] = useState(false);
+  const [verifyingUpi, setVerifyingUpi] = useState(false);
+  const [verifiedUpiName, setVerifiedUpiName] = useState(null);
+  const [upiVerificationError, setUpiVerificationError] = useState(null);
 
   // ── Donation request state ─────────────────────────────────────
   const [myRequests, setMyRequests] = useState([]);
@@ -236,11 +239,27 @@ const FarmerDashboard = () => {
     }
   };
 
+  const handleVerifyUpi = async () => {
+    if (!upiId) return;
+    setVerifyingUpi(true);
+    setUpiVerificationError(null);
+    setVerifiedUpiName(null);
+    try {
+      const res = await axiosInstance.post('/v1/user/verify-upi', { upiId });
+      setVerifiedUpiName(res.data.data.name);
+    } catch (err) {
+      setUpiVerificationError(err.response?.data?.message || 'Failed to verify UPI ID');
+    } finally {
+      setVerifyingUpi(false);
+    }
+  };
+
   const handleSaveUpi = async () => {
     setSavingUpi(true);
     try {
       await axiosInstance.patch('/v1/user/payout-details', { upiId });
       alert('UPI ID saved');
+      setVerifiedUpiName(null);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to save UPI ID');
     } finally {
@@ -446,7 +465,9 @@ const FarmerDashboard = () => {
                         <p className="fd-empty-text">No orders received yet</p>
                       </div>
                     ) : (
-                      orders.map((order) => (
+                      orders.map((order) => {
+                        const isPaymentPending = order.paymentStatus === 'pending' && order.orderStatus === 'placed';
+                        return (
                         <div key={order._id}
                           className="fd-order-card"
                           onClick={() => navigate(`/farmer/orders/${order._id}`)}
@@ -457,9 +478,15 @@ const FarmerDashboard = () => {
                             <div>
                               <div className="fd-order-title-row">
                                 <p className="fd-order-crop">{order.listing?.cropName || 'Crop'}</p>
-                                <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
-                                  {order.orderStatus}
-                                </span>
+                                {isPaymentPending ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: '#fef3c7', color: '#92400e', border: '1.5px solid #fcd34d', whiteSpace: 'nowrap' }}>
+                                    ⏳ Payment Pending
+                                  </span>
+                                ) : (
+                                  <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
+                                    {order.orderStatus}
+                                  </span>
+                                )}
                               </div>
                               <div className="fd-order-meta">
                                 <p>Buyer: <span className="fd-order-meta-strong">{order.buyer?.name || '—'}</span></p>
@@ -475,8 +502,8 @@ const FarmerDashboard = () => {
                               </div>
                             </div>
 
-                            {/* Status update buttons */}
-                            {STATUS_ACTIONS[order.orderStatus]?.length > 0 && (
+                            {/* Status update buttons — hidden for payment-pending orders */}
+                            {!isPaymentPending && STATUS_ACTIONS[order.orderStatus]?.length > 0 && (
                               <div className="fd-order-actions">
                                 {STATUS_ACTIONS[order.orderStatus].map((nextStatus) => (
                                   <button
@@ -493,9 +520,16 @@ const FarmerDashboard = () => {
                                 ))}
                               </div>
                             )}
+                            {/* Payment pending notice for farmer */}
+                            {isPaymentPending && (
+                              <div style={{ fontSize: '11.5px', color: '#92400e', fontWeight: 600, padding: '6px 12px', borderRadius: '8px', background: '#fffbeb', border: '1px solid #fcd34d' }}>
+                                ⚠️ Awaiting payment
+                              </div>
+                            )}
                           </div>
                         </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 )}
@@ -507,16 +541,48 @@ const FarmerDashboard = () => {
                   <div className="fd-earnings">
                     <div className="fd-card" style={{ marginBottom: 18, padding: 16 }}>
                       <p className="fd-card-title" style={{ marginBottom: 8 }}>Payout UPI ID</p>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="yourname@upi"
-                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #d6d3d1' }}
-                        />
-                        <button onClick={handleSaveUpi} disabled={savingUpi} className="fd-btn fd-btn--progress">
-                          {savingUpi ? 'Saving...' : 'Save'}
-                        </button>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <input
+                            value={upiId}
+                            onChange={(e) => {
+                              setUpiId(e.target.value);
+                              setVerifiedUpiName(null);
+                              setUpiVerificationError(null);
+                            }}
+                            placeholder="yourname@upi"
+                            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d6d3d1', width: '100%' }}
+                          />
+                          {verifiedUpiName && (
+                            <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              ✅ Verified: {verifiedUpiName}
+                            </div>
+                          )}
+                          {upiVerificationError && (
+                            <div style={{ fontSize: 12, color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              ❌ {upiVerificationError}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <button 
+                            onClick={handleVerifyUpi} 
+                            disabled={verifyingUpi || !upiId || !!verifiedUpiName} 
+                            className="fd-btn fd-btn--neutral"
+                            style={{ height: 38 }}
+                          >
+                            {verifyingUpi ? 'Verifying...' : 'Verify'}
+                          </button>
+                          <button 
+                            onClick={handleSaveUpi} 
+                            disabled={savingUpi || (upiId && !verifiedUpiName)} 
+                            className="fd-btn fd-btn--progress"
+                            style={{ height: 38, opacity: (upiId && !verifiedUpiName) ? 0.6 : 1 }}
+                            title={upiId && !verifiedUpiName ? 'Please verify UPI ID first' : ''}
+                          >
+                            {savingUpi ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -593,16 +659,24 @@ const FarmerDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {orders.map((order) => (
+                              {orders.map((order) => {
+                                const isPaymentPending = order.paymentStatus === 'pending' && order.orderStatus === 'placed';
+                                return (
                                 <tr key={order._id}>
-                                  <td className="fd-td-strong">{order.crop?.name || '—'}</td>
+                                  <td className="fd-td-strong">{order.listing?.cropName || '—'}</td>
                                   <td className="fd-td-muted">{order.buyer?.name || '—'}</td>
                                   <td className="fd-td-muted">{order.quantity}</td>
                                   <td className="fd-td-accent">₹{order.totalPrice?.toLocaleString('en-IN') || '—'}</td>
                                   <td>
-                                    <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
-                                      {order.orderStatus}
-                                    </span>
+                                    {isPaymentPending ? (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: '#fef3c7', color: '#92400e', border: '1.5px solid #fcd34d', whiteSpace: 'nowrap' }}>
+                                        ⏳ Payment Pending
+                                      </span>
+                                    ) : (
+                                      <span className={`fd-badge ${STATUS_STYLES[order.orderStatus] || STATUS_STYLES.placed}`}>
+                                        {order.orderStatus}
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="fd-td-faint">
                                     {order.createdAt
@@ -612,7 +686,8 @@ const FarmerDashboard = () => {
                                       : '—'}
                                   </td>
                                 </tr>
-                              ))}
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
