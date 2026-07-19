@@ -1,5 +1,5 @@
 // src/components/mandi/LocationSelector.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
 const LocationSelector = ({
   states = [],
@@ -13,6 +13,17 @@ const LocationSelector = ({
   handleMandiSelect,
   handleRefresh,
 }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefreshClick = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    handleRefresh();
+    // Purely visual — gives feedback that the click registered even though
+    // handleRefresh's actual fetch may resolve faster or slower than this.
+    setTimeout(() => setIsRefreshing(false), 2000);
+  };
+
   return (
     <div style={{
       background: '#fff',
@@ -183,28 +194,46 @@ const LocationSelector = ({
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
             <button
-              onClick={handleRefresh}
+              onClick={onRefreshClick}
+              disabled={isRefreshing}
               style={{
                 flex: 1,
                 padding: '8px 12px',
                 borderRadius: '8px',
-                background: '#16a34a',
+                background: isRefreshing ? '#0f3d21' : '#16a34a',
                 color: '#fff',
                 border: 'none',
                 fontWeight: 700,
                 fontSize: '11px',
-                cursor: 'pointer',
+                cursor: isRefreshing ? 'default' : 'pointer',
                 boxShadow: '0 2px 6px rgba(22,163,74,0.2)',
-                transition: 'all 0.2s'
+                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
               }}
-              onMouseEnter={(e) => e.target.style.background = '#15803d'}
-              onMouseLeave={(e) => e.target.style.background = '#16a34a'}
+              onMouseEnter={(e) => { if (!isRefreshing) e.target.style.background = '#15803d'; }}
+              onMouseLeave={(e) => { if (!isRefreshing) e.target.style.background = '#16a34a'; }}
             >
-              🔄 Refresh
+              <span style={{
+                display: 'inline-block',
+                animation: isRefreshing ? 'mandi-refresh-spin 0.7s linear infinite' : 'none'
+              }}>
+                🔄
+              </span>
+              {isRefreshing ? 'Refreshing…' : 'Refresh'}
             </button>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes mandi-refresh-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

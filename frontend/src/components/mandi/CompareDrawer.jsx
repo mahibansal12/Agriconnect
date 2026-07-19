@@ -5,7 +5,15 @@ const CompareDrawer = ({
   compareCommodity,
   setCompareCommodity,
   comparisonList,
+  availableCrops = [],
 }) => {
+  // Only ever offer crops that are actually sold at the selected mandi
+  // (derived live from that mandi's rates table), so the dropdown can never
+  // point at a crop with no data behind it. Falls back to whatever crop is
+  // currently selected so the dropdown isn't blank while data is loading.
+  const cropOptions = availableCrops.length
+    ? availableCrops
+    : (compareCommodity ? [compareCommodity] : []);
   return (
     <div style={{
       background: '#fff',
@@ -27,6 +35,7 @@ const CompareDrawer = ({
           <select
             value={compareCommodity}
             onChange={(e) => setCompareCommodity(e.target.value)}
+            disabled={!cropOptions.length}
             style={{
               padding: '8px 10px',
               border: '1.5px solid #bbf7d0',
@@ -36,12 +45,16 @@ const CompareDrawer = ({
               fontWeight: 600,
               fontSize: '12px',
               color: '#374151',
-              cursor: 'pointer'
+              cursor: cropOptions.length ? 'pointer' : 'not-allowed'
             }}
           >
-            {['Wheat', 'Rice', 'Mustard', 'Soybean', 'Cotton', 'Onion'].map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {cropOptions.length ? (
+              cropOptions.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))
+            ) : (
+              <option value="">No crops available</option>
+            )}
           </select>
         </div>
       </div>
