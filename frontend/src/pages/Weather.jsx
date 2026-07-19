@@ -6,41 +6,44 @@ import WeatherStats from "../components/weather/WeatherStats";
 import Navbar from "../components/common/Navbar";
 
 function Weather() {
-  // Initialize location from localStorage if saved, otherwise default to Jaipur
-  const [locationName, setLocationName] = useState(() => {
-    return localStorage.getItem("weatherLocation") || "Jaipur";
-  });
+  const [locationName, setLocationName] = useState("");
+  const [coords, setCoords]             = useState(null);
   const [searchInput, setSearchInput]   = useState("");
 
-  // Retrieve user's current city from IP geolocator ONLY if they haven't saved a custom choice yet
   useEffect(() => {
-    const savedLocation = localStorage.getItem("weatherLocation");
-    if (!savedLocation) {
-      const detectUserLocation = async () => {
-        try {
-          const response = await fetch("https://ipapi.co/json/");
-          const data = await response.json();
-          if (data && data.city) {
-            const detected = `${data.city}, ${data.region || data.country_name}`;
-            setLocationName(detected);
-            localStorage.setItem("weatherLocation", detected);
-          }
-        } catch (err) {
-          console.warn("Location detection via IP failed. Using default Jaipur.", err);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCoords({ lat: latitude, lon: longitude });
+          // get city name just for display
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+            .then(r => r.json())
+            .then(data => {
+              const city = data.address?.city || data.address?.town || data.address?.village || "Your Location";
+              setLocationName(city);
+            })
+            .catch(() => setLocationName("Your Location"));
+        },
+        () => {
+          // GPS denied — fallback to Delhi
+          setLocationName("Delhi");
+          setCoords({ lat: 28.6139, lon: 77.2090 });
         }
-      };
-      detectUserLocation();
+      );
+    } else {
+      setLocationName("Delhi");
+      setCoords({ lat: 28.6139, lon: 77.2090 });
     }
   }, []);
 
-  const { current, forecast, loading, error, retry } = useWeather(locationName);
+  const { current, forecast, loading, error, retry } = useWeather(locationName, coords);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      const targetCity = searchInput.trim();
-      setLocationName(targetCity);
-      localStorage.setItem("weatherLocation", targetCity);
+      setLocationName(searchInput.trim());
+      setCoords(null); // clear coords so city name search is used
       setSearchInput("");
     }
   };
