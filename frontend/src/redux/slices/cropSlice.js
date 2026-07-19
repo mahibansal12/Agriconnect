@@ -97,7 +97,9 @@ export const addCrop = createAsyncThunk(
   'crops/add',
   async (cropFormData, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post('/v1/listing', toListingFormData(cropFormData));
+    const { data } = await axiosInstance.post('/v1/listing', toListingFormData(cropFormData), {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
       // {
       //   headers: { 'Content-Type': 'multipart/form-data' },
       // });
@@ -112,7 +114,9 @@ export const updateCrop = createAsyncThunk(
   'crops/update',
   async ({ id, formData: cropFormData }, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.put(`/v1/listing/${id}`, toListingFormData(cropFormData));
+     const { data } = await axiosInstance.put(`/v1/listing/${id}`, toListingFormData(cropFormData), {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
       return normalizeListing(data.data);
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to update crop listing');
