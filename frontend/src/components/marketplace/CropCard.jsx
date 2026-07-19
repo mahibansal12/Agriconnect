@@ -80,9 +80,16 @@ const CropCard = ({ crop }) => {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/40 via-transparent to-transparent" />
-          <span className={`absolute left-4 top-4 rounded-full border px-3 py-1 text-xs font-black ${badgeStyle}`}>
-            {type || 'Crop'}
-          </span>
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+            <span className={`rounded-full border px-3 py-1 text-xs font-black ${badgeStyle}`}>
+              {type || 'Crop'}
+            </span>
+            {crop.quantity === 0 && (
+              <span className="rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-black text-red-600 shadow-sm">
+                Out of Stock
+              </span>
+            )}
+          </div>
           {!isOwner && (
             <button
               type="button"

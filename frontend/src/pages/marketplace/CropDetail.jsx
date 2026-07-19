@@ -269,6 +269,11 @@ const CropDetail = () => {
               <div className="cd-details-top">
                 <div>
                   <span className="cd-type-badge">{crop.type}</span>
+                  {crop.quantity === 0 && (
+                    <span className="cd-type-badge" style={{ marginLeft: '8px', background: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' }}>
+                      Out of Stock
+                    </span>
+                  )}
                   <h1 className="cd-name">{crop.name}</h1>
                   <p className="cd-price">₹{crop.price}/qtl</p>
                 </div>
@@ -342,9 +347,14 @@ const CropDetail = () => {
                 )}
                 {!isAdmin && !isOwner && (
                   <>
-                    <button onClick={handleBuyNow} className="cd-btn cd-btn--primary">
+                    <button 
+                      onClick={handleBuyNow} 
+                      disabled={crop.quantity === 0}
+                      className="cd-btn cd-btn--primary"
+                      style={crop.quantity === 0 ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                    >
                       <Icon.cart width={16} height={16} />
-                      Buy Now
+                      {crop.quantity === 0 ? 'Out of Stock' : 'Buy Now'}
                     </button>
                     <button onClick={handleContactSeller} className="cd-btn cd-btn--secondary">
                       <Icon.phone width={16} height={16} />

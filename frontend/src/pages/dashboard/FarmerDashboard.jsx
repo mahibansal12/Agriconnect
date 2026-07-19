@@ -134,7 +134,9 @@ const FarmerDashboard = () => {
   const ordersTotal = orders
     .filter((o) => o.orderStatus === 'delivered')
     .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
-  const pendingOrders = orders.filter((o) => o.orderStatus === 'pending').length;
+  const buyerPendingOrders = orders.filter((o) => o.paymentStatus === 'pending' && o.orderStatus === 'placed').length;
+  const validTotalOrders = orders.length - buyerPendingOrders;
+  const pendingOrders = orders.filter((o) => !['delivered', 'cancelled'].includes(o.orderStatus) && !(o.paymentStatus === 'pending' && o.orderStatus === 'placed')).length;
 
   const ordersPaidOut = orders
     .filter((o) => o.payoutStatus === 'paid')
@@ -361,7 +363,7 @@ const FarmerDashboard = () => {
                   <StatCard
                     icon="📦"
                     label="Total Orders"
-                    value={orders.length}
+                    value={validTotalOrders}
                     sub={`${pendingOrders} pending`}
                     accent="sky"
                   />
