@@ -31,6 +31,24 @@ const hashSeed = (str = '') => {
   return h;
 };
 
+// Real backend dates arrive as full ISO datetimes (e.g. "2026-07-09T00:00:00.000Z"),
+// while synthetic/walked-back points use plain "YYYY-MM-DD". Parsing with `new Date`
+// handles both correctly instead of naively splitting the string on "-", which broke
+// on the "T00:00:00.000Z" portion of real ISO dates.
+const formatDateShort = (str) => {
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return str;
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+};
+
+const formatDateLong = (str) => {
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return str;
+  return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: '2-digit', timeZone: 'UTC' });
+};
+
 /**
  * Build exactly `timeframe` days of chart data.
  * - If real history already covers the timeframe, just use the most recent slice.
@@ -82,7 +100,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       padding: '10px 14px',
       fontSize: '12px'
     }}>
-      <p style={{ margin: 0, color: '#9ca3af', fontWeight: 500 }}>{label}</p>
+      <p style={{ margin: 0, color: '#9ca3af', fontWeight: 500 }}>{formatDateLong(label)}</p>
       <p style={{ margin: '4px 0 0', fontWeight: 800, color: '#14532d' }}>
         ₹{payload[0].value?.toLocaleString('en-IN')}/qtl
       </p>
@@ -211,11 +229,7 @@ const PriceChart = ({ crop = '', history = [], loading = false, seedKey = '' }) 
               fontSize={10}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(str) => {
-                const parts = str.split('-');
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
-                return str;
-              }}
+              tickFormatter={formatDateShort}
             />
             <YAxis
               stroke="#9ca3af"

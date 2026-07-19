@@ -3,7 +3,7 @@ import CropRecommendForm from '../../components/recommendations/CropRecommendFor
 import CropResultCard from '../../components/recommendations/CropResultCard';
 import Navbar from '../../components/common/Navbar';
 import axiosInstance from '../../utils/axiosInstance';
-import { rankCrops } from '../../utils/cropRecommendationEngine';
+import { rankCrops } from '../../utils/Croprecommendationengine';
  
 const LOCAL_RECOMMENDATIONS = {
   Alluvial: [

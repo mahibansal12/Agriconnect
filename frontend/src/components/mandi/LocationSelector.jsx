@@ -202,24 +202,6 @@ const LocationSelector = ({
             >
               🔄 Refresh
             </button>
-            <button
-              onClick={() => alert('Mandi location saved successfully!')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                background: '#fff',
-                color: '#14532d',
-                border: '1.5px solid #16a34a',
-                fontWeight: 700,
-                fontSize: '11px',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#f0fdf4'}
-              onMouseLeave={(e) => e.target.style.background = '#fff'}
-            >
-              💾 Save
-            </button>
           </div>
         </div>
       </div>

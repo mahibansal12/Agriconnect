@@ -9,12 +9,10 @@ const STATES = [
   'Tamil Nadu', 'Karnataka', 'West Bengal',
 ];
 
-// India's annual rainfall realistically ranges from near-zero (arid Rajasthan/
-// Ladakh) to ~11,000mm (Mawsynram/Cherrapunji, the wettest places on Earth).
-// 10,000mm comfortably covers every real Indian location while rejecting
-// obviously-mistyped values like "888444844979".
+// Capped at 2000mm — comfortably covers normal agricultural rainfall inputs
+// while rejecting unrealistic/mistyped values.
 const RAINFALL_MIN = 0;
-const RAINFALL_MAX = 10000;
+const RAINFALL_MAX = 2000;
 
 const validateRainfall = (raw) => {
   if (raw === '' || raw === null || raw === undefined) return ''; // optional field
@@ -48,8 +46,6 @@ const CropRecommendForm = ({ onSubmit, loading }) => {
       season: fd.get('season'),
       state: fd.get('state'),
       rainfall: rainfallRaw,
-      temperature: fd.get('temperature'),
-      ph: fd.get('ph'),
     });
   };
 
@@ -97,14 +93,6 @@ const CropRecommendForm = ({ onSubmit, loading }) => {
             onChange={handleRainfallChange}
             aria-invalid={rainfallError ? 'true' : 'false'}
           />
-        </Field>
-
-        <Field label="Avg Temperature" suffix="C">
-          <input name="temperature" type="number" placeholder="25" min="0" max="55" />
-        </Field>
-
-        <Field label="Soil pH">
-          <input name="ph" type="number" placeholder="6.5" min="0" max="14" step="0.1" />
         </Field>
       </div>
 

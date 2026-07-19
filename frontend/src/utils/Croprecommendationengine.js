@@ -1,11 +1,8 @@
 export const FACTOR_WEIGHTS = {
-  soil: 0.20,
-  season: 0.20,
-  temperature: 0.15,
-  rainfall: 0.15,
-  ph: 0.10,
-  state: 0.10,
-  water: 0.10,
+  soil: 0.37,
+  rainfall: 0.27,
+  state: 0.18,
+  water: 0.18,
 };
  
 const WATER_LEVEL = { low: 1, medium: 2, high: 3 };
@@ -168,14 +165,11 @@ const waterMatchScore = (rainfall, cropWaterNeed) => {
  * data is actually available.
  */
 export const scoreCrop = (crop, inputs) => {
-  const { soilType, season, state, rainfall, temperature, ph } = inputs;
+  const { soilType, state, rainfall } = inputs;
  
   const factors = {
     soil: listMatchScore(soilType, crop.soilTypes),
-    season: listMatchScore(season, crop.season),
-    temperature: rangeMatchScore(temperature, crop.tempRange),
     rainfall: rangeMatchScore(rainfall, crop.rainfallRange),
-    ph: rangeMatchScore(ph, crop.phRange),
     state: listMatchScore(state, crop.statesSuited),
     water: waterMatchScore(rainfall, crop.waterNeed),
   };
@@ -197,6 +191,14 @@ const WATER_LABEL = { low: 'Low', medium: 'Medium', high: 'High' };
 /**
  * Rank the full crop dataset against the given form inputs and return
  * card-ready objects (matching what CropResultCard already expects).
+ *
+ * Season is enforced as a HARD filter here (not just a scoring factor): a
+ * crop that doesn't grow in the selected season is removed from the
+ * candidate pool before scoring even begins, so it can never appear in
+ * results no matter how well it matches soil/rainfall/state/water. This is
+ * what actually fixes out-of-season recommendations — previously season was
+ * only one weighted factor among several, so a crop could still rank highly
+ * by scoring well elsewhere even with a complete season mismatch.
  */
 export const rankCrops = (inputs, limit = 6) => {
   const parsed = {
@@ -205,13 +207,17 @@ export const rankCrops = (inputs, limit = 6) => {
     state: inputs.state || null,
     rainfall: inputs.rainfall !== '' && inputs.rainfall !== undefined && inputs.rainfall !== null
       ? Number(inputs.rainfall) : null,
-    temperature: inputs.temperature !== '' && inputs.temperature !== undefined && inputs.temperature !== null
-      ? Number(inputs.temperature) : null,
-    ph: inputs.ph !== '' && inputs.ph !== undefined && inputs.ph !== null
-      ? Number(inputs.ph) : null,
   };
  
-  return CROP_DATASET
+  // Hard season filter — only applied when the user actually selected a
+  // season. Comparison is case-insensitive against each crop's season list.
+  const seasonEligible = parsed.season
+    ? CROP_DATASET.filter((crop) =>
+        crop.season.some((s) => s.toLowerCase() === parsed.season.toLowerCase())
+      )
+    : CROP_DATASET;
+ 
+  return seasonEligible
     .map((crop) => scoreCrop(crop, parsed))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
