@@ -28,7 +28,21 @@ const STATES = [
   'Karnataka',
   'West Bengal',
 ];
-
+const DISTRICTS = {
+  'Uttar Pradesh': ['Lucknow','Agra','Varanasi','Prayagraj','Kanpur','Ghaziabad','Noida','Meerut','Mathura','Aligarh','Bareilly','Moradabad','Saharanpur','Gorakhpur','Firozabad','Jhansi','Muzaffarnagar','Etawah','Auraiya','Sitapur'],
+  'Punjab': ['Amritsar','Ludhiana','Jalandhar','Patiala','Bathinda','Mohali','Gurdaspur','Hoshiarpur','Ferozepur','Sangrur','Fatehgarh Sahib','Moga','Nawanshahr','Kapurthala'],
+  'Haryana': ['Karnal','Panipat','Ambala','Hisar','Rohtak','Sirsa','Sonipat','Yamunanagar','Faridabad','Gurugram','Kurukshetra','Jind','Bhiwani','Rewari'],
+  'Madhya Pradesh': ['Indore','Bhopal','Jabalpur','Gwalior','Ujjain','Sagar','Rewa','Satna','Ratlam','Dewas','Morena','Chhindwara','Vidisha','Hoshangabad'],
+  'Rajasthan': ['Jaipur','Jodhpur','Udaipur','Ajmer','Kota','Bikaner','Alwar','Bharatpur','Sikar','Nagaur','Tonk','Barmer','Jhunjhunu','Churu'],
+  'Maharashtra': ['Mumbai','Pune','Nagpur','Nashik','Aurangabad','Solapur','Kolhapur','Amravati','Nanded','Latur','Jalgaon','Ahmednagar','Satara','Sangli'],
+  'Bihar': ['Patna','Gaya','Muzaffarpur','Bhagalpur','Darbhanga','Purnia','Ara','Sitamarhi','Vaishali','Saran','Nalanda','Begusarai','Samastipur','Madhubani'],
+  'Uttarakhand': ['Dehradun','Haridwar','Roorkee','Haldwani','Nainital','Almora','Rishikesh','Kashipur','Rudrapur','Tehri','Pauri','Champawat','Pithoragarh','Bageshwar'],
+  'Gujarat': ['Ahmedabad','Surat','Vadodara','Rajkot','Bhavnagar','Jamnagar','Junagadh','Gandhinagar','Anand','Mehsana','Patan','Banaskantha','Kheda','Kutch'],
+  'Andhra Pradesh': ['Visakhapatnam','Vijayawada','Guntur','Nellore','Kurnool','Tirupati','Rajahmundry','Kakinada','Eluru','Ongole','Chittoor','Anantapur','Srikakulam','Vizianagaram'],
+  'Tamil Nadu': ['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Tirunelveli','Vellore','Erode','Dindigul','Thanjavur','Kanchipuram','Tirupur','Krishnagiri','Namakkal'],
+  'Karnataka': ['Bengaluru','Mysuru','Hubballi','Mangaluru','Belagavi','Kalaburagi','Ballari','Vijayapura','Shivamogga','Tumakuru','Dharwad','Raichur','Bidar','Hassan'],
+  'West Bengal': ['Kolkata','Howrah','Durgapur','Asansol','Siliguri','Bardhaman','Malda','Murshidabad','Nadia','Hooghly','North 24 Parganas','South 24 Parganas','Bankura','Purulia'],
+};
 const INITIAL_FORM = {
   name: '',
   type: '',
@@ -106,10 +120,15 @@ const AddListing = () => {
     }
   }, [isEditMode, prefilled, selectedCrop, id]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setFormError(''); // clear error on typing
-  };
+ const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "state") {
+        setForm({ ...form, state: value, district: "" });
+    } else {
+        setForm({ ...form, [name]: value });
+    }
+    setFormError('');
+};
 
   const validate = () => {
     const { name, type, price, quantity, state, district } = form;
@@ -269,16 +288,23 @@ const AddListing = () => {
                 ))}
               </select>
             </div>
-            <div className="al-field">
-              <label className="al-label">District <span className="al-req">*</span></label>
-              <input
-                name="district"
-                value={form.district}
-                onChange={handleChange}
-                placeholder="e.g. Haridwar"
-                className="al-input"
-              />
-            </div>
+           <div className="al-field">
+  <label className="al-label">District <span className="al-req">*</span></label>
+  <select
+    name="district"
+    value={form.district}
+    onChange={handleChange}
+    className="al-input al-select"
+    disabled={!form.state}
+  >
+    <option value="">
+      {form.state ? "Select district" : "Select state first"}
+    </option>
+    {(DISTRICTS[form.state] || []).map((d) => (
+      <option key={d} value={d}>{d}</option>
+    ))}
+  </select>
+</div>
           </div>
 
           {/* Row 4: Description */}
