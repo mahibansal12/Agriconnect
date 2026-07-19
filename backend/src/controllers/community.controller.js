@@ -49,9 +49,9 @@ const getPostById = asyncHandler(async (req, res) => {
 const createPost = asyncHandler(async (req, res) => {
     const { title, content, category } = req.body;
 
-    if (!title || !content) {
-        throw new ApiError(400, "Title and content are required");
-    }
+    if (!title) {
+    throw new ApiError(400, "Title is required");
+}
 
     let imageUrl = "";
     const imageLocalPath = req.file?.path;
