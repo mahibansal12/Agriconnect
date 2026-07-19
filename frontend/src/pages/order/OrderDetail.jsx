@@ -123,10 +123,14 @@ export default function OrderDetail() {
         <div className="od-section">
           <h3>Delivery Address</h3>
           <p>
-            {order.deliveryAddress?.village}, {order.deliveryAddress?.district},{' '}
-            {order.deliveryAddress?.state} - {order.deliveryAddress?.pincode}
+            {[
+              order.deliveryAddress?.village,
+              order.deliveryAddress?.district,
+              order.deliveryAddress?.state,
+            ].filter(Boolean).join(', ')}
+            {order.deliveryAddress?.pincode ? ` - ${order.deliveryAddress.pincode}` : ''}
           </p>
-          <p>Phone: {order.deliveryAddress?.phone}</p>
+          {order.deliveryAddress?.phone && <p>Phone: {order.deliveryAddress.phone}</p>}
         </div>
 
         <div className="od-section od-people">

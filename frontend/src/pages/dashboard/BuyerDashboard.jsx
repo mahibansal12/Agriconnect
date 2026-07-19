@@ -198,7 +198,7 @@ export default function BuyerDashboard() {
   };
 
   // ── Derived stats ───────────────────────────────────────────────────────
-  const activeOrders = orders.filter(o => !["cancelled", "delivered"].includes(o.orderStatus)).length;
+  const activeOrders = orders.filter(o => !["cancelled", "delivered"].includes(o.orderStatus) && !(o.paymentStatus === "pending" && o.orderStatus === "placed")).length;
   const totalSpent = orders.filter(o => o.paymentStatus === "paid").reduce((s, o) => s + (o.totalPrice || 0), 0);
 
   const navItems = [
