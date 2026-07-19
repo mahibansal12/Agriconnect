@@ -27,4 +27,15 @@ const verifyPaymentSignature = (razorpayOrderId, razorpayPaymentId, signature) =
     return expectedSignature === signature;
 };
 
-export { createRazorpayOrder, verifyPaymentSignature };
+// issues a full refund for a captured Razorpay payment
+// amount must be in paise (multiply rupees by 100)
+const createRazorpayRefund = async (paymentId, amountInRupees) => {
+    const refund = await razorpayInstance.payments.refund(paymentId, {
+        amount: amountInRupees * 100,   // paise
+        speed: "optimum",               // "normal" (T+5) or "instant" (T+0, higher fee)
+        notes: { reason: "Buyer cancelled order via AgriConnect" },
+    });
+    return refund;
+};
+
+export { createRazorpayOrder, verifyPaymentSignature, createRazorpayRefund };

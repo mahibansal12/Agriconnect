@@ -101,9 +101,37 @@ const sendOtpEmail = async (toEmail, otp) => {
     await transporter.sendMail(mailOptions);
 };
 
+// send refund confirmation email to buyer when order is cancelled
+const sendRefundEmail = async (toEmail, userName, orderDetails) => {
+    const mailOptions = {
+        from: `"AgriConnect" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject: "Order Cancelled & Refund Initiated - AgriConnect",
+        html: `
+            <h2>Order Cancelled</h2>
+            <p>Hi ${userName},</p>
+            <p>Your order has been cancelled and a full refund has been initiated.</p>
+            <h3>Refund Details:</h3>
+            <ul>
+                <li>Crop: ${orderDetails.cropName}</li>
+                <li>Quantity: ${orderDetails.quantity} ${orderDetails.unit}</li>
+                <li>Refund Amount: ₹${orderDetails.refundAmount}</li>
+                <li>Razorpay Refund ID: ${orderDetails.refundId}</li>
+            </ul>
+            <p>The refund will reflect in your original payment source within <strong>5–7 business days</strong> (instant refunds may arrive sooner).</p>
+            <p>If you have any questions, contact AgriConnect support.</p>
+            <br/>
+            <p><strong>Team AgriConnect</strong></p>
+        `,
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
 export {
     sendWelcomeEmail,
     sendOrderConfirmationEmail,
     sendPasswordResetEmail,
     sendOtpEmail,
+    sendRefundEmail,
 };

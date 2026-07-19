@@ -21,7 +21,7 @@ const HeartIcon = ({ filled, ...p }) => (
 const isSameId = (a, b) => !!a && !!b && a.toString() === b.toString();
 
 const CropCard = ({ crop }) => {
-  const { _id, name, price, state, district, type, images, seller, wishlistedBy } = crop;
+  const { _id, name, price, state, district, type, images, seller, wishlistedBy, views, isOrganic, harvestDate } = crop;
   const badgeStyle = typeStyles[type] || 'border-emerald-200 bg-emerald-50 text-emerald-700';
 
   const navigate = useNavigate();
@@ -98,6 +98,18 @@ const CropCard = ({ crop }) => {
               <HeartIcon filled={wishlisted} />
             </button>
           )}
+          {/* Views badge — bottom-left of image */}
+          {typeof views === 'number' && (
+            <span style={{
+              position: 'absolute', left: '12px', bottom: '10px',
+              background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(6px)',
+              color: '#fff', fontSize: '11px', fontWeight: 700,
+              borderRadius: '999px', padding: '3px 9px',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
+              👁 {views.toLocaleString('en-IN')}
+            </span>
+          )}
         </div>
 
           <div style={{ padding:"16px 20px 20px" }}>
@@ -118,16 +130,36 @@ const CropCard = ({ crop }) => {
 
   {/* Location */}
   <p style={{
-    margin:"0 0 14px",
-    fontSize:"12px",
-    color:"#6b7280",
-    fontWeight:500,
-    display:"flex",
-    alignItems:"center",
-    gap:"4px",
+    margin: '0 0 10px',
+    fontSize: '12px',
+    color: '#6b7280',
+    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
   }}>
     📍 {district}, {state}
   </p>
+
+  {/* Organic + Harvest Date chips */}
+  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+    {isOrganic && (
+      <span style={{
+        fontSize: '11px', fontWeight: 700,
+        background: '#dcfce7', color: '#15803d',
+        border: '1px solid #bbf7d0',
+        borderRadius: '999px', padding: '2px 9px',
+      }}>🌿 Organic</span>
+    )}
+    {harvestDate && (
+      <span style={{
+        fontSize: '11px', fontWeight: 600,
+        background: '#fef9c3', color: '#854d0e',
+        border: '1px solid #fde68a',
+        borderRadius: '999px', padding: '2px 9px',
+      }}>🌾 {new Date(harvestDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+    )}
+  </div>
 
   {/* Divider */}
   <div style={{ height:"1px", background:"linear-gradient(90deg,#bbf7d0,transparent)", marginBottom:"14px" }} />

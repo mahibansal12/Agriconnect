@@ -72,6 +72,8 @@ export const fetchCrops = createAsyncThunk(
       if (filters.district) params.append('district', filters.district);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+      if (filters.qualityGrade && filters.qualityGrade !== 'All') params.append('qualityGrade', filters.qualityGrade);
+      if (filters.isOrganic === true) params.append('isOrganic', 'true');
 
       const { data } = await axiosInstance.get(`/v1/listing?${params.toString()}`);
       return (data.data?.listings ?? data.data ?? []).map(normalizeListing);

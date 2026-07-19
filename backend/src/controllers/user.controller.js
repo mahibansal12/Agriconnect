@@ -515,7 +515,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     const normalizedEmail = normalizeEmail(email);
     const query = role ? { email: normalizedEmail, role } : { email: normalizedEmail };
-    const matches = await User.find(query).limit(role ? 1 : 2);
+    const matches = await User.find(query).limit(5);
 
     // Always respond the same way whether or not the account exists —
     // otherwise this endpoint becomes a way to check which emails are
@@ -525,21 +525,27 @@ const forgotPassword = asyncHandler(async (req, res) => {
             new ApiResponse(200, {}, "If an account exists, a password reset link has been sent")
         );
 
-    if (matches.length !== 1) return genericResponse();
+    if (matches.length === 0) return genericResponse();
 
-    const user = matches[0];
-    const rawToken = crypto.randomBytes(32).toString("hex");
+    // Trim CORS_ORIGIN to avoid leading/trailing whitespace in .env values
+    const baseUrl = (process.env.CORS_ORIGIN || "http://localhost:5173").trim().replace(/\/$/, "");
 
-    user.resetPasswordToken = hashOtp(rawToken);
-    user.resetPasswordExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
-    await user.save({ validateBeforeSave: false });
+    // Send a reset email to every matched account (handles same email across
+    // multiple roles — e.g. a user who has both a farmer and a buyer account).
+    for (const user of matches) {
+        const rawToken = crypto.randomBytes(32).toString("hex");
 
-    const resetLink = `${process.env.CORS_ORIGIN}/reset-password/${rawToken}?role=${user.role}`;
+        user.resetPasswordToken = hashOtp(rawToken);
+        user.resetPasswordExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+        await user.save({ validateBeforeSave: false });
 
-    try {
-        await sendPasswordResetEmail(user.email, user.name, resetLink);
-    } catch (err) {
-        console.error("Failed to send password reset email:", err.message);
+        const resetLink = `${baseUrl}/reset-password/${rawToken}?role=${user.role}`;
+
+        try {
+            await sendPasswordResetEmail(user.email, user.name, resetLink);
+        } catch (err) {
+            console.error(`Failed to send password reset email to ${user.email} (${user.role}):`, err.message);
+        }
     }
 
     return genericResponse();
