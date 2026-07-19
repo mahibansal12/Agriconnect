@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import CommentSection from "../../components/community/CommentSection";
 import Navbar from "../../components/common/Navbar";
@@ -12,6 +12,7 @@ function getInitials(name) {
 
 function PostDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   
   const [post, setPost]         = useState(null);
@@ -19,6 +20,7 @@ function PostDetail() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
   const [liking, setLiking]     = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // ── Fetch post details and comments ────────────────────────────────────
   const fetchPostDetails = async () => {
@@ -81,6 +83,26 @@ function PostDetail() {
     setComments(prev => [...prev, newComment]);
   };
 
+  const handleCommentDeleted = (commentId) => {
+    setComments(prev => prev.filter(c => c._id !== commentId));
+  };
+
+  // ── Delete post (author only — backend re-checks this too) ─────────────
+  const handleDeletePost = async () => {
+    if (!post) return;
+    if (!window.confirm("Delete this post? This can't be undone.")) return;
+    try {
+      setDeleting(true);
+      // DELETE /api/v1/community/posts/:id
+      await axiosInstance.delete(`/v1/community/posts/${id}`);
+      navigate("/community");
+    } catch (err) {
+      console.error("Delete post error:", err);
+      alert(err.response?.data?.message || "Failed to delete post.");
+      setDeleting(false);
+    }
+  };
+
   // ── Loading state ────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight:"100vh", background:"#f0fdf4", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
@@ -116,6 +138,7 @@ function PostDetail() {
   const authorName = post.author?.name || "Anonymous";
   const likeCount  = Array.isArray(post.likes) ? post.likes.length : Number(post.likes || 0);
   const userHasLiked = user && Array.isArray(post.likes) && post.likes.includes(user._id);
+  const userIsAuthor = user && post.author?._id && user._id.toString() === post.author._id.toString();
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0fdf4 0%,#f7fef9 50%,#ecfdf5 100%)", fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
@@ -145,6 +168,16 @@ function PostDetail() {
             <span style={{ padding:"5px 14px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#dcfce7", color:"#14532d", border:"1.5px solid #86efac", textTransform:"capitalize" }}>
               {(post.category || "general").replace("-", " ")}
             </span>
+            {userIsAuthor && (
+              <button
+                onClick={handleDeletePost}
+                disabled={deleting}
+                title="Delete post"
+                style={{ display:"flex", alignItems:"center", gap:"6px", padding:"5px 12px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#fef2f2", color:"#dc2626", border:"1.5px solid #fecaca", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}
+              >
+                🗑️ {deleting ? "Deleting..." : "Delete"}
+              </button>
+            )}
           </div>
 
           {/* Title */}
@@ -186,7 +219,12 @@ function PostDetail() {
         </div>
 
         {/* Comments */}
-        <CommentSection postId={post._id} comments={comments} onAddComment={handleCommentAdded} />
+        <CommentSection
+          postId={post._id}
+          comments={comments}
+          onAddComment={handleCommentAdded}
+          onCommentDeleted={handleCommentDeleted}
+        />
       </div>
     </div>
   );

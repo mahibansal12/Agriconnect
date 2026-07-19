@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import Navbar from "../../components/common/Navbar";
 import CropInfoCard from "../../components/crop-knowledge/CropInfoCard";
@@ -16,6 +17,7 @@ const categoryMeta = {
 };
 
 function CropKnowledge() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [crops, setCrops] = useState([]);           
@@ -103,8 +105,36 @@ function CropKnowledge() {
               </p>
             </div>
 
-            {/* Search */}
-            <div style={{ position:"relative", width:"320px", flexShrink:0 }}>
+            {/* Search + Pest Library */}
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px", width:"320px", flexShrink:0 }}>
+              {/* Pest Library Button */}
+              <button
+                onClick={() => navigate("/pests")}
+                style={{
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:"8px",
+                  width:"100%", boxSizing:"border-box",
+                  padding:"11px 16px",
+                  borderRadius:"14px",
+                  border:"1.5px solid rgba(252,165,165,0.45)",
+                  background:"linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+                  color:"#fff",
+                  fontSize:"13.5px",
+                  fontWeight:700,
+                  cursor:"pointer",
+                  boxShadow:"0 4px 14px rgba(220,38,38,0.35)",
+                  transition:"transform 0.18s ease, box-shadow 0.18s ease",
+                  outline:"none",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 18px rgba(220,38,38,0.45)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(220,38,38,0.35)"; }}
+              >
+                <span style={{ fontSize:"15px" }}>🐛</span>
+                Explore Pest Library
+                <span style={{ fontSize:"13px" }}>→</span>
+              </button>
+
+              {/* Search */}
+              <div style={{ position:"relative", width:"100%" }}>
               <span style={{ position:"absolute", left:"15px", top:"50%", transform:"translateY(-50%)", fontSize:"15px" }}>🔍</span>
               <input
                 type="text"
@@ -127,6 +157,7 @@ function CropKnowledge() {
                 onFocus={e => e.target.style.border = "1.5px solid rgba(134,239,172,0.75)"}
                 onBlur={e => e.target.style.border = "1.5px solid rgba(134,239,172,0.35)"}
               />
+              </div>
             </div>
           </div>
         </div>

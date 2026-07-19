@@ -25,9 +25,6 @@ const LINKS = {
   Company: [
   { to: "/about",    label: "About AgriConnect" },
     { to: "/contact",  label: "Contact Us" },
-    { to: "/privacy",  label: "Privacy Policy" },
-    { to: "/terms",    label: "Terms of Use" },
-    { to: "/grievance",label: "Grievance" },
   ],
 };
 
@@ -78,8 +75,6 @@ export default function Footer() {
       <div className="ft-bar">
         <span>© 2026 AgriConnect Platform &nbsp;·&nbsp; Ministry of Agriculture &amp; Farmers Welfare, Government of India</span>
         <div className="ft-bar-links">
-          <Link to="/privacy" className="ft-bar-link">Privacy</Link>
-          <Link to="/terms"   className="ft-bar-link">Terms</Link>
           <Link to="/sitemap" className="ft-bar-link">Sitemap</Link>
         </div>
       </div>
