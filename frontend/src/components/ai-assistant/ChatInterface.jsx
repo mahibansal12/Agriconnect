@@ -39,12 +39,108 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatInterface() {
-  const { name } = useAuth();
+  const { name, isLoggedIn } = useAuth();
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  // ── Per-user chat history (left sidebar) ──────────────────────────────
+  // Sessions are stored server-side under /v1/ai/sessions, scoped to the
+  // logged-in user's own account — nothing here is shared across users or
+  // persisted for guests.
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const fetchSessions = async () => {
+    if (!isLoggedIn) return;
+    try {
+      setSessionsLoading(true);
+      const { data } = await axiosInstance.get('/v1/ai/sessions');
+      setSessions(data?.data || []);
+    } catch (err) {
+      console.error('Fetch chat sessions error:', err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) fetchSessions();
+    else { setSessions([]); setActiveSessionId(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
+
+  const loadSession = async (id) => {
+    if (id === activeSessionId || loading) return;
+    try {
+      const { data } = await axiosInstance.get(`/v1/ai/sessions/${id}`);
+      const session = data?.data;
+      setMessages(session?.messages?.length ? session.messages : [WELCOME_MESSAGE]);
+      setActiveSessionId(id);
+      setSidebarOpen(false);
+    } catch (err) {
+      console.error('Load chat session error:', err);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([WELCOME_MESSAGE]);
+    setActiveSessionId(null);
+    setInput('');
+    setSidebarOpen(false);
+  };
+
+  const handleDeleteSession = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this chat from your history?')) return;
+    try {
+      await axiosInstance.delete(`/v1/ai/sessions/${id}`);
+      setSessions(prev => prev.filter(s => s._id !== id));
+      if (id === activeSessionId) handleNewChat();
+    } catch (err) {
+      console.error('Delete chat session error:', err);
+    }
+  };
+
+  // Save (or create) the session that backs the current conversation —
+  // called after every completed exchange so the sidebar always reflects
+  // what's on screen.
+  const persistSession = async (msgsToSave) => {
+    if (!isLoggedIn) return;
+    try {
+      if (activeSessionId) {
+        const { data } = await axiosInstance.put(`/v1/ai/sessions/${activeSessionId}`, { messages: msgsToSave });
+        const updated = data?.data;
+        setSessions(prev => {
+          const rest = prev.filter(s => s._id !== activeSessionId);
+          return [{ _id: activeSessionId, title: updated?.title, updatedAt: updated?.updatedAt }, ...rest];
+        });
+      } else {
+        const { data } = await axiosInstance.post('/v1/ai/sessions', { messages: msgsToSave });
+        const created = data?.data;
+        if (created?._id) {
+          setActiveSessionId(created._id);
+          setSessions(prev => [{ _id: created._id, title: created.title, updatedAt: created.updatedAt }, ...prev]);
+        }
+      }
+    } catch (err) {
+      console.error('Persist chat session error:', err);
+    }
+  };
+
+  const formatSessionTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    return sameDay
+      ? d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,30 +155,36 @@ export default function ChatInterface() {
   };
   useEffect(autoGrow, [input]);
 
-  const sendMessage = async (overrideText, { isRegenerate = false } = {}) => {
+  const sendMessage = async (overrideText, { isRegenerate = false, baseMessages = null } = {}) => {
     const text = (overrideText ?? input).trim();
     if (!text || loading) return;
 
+    let workingMessages = isRegenerate ? (baseMessages ?? messages) : messages;
     if (!isRegenerate) {
-      setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
+      workingMessages = [...messages, { role: 'user', text, timestamp: new Date().toISOString() }];
+      setMessages(workingMessages);
       setInput('');
     }
     setLoading(true);
     try {
-      const history = messages.slice(-6).map(m => ({ role: m.role, content: m.text }));
+      const history = workingMessages.slice(-6).map(m => ({ role: m.role, content: m.text }));
       const { data } = await axiosInstance.post('/v1/ai/chat', { message: text, history });
-      setMessages(prev => [...prev, {
+      const finalMessages = [...workingMessages, {
         role: 'assistant',
         text: data.data?.reply ?? 'Sorry, I could not get a response.',
         timestamp: new Date().toISOString(),
-      }]);
+      }];
+      setMessages(finalMessages);
+      persistSession(finalMessages);
     } catch (err) {
-      setMessages(prev => [...prev, {
+      const finalMessages = [...workingMessages, {
         role: 'assistant',
         text: '⚠️ ' + (err.response?.data?.message ?? 'Network error. Please try again.'),
         timestamp: new Date().toISOString(),
         isError: true,
-      }]);
+      }];
+      setMessages(finalMessages);
+      persistSession(finalMessages);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -104,9 +206,10 @@ export default function ChatInterface() {
     // drop the last assistant reply, then re-ask the same question
     setMessages(prev => {
       const idx = prev.map(m => m.role).lastIndexOf('assistant');
-      return idx === -1 ? prev : prev.slice(0, idx);
+      const truncated = idx === -1 ? prev : prev.slice(0, idx);
+      sendMessage(lastUserMsg.text, { isRegenerate: true, baseMessages: truncated });
+      return truncated;
     });
-    sendMessage(lastUserMsg.text, { isRegenerate: true });
   };
 
   const handleFeedback = (idx, value) => {
@@ -118,9 +221,59 @@ export default function ChatInterface() {
   const firstName = name?.split(' ')[0];
 
   return (
-    <div className="aic-wrap">
+    <div className="aic-layout">
+      {/* ── Chat history sidebar (per logged-in user) ── */}
+      <aside className={`aic-sidebar ${sidebarOpen ? 'aic-sidebar--open' : ''}`}>
+        <button type="button" className="aic-newchat-btn" onClick={handleNewChat}>
+          <span aria-hidden="true">+</span> New chat
+        </button>
+
+        <div className="aic-sidebar-list">
+          {!isLoggedIn ? (
+            <p className="aic-sidebar-empty">Log in to save and revisit your chat history.</p>
+          ) : sessionsLoading ? (
+            <p className="aic-sidebar-empty">Loading…</p>
+          ) : sessions.length === 0 ? (
+            <p className="aic-sidebar-empty">No past chats yet — your conversations will show up here.</p>
+          ) : (
+            sessions.map(s => (
+              <div
+                key={s._id}
+                className={`aic-session-row ${s._id === activeSessionId ? 'aic-session-row--active' : ''}`}
+                onClick={() => loadSession(s._id)}
+              >
+                <div className="aic-session-info">
+                  <span className="aic-session-title">{s.title || 'New chat'}</span>
+                  <span className="aic-session-time">{formatSessionTime(s.updatedAt)}</span>
+                </div>
+                <button
+                  type="button"
+                  className="aic-session-delete"
+                  title="Delete chat"
+                  onClick={(e) => handleDeleteSession(s._id, e)}
+                >
+                  🗑️
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+
+      {/* Backdrop for the sidebar on mobile */}
+      {sidebarOpen && <div className="aic-sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+
+      <div className="aic-wrap">
       {/* Feature pills */}
       <div className="aic-pills">
+        <button
+          type="button"
+          className="aic-sidebar-toggle"
+          onClick={() => setSidebarOpen(v => !v)}
+          aria-label="Toggle chat history"
+        >
+          ☰
+        </button>
         {FEATURE_PILLS.map(p => (
           <button
             key={p.label}
@@ -247,9 +400,80 @@ export default function ChatInterface() {
       </div>
 
       <style>{`
+        .aic-layout {
+          display: flex; height: 100%; width: 100%;
+          position: relative;
+        }
+
+        /* Chat history sidebar */
+        .aic-sidebar {
+          width: 250px; flex-shrink: 0;
+          background: #FBFDFB; border-right: 1.5px solid #E5E7EB;
+          display: flex; flex-direction: column;
+          padding: 14px 12px; gap: 10px;
+          height: 100%; overflow-y: auto;
+        }
+        .aic-newchat-btn {
+          display: flex; align-items: center; gap: 8px; justify-content: center;
+          padding: 10px 12px; border-radius: 12px;
+          background: linear-gradient(135deg,#15803D,#22C55E); color: #fff;
+          border: none; font-family: inherit; font-size: 13px; font-weight: 700;
+          cursor: pointer; flex-shrink: 0;
+          box-shadow: 0 3px 10px rgba(21,128,61,0.25);
+        }
+        .aic-newchat-btn:hover { filter: brightness(1.05); }
+        .aic-sidebar-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+        .aic-sidebar-empty {
+          font-size: 12px; color: #9CA3AF; line-height: 1.6;
+          padding: 12px 8px; text-align: center;
+        }
+        .aic-session-row {
+          display: flex; align-items: center; justify-content: space-between; gap: 6px;
+          padding: 9px 10px; border-radius: 10px; cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .aic-session-row:hover { background: #F0FDF4; }
+        .aic-session-row--active { background: #DCFCE7; }
+        .aic-session-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+        .aic-session-title {
+          font-size: 12.5px; font-weight: 600; color: #14532D;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .aic-session-time { font-size: 10.5px; color: #9CA3AF; }
+        .aic-session-delete {
+          flex-shrink: 0; background: none; border: none; cursor: pointer;
+          font-size: 12px; opacity: 0; padding: 4px; border-radius: 6px;
+          transition: opacity 0.15s ease, background 0.15s ease;
+        }
+        .aic-session-row:hover .aic-session-delete { opacity: 0.7; }
+        .aic-session-delete:hover { opacity: 1 !important; background: #FEE2E2; }
+
+        .aic-sidebar-toggle {
+          display: none; align-items: center; justify-content: center;
+          width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+          background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 14px; cursor: pointer;
+        }
+        .aic-sidebar-backdrop { display: none; }
+
+        @media (max-width: 760px) {
+          .aic-sidebar {
+            position: fixed; inset: 0 auto 0 0; z-index: 30;
+            transform: translateX(-100%);
+            transition: transform 0.22s ease;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+          }
+          .aic-sidebar--open { transform: translateX(0); }
+          .aic-sidebar-toggle { display: flex; }
+          .aic-sidebar-backdrop {
+            display: block; position: fixed; inset: 0; z-index: 20;
+            background: rgba(0,0,0,0.35);
+          }
+        }
+
         .aic-wrap {
           display: flex; flex-direction: column; height: 100%;
           max-width: 1300px; width: 100%; margin: 0 auto;
+          min-width: 0;
         }
 
         /* Feature pills */
@@ -448,6 +672,7 @@ export default function ChatInterface() {
           .aic-typing span { animation: none; }
         }
       `}</style>
+    </div>
     </div>
   );
 }

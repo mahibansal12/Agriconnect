@@ -3,32 +3,17 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
-import { formatPrice, formatChange } from "../utils/formatters";
+import { formatPrice, formatDate } from "../utils/formatters";
 import axiosInstance from "../utils/axiosInstance";
 
-const MOCK_MANDI = [
-  { crop: "Wheat",        mandi: "Jaipur Mandi",     price: 2450, change: 2.5  },
-  { crop: "Paddy (Dhan)", mandi: "Alwar Mandi",      price: 1860, change: -1.2 },
-  { crop: "Mustard",      mandi: "Bharatpur Mandi",  price: 5650, change: 1.8  },
-  { crop: "Soybean",      mandi: "Kota Mandi",       price: 4120, change: 0.5  },
-  { crop: "Chana",        mandi: "Ajmer Mandi",      price: 4980, change: -0.3 },
-];
-
-const MOCK_NEWS = [
-  { id: 1, title: "Govt announces new scheme for millet farmers",     category: "Government Policies", date: "12 May 2024" },
-  { id: 2, title: "Timely rainfall may boost Kharif crop production", category: "Weather News",        date: "10 May 2024" },
-  { id: 3, title: "Drip irrigation can save up to 60% water",        category: "New Technologies",    date: "09 May 2024" },
-  { id: 4, title: "MSP for Rabi crops increased by 5%",              category: "Market Updates",      date: "08 May 2024" },
-];
-
-const MOCK_SCHEMES = [
-  { id: 1, icon: "💰", name: "PM Kisan Samman Nidhi",         benefit: "₹6,000 per year financial support" },
-  { id: 2, icon: "🌾", name: "PM Fasal Bima Yojana",          benefit: "Crop insurance for financial support" },
-  { id: 3, icon: "🧪", name: "Soil Health Card Scheme",        benefit: "Free soil testing and improvement" },
-  { id: 4, icon: "💳", name: "Kisan Credit Card",              benefit: "Low interest loans for farmers" },
-  { id: 5, icon: "💧", name: "Pradhan Mantri Krishi Sinchai",  benefit: "Irrigation facility scheme" },
-  { id: 6, icon: "📱", name: "Rashtriya Krishi Vikas Yojana", benefit: "Agriculture development support" },
-];
+// Icon shown per scheme category (mirrors the categories used on the real Schemes page)
+const SCHEME_CATEGORY_ICON = {
+  subsidy:   "💰",
+  loan:      "🏦",
+  insurance: "🛡️",
+  training:  "📚",
+  other:     "📋",
+};
 
 const QUICK_LINKS = [
   { to: "/marketplace",          icon: "🛒", label: "Marketplace",  sub: "Buy & sell crops" },
@@ -40,16 +25,84 @@ const QUICK_LINKS = [
 ];
 
 const CAT_COLORS = {
-  "Government Policies": { bg: "#FFF8E1", color: "#E65100" },
-  "Weather News":        { bg: "#E3F2FD", color: "#1565C0" },
-  "New Technologies":    { bg: "#E8F5E9", color: "#1B5E20" },
-  "Market Updates":      { bg: "#F3E5F5", color: "#6A1B9A" },
+  government: { bg: "#dbeafe", color: "#1d4ed8", icon: "🏛️", label: "Government" },
+  market:     { bg: "#fef3c7", color: "#92400e", icon: "📈", label: "Market" },
+  weather:    { bg: "#e0f2fe", color: "#0c4a6e", icon: "🌦️", label: "Weather" },
+  technology: { bg: "#ede9fe", color: "#4c1d95", icon: "💡", label: "Technology" },
+  general:    { bg: "#d1fae5", color: "#064e3b", icon: "🌾", label: "General" },
+};
+
+// e.g. "2 min ago", "3 hr ago", "5 days ago"
+const timeAgo = (dateString) => {
+  if (!dateString) return "";
+  const diffMs = Date.now() - new Date(dateString).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days !== 1 ? "s" : ""} ago`;
 };
 
 export default function Landing() {
   const [weather, setWeather]           = useState(null);
   const [locationName, setLocationName] = useState("Detecting location...");
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [schemes, setSchemes]           = useState([]);
+  const [mandiRates, setMandiRates]     = useState([]);
+  const [news, setNews]                 = useState([]);
+
+  // Live mandi rates — same /v1/mandi/rates endpoint the real Mandi Rates
+  // page uses, sorted by most recent arrival so this stays "live".
+  useEffect(() => {
+    const fetchTopMandiRates = async () => {
+      try {
+        const res = await axiosInstance.get("/v1/mandi/rates", {
+          params: { limit: 5, sortBy: "arrivalDate", order: "desc" },
+        });
+        setMandiRates(res.data?.data?.rates || []);
+      } catch (err) {
+        console.error("Error fetching mandi rates:", err);
+        setMandiRates([]);
+      }
+    };
+    fetchTopMandiRates();
+  }, []);
+
+  // Latest news — same /v1/news endpoint the real News page uses (live
+  // agriculture headlines + any news added by admins), newest first.
+  useEffect(() => {
+    const fetchTopNews = async () => {
+      try {
+        const res = await axiosInstance.get("/v1/news");
+        const articles = Array.isArray(res.data?.data) ? res.data.data : [];
+        const sorted = [...articles].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setNews(sorted.slice(0, 4));
+      } catch (err) {
+        console.error("Error fetching news:", err);
+        setNews([]);
+      }
+    };
+    fetchTopNews();
+  }, []);
+
+  // Fetch the same live schemes shown on the real Schemes page, so the
+  // homepage never shows a scheme that doesn't actually exist there.
+  useEffect(() => {
+    const fetchTopSchemes = async () => {
+      try {
+        const res = await axiosInstance.get("/v1/schemes");
+        setSchemes((res.data.data || []).slice(0, 5));
+      } catch (err) {
+        console.error("Error fetching schemes:", err);
+        setSchemes([]);
+      }
+    };
+    fetchTopSchemes();
+  }, []);
 
 useEffect(() => {
     const getWeatherByCoords = async (lat, lon) => {
@@ -220,7 +273,12 @@ useEffect(() => {
             </div>
             <div className="lp-live-dot">
               <span className="lp-dot" />
-              <span>Live · Updated 2 min ago</span>
+              <span>
+                Live ·{" "}
+                {mandiRates.length
+                  ? `Updated ${timeAgo(mandiRates[0].arrivalDate)}`
+                  : "Fetching latest rates..."}
+              </span>
             </div>
             <table className="lp-table">
               <thead>
@@ -228,23 +286,25 @@ useEffect(() => {
                   <th>Crop</th>
                   <th>Mandi</th>
                   <th>Price</th>
-                  <th>Change</th>
+                  <th>Arrival</th>
                 </tr>
               </thead>
               <tbody>
-                {MOCK_MANDI.map((r) => {
-                  const ch = formatChange(r.change);
-                  return (
-                    <tr key={r.crop}>
-                      <td className="lp-td-bold">{r.crop}</td>
-                      <td className="lp-td-muted lp-td-sm">{r.mandi}</td>
-                      <td className="lp-td-bold lp-td-green">{formatPrice(r.price)}</td>
-                      <td>
-                        <span className={`lp-badge lp-badge-${ch.direction}`}>{ch.label}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {mandiRates.length === 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "16px 14px", fontSize: "13px", color: "#7A8F76" }}>
+                      No mandi rates available right now.
+                    </td>
+                  </tr>
+                )}
+                {mandiRates.map((r) => (
+                  <tr key={r._id}>
+                    <td className="lp-td-bold">{r.commodityName}</td>
+                    <td className="lp-td-muted lp-td-sm">{r.mandi}</td>
+                    <td className="lp-td-bold lp-td-green">{formatPrice(r.modalPrice)}</td>
+                    <td className="lp-td-muted lp-td-sm">{formatDate(r.arrivalDate)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -261,16 +321,28 @@ useEffect(() => {
               <Link to="/news" className="lp-card-link">View all →</Link>
             </div>
             <div className="lp-news-list">
-              {MOCK_NEWS.map((n) => {
-                const style = CAT_COLORS[n.category] || { bg: "#F3F4F6", color: "#374151" };
+              {news.length === 0 && (
+                <div style={{ padding: "18px 4px", fontSize: "13px", color: "#7A8F76" }}>
+                  No news available right now.
+                </div>
+              )}
+              {news.map((n) => {
+                const style = CAT_COLORS[n.category] || { bg: "#F3F4F6", color: "#374151", label: n.category };
+                const ItemTag = n.isLive ? "a" : Link;
                 return (
-                  <Link key={n.id} to={`/news/${n.id}`} className="lp-news-item">
+                  <ItemTag
+                    key={n._id}
+                    className="lp-news-item"
+                    {...(n.isLive
+                      ? { href: n.sourceUrl, target: "_blank", rel: "noopener noreferrer" }
+                      : { to: `/news/${n._id}` })}
+                  >
                     <span className="lp-news-cat" style={{ background: style.bg, color: style.color }}>
-                      {n.category}
+                      {style.label || n.category}
                     </span>
                     <div className="lp-news-title">{n.title}</div>
-                    <div className="lp-news-date">{n.date}</div>
-                  </Link>
+                    <div className="lp-news-date">{formatDate(n.createdAt)}</div>
+                  </ItemTag>
                 );
               })}
             </div>
@@ -289,12 +361,17 @@ useEffect(() => {
               <Link to="/schemes" className="lp-card-link">View all →</Link>
             </div>
             <div className="lp-scheme-list">
-              {MOCK_SCHEMES.map((s) => (
-                <Link key={s.id} to={`/schemes/${s.id}`} className="lp-scheme-item">
-                  <span className="lp-scheme-icon">{s.icon}</span>
+              {schemes.length === 0 && (
+                <div style={{ padding: "18px 4px", fontSize: "13px", color: "#7A8F76" }}>
+                  No schemes available right now.
+                </div>
+              )}
+              {schemes.map((s) => (
+                <Link key={s._id} to="/schemes" className="lp-scheme-item">
+                  <span className="lp-scheme-icon">{SCHEME_CATEGORY_ICON[s.category] || "📋"}</span>
                   <div>
-                    <div className="lp-scheme-name">{s.name}</div>
-                    <div className="lp-scheme-benefit">{s.benefit}</div>
+                    <div className="lp-scheme-name">{s.title}</div>
+                    <div className="lp-scheme-benefit">{(s.benefits || "").split(",")[0]}</div>
                   </div>
                   <svg className="lp-scheme-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="9 18 15 12 9 6"/>
