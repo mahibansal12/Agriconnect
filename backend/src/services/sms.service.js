@@ -76,11 +76,21 @@ const sendPayoutConfirmationSms = async (toPhone, farmerName, amount) => {
     });
 };
 
+// notify buyer that their refund has been initiated after cancellation
+const sendRefundSms = async (toPhone, buyerName, amount, cropName) => {
+    await client.messages.create({
+        body: `Hi ${buyerName}, your order for ${cropName} on AgriConnect has been cancelled. A full refund of Rs.${amount} has been initiated and will reach you in 5-7 business days.`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: toE164(toPhone),
+    });
+};
+
 export {
     sendOTPSms,
     sendOrderNotificationSms,
     sendPaymentConfirmationSms,
     sendOrderStatusSms,
     sendPayoutConfirmationSms,
+    sendRefundSms,
     toE164,
 };

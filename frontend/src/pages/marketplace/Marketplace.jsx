@@ -19,6 +19,8 @@ const Marketplace = () => {
     maxPrice: '',
     state: 'All',
     district: '',
+    qualityGrade: 'All',
+    isOrganic: false,
   });
 
   const [search, setSearch] = useState('');

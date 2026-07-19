@@ -275,10 +275,13 @@ const CropDetail = () => {
  
                 <div className="cd-meta-grid">
                   {[
-                    ['Quantity', `${crop.quantity} qtl`],
-                    ['State', crop.state],
-                    ['District', crop.district],
+                    ['Quantity', `${crop.quantity} ${crop.unit || 'qtl'}`],
+                    ['Quality Grade', crop.qualityGrade ? `Grade ${crop.qualityGrade}` : '—'],
+                    ['State', crop.state || '—'],
+                    ['District', crop.district || '—'],
                     ['Seller', crop.seller?.name || 'N/A'],
+                    ['Harvest Date', crop.harvestDate ? new Date(crop.harvestDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
+                    ['Available Until', crop.availableUntil ? new Date(crop.availableUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
                     ['Listed', crop.createdAt ? new Date(crop.createdAt).toLocaleDateString('en-IN') : '—'],
                   ].map(([label, value]) => (
                     <div key={label} className="cd-meta-cell">
@@ -286,6 +289,20 @@ const CropDetail = () => {
                       <p className="cd-meta-value">{value}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Organic + Views badges */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '-4px' }}>
+                  {crop.isOrganic && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 13px', borderRadius: '999px', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', fontSize: '13px', fontWeight: 700 }}>
+                      🌿 Organically Grown
+                    </span>
+                  )}
+                  {typeof crop.views === 'number' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 13px', borderRadius: '999px', background: 'rgba(0,0,0,0.05)', color: '#57534E', border: '1px solid rgba(0,0,0,0.08)', fontSize: '13px', fontWeight: 600 }}>
+                      👁 {crop.views.toLocaleString('en-IN')} views
+                    </span>
+                  )}
                 </div>
  
                 {crop.description && (

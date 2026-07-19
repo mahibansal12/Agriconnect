@@ -47,7 +47,7 @@ const createListing = asyncHandler(async (req, res) => {
     const imageFiles = req.files || [];
     const uploadedImages = [];
 
-    
+
     for (const file of imageFiles) {
         const uploaded = await uploadOnCloudinary(file.path);
         if (uploaded) {
@@ -91,7 +91,7 @@ const createListing = asyncHandler(async (req, res) => {
 const getAllListings = asyncHandler(async (req, res) => {
     const {
         page = 1,
-        limit = 10,
+        limit = 1000,
         cropName,
         category,
         state,

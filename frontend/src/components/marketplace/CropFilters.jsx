@@ -1,6 +1,7 @@
 // src/components/marketplace/CropFilters.jsx
 
 const CROP_TYPES = ['All', 'Grain', 'Vegetable', 'Fruit', 'Spice', 'Oilseed'];
+const QUALITY_GRADES = ['All', 'A', 'B', 'C'];
 
 const STATES = [
   'All',
@@ -25,7 +26,7 @@ const CropFilters = ({ filters, onChange }) => {
   };
 
   const handleReset = () => {
-    onChange({ type: 'All', minPrice: '', maxPrice: '', state: 'All', district: '' });
+    onChange({ type: 'All', minPrice: '', maxPrice: '', state: 'All', district: '', qualityGrade: 'All', isOrganic: false });
   };
 
   const hasActiveFilters =
@@ -33,7 +34,9 @@ const CropFilters = ({ filters, onChange }) => {
     filters.state !== 'All' ||
     filters.minPrice !== '' ||
     filters.maxPrice !== '' ||
-    filters.district !== '';
+    filters.district !== '' ||
+    filters.qualityGrade !== 'All' ||
+    filters.isOrganic === true;
 
   return (
     <section className="mf">
@@ -102,6 +105,27 @@ const CropFilters = ({ filters, onChange }) => {
             onChange={(e) => handleChange('district', e.target.value)}
           />
         </label>
+
+        <label className="mf-field">
+          <span>Quality Grade</span>
+          <select value={filters.qualityGrade || 'All'} onChange={(e) => handleChange('qualityGrade', e.target.value)}>
+            {QUALITY_GRADES.map((g) => (
+              <option key={g} value={g}>{g === 'All' ? 'All Grades' : `Grade ${g}`}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="mf-field mf-field--organic">
+          <span>Organic Only</span>
+          <button
+            type="button"
+            onClick={() => handleChange('isOrganic', !filters.isOrganic)}
+            className={`mf-organic-btn${filters.isOrganic ? ' mf-organic-btn--on' : ''}`}
+          >
+            <span className="mf-organic-knob" />
+            <span className="mf-organic-label">{filters.isOrganic ? '🌿 On' : 'Off'}</span>
+          </button>
+        </label>
       </div>
 
       <style>{`
@@ -150,7 +174,7 @@ const CropFilters = ({ filters, onChange }) => {
 
         .mf-grid {
           display: grid;
-          grid-template-columns: 1.1fr 0.9fr 0.9fr 1.4fr 1.2fr;
+          grid-template-columns: 1fr 0.8fr 0.8fr 1.2fr 1fr 0.8fr 0.7fr;
           gap: 14px;
         }
 
@@ -207,10 +231,35 @@ const CropFilters = ({ filters, onChange }) => {
           box-shadow: 0 0 0 4px rgba(22,163,74,0.12);
         }
 
-        @media (max-width: 980px) {
+        /* Organic toggle button */
+        .mf-organic-btn {
+          position: relative;
+          display: flex; align-items: center; gap: 8px;
+          height: 44px; width: 100%;
+          border: 1px solid #D8E8C8; border-radius: 10px;
+          background: #F8FBF6; cursor: pointer;
+          padding: 0 12px;
+          font-size: 14px; font-weight: 600; color: #0A2E0C;
+          transition: background 0.2s, border-color 0.2s;
+        }
+        .mf-organic-btn--on {
+          background: #DCFCE7; border-color: #86EFAC; color: #15803D;
+        }
+        .mf-organic-knob {
+          display: inline-block;
+          width: 18px; height: 18px; border-radius: 50%;
+          background: #D1D5DB; flex-shrink: 0;
+          transition: background 0.2s;
+        }
+        .mf-organic-btn--on .mf-organic-knob { background: #16A34A; }
+        .mf-organic-label { flex: 1; text-align: left; }
+
+        @media (max-width: 1100px) {
+          .mf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (max-width: 700px) {
           .mf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
-
         @media (max-width: 560px) {
           .mf { padding: 16px; }
           .mf-head { align-items: flex-start; flex-direction: column; }

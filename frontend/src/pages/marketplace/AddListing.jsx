@@ -12,6 +12,11 @@ import CropImageUpload from '../../components/marketplace/CropImageUpload';
 
 const CROP_TYPES = ['Grain', 'Vegetable', 'Fruit', 'Spice', 'Oilseed'];
 const UNITS = ['quintal', 'kg', 'ton'];
+const QUALITY_GRADES = [
+  { value: 'A', label: 'Grade A — Premium quality' },
+  { value: 'B', label: 'Grade B — Standard quality' },
+  { value: 'C', label: 'Grade C — Economy quality' },
+];
 
 const STATES = [
   'Uttar Pradesh',
@@ -49,6 +54,9 @@ const INITIAL_FORM = {
   price: '',
   quantity: '',
   unit: 'quintal',
+  harvestDate: '',
+  isOrganic: false,
+  qualityGrade: 'B',
   state: '',
   district: '',
   description: '',
@@ -111,6 +119,11 @@ const AddListing = () => {
         price: selectedCrop.price ?? '',
         quantity: selectedCrop.quantity ?? '',
         unit: selectedCrop.unit || 'quintal',
+        harvestDate: selectedCrop.harvestDate
+          ? new Date(selectedCrop.harvestDate).toISOString().split('T')[0]
+          : '',
+        isOrganic: selectedCrop.isOrganic || false,
+        qualityGrade: selectedCrop.qualityGrade || 'B',
         state: selectedCrop.state || '',
         district: selectedCrop.district || '',
         description: selectedCrop.description || '',
@@ -120,15 +133,17 @@ const AddListing = () => {
     }
   }, [isEditMode, prefilled, selectedCrop, id]);
 
- const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "state") {
-        setForm({ ...form, state: value, district: "" });
+  const handleChange = (e) => {
+    const { name, value, type: inputType, checked } = e.target;
+    if (name === 'state') {
+      setForm({ ...form, state: value, district: '' });
+    } else if (inputType === 'checkbox') {
+      setForm({ ...form, [name]: checked });
     } else {
-        setForm({ ...form, [name]: value });
+      setForm({ ...form, [name]: value });
     }
     setFormError('');
-};
+  };
 
   const validate = () => {
     const { name, type, price, quantity, state, district } = form;
@@ -151,6 +166,9 @@ const AddListing = () => {
 
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => {
+      // always send isOrganic and harvestDate even if falsy
+      if (k === 'isOrganic') { formData.append(k, v); return; }
+      if (k === 'harvestDate') { formData.append(k, v || new Date().toISOString()); return; }
       if (v) formData.append(k, v);
     });
     // Only File objects are new uploads — pre-existing images arrive as URL
@@ -255,7 +273,7 @@ const AddListing = () => {
             </div>
           </div>
 
-          {/* Row 2b: Unit */}
+          {/* Row 2b: Unit + Harvest Date */}
           <div className="al-row">
             <div className="al-field">
               <label className="al-label">Unit</label>
@@ -269,6 +287,50 @@ const AddListing = () => {
                   <option key={u} value={u}>{u}</option>
                 ))}
               </select>
+            </div>
+            <div className="al-field">
+              <label className="al-label">Harvest Date <span className="al-req">*</span></label>
+              <input
+                name="harvestDate"
+                type="date"
+                value={form.harvestDate}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]}
+                className="al-input"
+              />
+            </div>
+          </div>
+
+          {/* Row 2c: Quality Grade + Organic toggle */}
+          <div className="al-row">
+            <div className="al-field">
+              <label className="al-label">Quality Grade</label>
+              <select
+                name="qualityGrade"
+                value={form.qualityGrade}
+                onChange={handleChange}
+                className="al-input al-select"
+              >
+                {QUALITY_GRADES.map((g) => (
+                  <option key={g.value} value={g.value}>{g.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="al-field">
+              <label className="al-label">Organic Produce</label>
+              <label className="al-organic-toggle" style={{ marginTop: '8px' }}>
+                <input
+                  type="checkbox"
+                  name="isOrganic"
+                  checked={form.isOrganic}
+                  onChange={handleChange}
+                  className="al-organic-cb"
+                />
+                <span className="al-organic-slider" />
+                <span className="al-organic-text">
+                  {form.isOrganic ? '🌿 Yes — Organically grown' : 'No — Conventional farming'}
+                </span>
+              </label>
             </div>
           </div>
 
@@ -465,6 +527,31 @@ const AddListing = () => {
         }
         .al-submit:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(101,163,13,0.4); }
         .al-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* ── Organic toggle ── */
+        .al-organic-toggle {
+          display: inline-flex; align-items: center; gap: 12px;
+          cursor: pointer; user-select: none;
+        }
+        .al-organic-cb { display: none; }
+        .al-organic-slider {
+          position: relative; display: inline-block;
+          width: 46px; height: 26px;
+          background: #D1D5DB; border-radius: 999px;
+          transition: background 0.2s;
+          flex-shrink: 0;
+        }
+        .al-organic-slider::after {
+          content: ''; position: absolute;
+          top: 3px; left: 3px;
+          width: 20px; height: 20px;
+          border-radius: 50%; background: #fff;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+          transition: transform 0.2s;
+        }
+        .al-organic-cb:checked + .al-organic-slider { background: #65A30D; }
+        .al-organic-cb:checked + .al-organic-slider::after { transform: translateX(20px); }
+        .al-organic-text { font-size: 14px; color: #374151; font-weight: 500; }
 
         /* ── Responsive ── */
         @media (max-width: 720px) {

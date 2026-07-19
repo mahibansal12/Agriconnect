@@ -7,14 +7,19 @@ import { User } from "../models/user.model.js";
 import {
     createRazorpayOrder,
     verifyPaymentSignature,
+    createRazorpayRefund,
 } from "../services/payment.service.js";
 import { PLATFORM_COMMISSION_PERCENT } from "../constants.js";
 import {
     sendOrderNotificationSms,
     sendPaymentConfirmationSms,
     sendOrderStatusSms,
+    sendRefundSms,
 } from "../services/sms.service.js";
-import { sendOrderConfirmationEmail } from "../services/email.service.js";
+import {
+    sendOrderConfirmationEmail,
+    sendRefundEmail,
+} from "../services/email.service.js";
 
 //  Create Order 
 // POST /api/v1/orders
@@ -278,17 +283,19 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, order, "Order status updated successfully"));
 });
 
-// Cancel Order 
+// Cancel Order
 // PATCH /api/v1/orders/:id/cancel
-// Private — buyer only (only if order is still "placed")
+// Private — buyer only (only if order is still "placed" or "confirmed")
 const cancelOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+        .populate("buyer", "name phone email")
+        .populate("farmer", "name phone");
 
     if (!order) {
         throw new ApiError(404, "Order not found");
     }
 
-    if (order.buyer.toString() !== req.user._id.toString()) {
+    if (order.buyer._id.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to cancel this order");
     }
 
@@ -299,17 +306,75 @@ const cancelOrder = asyncHandler(async (req, res) => {
         );
     }
 
-    // restore quantity on listing
+    // ── Restore listing quantity ──────────────────────────────────────────
     await CropListing.findByIdAndUpdate(order.listing, {
         $inc: { quantity: order.quantity },
     });
 
+    // ── Razorpay Refund (only if the buyer actually paid) ─────────────────
+    let refundInitiated = false;
+    if (order.paymentStatus === "paid" && order.razorpayPaymentId) {
+        try {
+            const refund = await createRazorpayRefund(
+                order.razorpayPaymentId,
+                order.totalPrice
+            );
+
+            order.razorpayRefundId = refund.id;
+            order.refundStatus    = "initiated";
+            order.refundAmount    = order.totalPrice;
+            order.refundedAt      = new Date();
+            order.paymentStatus   = "refunded";
+            refundInitiated       = true;
+        } catch (refundErr) {
+            // Refund API call failed — log it and mark as failed so admin
+            // can manually process it via Razorpay dashboard.
+            console.error("Razorpay refund failed:", refundErr.message);
+            order.refundStatus = "failed";
+            // Do NOT throw — the cancellation itself should still go through.
+        }
+    }
+
     order.orderStatus = "cancelled";
     await order.save({ validateBeforeSave: false });
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, order, "Order cancelled successfully"));
+    // ── Notifications ─────────────────────────────────────────────────────
+    // Never let a notification failure block the cancel response.
+    try {
+        if (refundInitiated) {
+            if (order.buyer?.phone) {
+                await sendRefundSms(
+                    order.buyer.phone,
+                    order.buyer.name,
+                    order.totalPrice,
+                    order.cropName
+                );
+            }
+            if (order.buyer?.email) {
+                await sendRefundEmail(order.buyer.email, order.buyer.name, {
+                    cropName:     order.cropName,
+                    quantity:     order.quantity,
+                    unit:         order.unit,
+                    refundAmount: order.totalPrice,
+                    refundId:     order.razorpayRefundId,
+                });
+            }
+        }
+    } catch (notifyErr) {
+        console.error("Refund notification failed:", notifyErr.message);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            order,
+            refundInitiated
+                ? `Order cancelled. Refund of ₹${order.totalPrice} initiated — it will reach your payment source in 5-7 business days.`
+                : order.paymentStatus === "pending"
+                ? "Order cancelled successfully (no payment was made)."
+                : "Order cancelled. Refund initiation failed — please contact support."
+        )
+    );
 });
 
 export {
