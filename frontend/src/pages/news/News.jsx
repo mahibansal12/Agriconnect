@@ -21,13 +21,15 @@ function News() {
   const [error, setError]     = useState(null);
 
   // ── Fetch all news from backend ─────────────────────────────────────────
-  const fetchNews = async () => {
+const fetchNews = async () => {
     try {
       setLoading(true);
       setError(null);
-      // GET /api/v1/news  — public route, no auth needed
-      const res = await axiosInstance.get("/v1/news");
-      setNews(res.data.data || []);
+      const res = await axiosInstance.get('/v1/news');
+      const articles = res.data?.data;
+      if (Array.isArray(articles) && articles.length > 0) {
+        setNews(articles);
+      }
     } catch (err) {
       console.error("News fetch error:", err);
       setError("Failed to load news. Please try again.");
