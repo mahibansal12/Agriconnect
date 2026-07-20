@@ -5,6 +5,7 @@ import { Suspense, lazy }          from 'react';
 import PrivateRoute from '../components/common/PrivateRoute';
 import RoleRoute    from '../components/common/RoleRoute';
 import Loader       from '../components/common/Loader';
+import ProfileSettings from '../pages/ProfileSettings';
 
 
 const AdminDashboard = lazy(() =>
@@ -51,6 +52,16 @@ export default function AdminRoutes() {
           /admin/schemes/new → add govt scheme
           /admin/listings    → moderate crop listings
       */}
+
+      {/* /admin/profile */}
+      <Route
+        path="profile"
+        element={
+          <AdminOnly>
+            <ProfileSettings />
+          </AdminOnly>
+        }
+      />
 
       {/* /admin/* → fallback */}
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

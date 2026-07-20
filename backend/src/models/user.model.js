@@ -106,6 +106,16 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // ── Pending email change ──
+    // Stores the new email the user wants to switch to, until OTP is verified.
+    // Cleared after the change is confirmed or a new change is requested.
+    pendingEmail: {
+      type: String,
+      select: false,
+      lowercase: true,
+      trim: true,
+    },
+
     // ── Login-via-OTP (email or phone, no password) ──
     // Separate from phoneOtp/emailOtp above (those are for *verifying
     // ownership* of a channel during registration) — this is a distinct

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser, sendPhoneOtp, sendLoginOtp, loginWithOtp } from "../../redux/slices/authSlice";
@@ -22,6 +22,13 @@ export default function LoginForm({ roleHint = null }) {
   const [cooldown, setCooldown] = useState(0);
   const [localError, setLocalError] = useState("");
 
+  // ── Multiple-account role picker ──
+  // When the backend returns 409 (multiple accounts), we intercept and show
+  // Farmer / Buyer choice cards so the user can pick then we re-fire login.
+  const [multipleAccounts, setMultipleAccounts] = useState(false);
+  // Store the pending login context so we can retry after role selection
+  const pendingLoginRef = useRef(null);
+
   // Legacy safety-net: an old/grandfathered account that's somehow still
   // phone-unverified gets routed through the original OTP screen.
   const [pendingVerification, setPendingVerification] = useState(null);
@@ -39,10 +46,17 @@ export default function LoginForm({ roleHint = null }) {
     else navigate("/admin/dashboard");
   };
 
+  // ── Check if error message indicates multiple accounts ──
+  const isMultipleAccountsError = (msg) =>
+    typeof msg === "string" &&
+    (msg.toLowerCase().includes("multiple accounts") ||
+      msg.toLowerCase().includes("specify which role"));
+
   // ── Password login ──
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setLocalError("");
+    setMultipleAccounts(false);
     const payload = { identifier, password, ...(roleHint && { role: roleHint }) };
     const result = await dispatch(loginUser(payload));
     if (loginUser.fulfilled.match(result)) {
@@ -51,20 +65,26 @@ export default function LoginForm({ roleHint = null }) {
         goToDashboard(user.role);
         return;
       }
-      // Safety net for old/grandfathered accounts that are somehow still
-      // unverified — new accounts are always already verified at creation.
+      // Safety net for old/grandfathered accounts
       const otpResult = await dispatch(sendPhoneOtp());
       if (sendPhoneOtp.rejected.match(otpResult)) {
         setOtpSendError(otpResult.payload || "Could not send verification code. Please try again.");
         return;
       }
       setPendingVerification({ phone: user.phone, role: user.role });
+    } else if (loginUser.rejected.match(result)) {
+      if (isMultipleAccountsError(result.payload)) {
+        // Show role picker — save context to retry
+        pendingLoginRef.current = { type: "password", identifier, password };
+        setMultipleAccounts(true);
+      }
     }
   };
 
-  // ── OTP login ──
+  // ── OTP login: send code ──
   const handleSendOtp = async () => {
     setLocalError("");
+    setMultipleAccounts(false);
     if (!identifier) {
       setLocalError("Enter your email or mobile number");
       return;
@@ -75,12 +95,18 @@ export default function LoginForm({ roleHint = null }) {
       setOtpStage("enter-code");
       setCooldown(30);
       setOtpCode("");
+    } else if (sendLoginOtp.rejected.match(result)) {
+      if (isMultipleAccountsError(result.payload)) {
+        pendingLoginRef.current = { type: "otp-send", identifier };
+        setMultipleAccounts(true);
+      }
     }
   };
 
   const handleVerifyLoginOtp = async (e) => {
     e.preventDefault();
     setLocalError("");
+    setMultipleAccounts(false);
     if (otpCode.length !== 6) {
       setLocalError("Enter the complete 6-digit code");
       return;
@@ -88,12 +114,57 @@ export default function LoginForm({ roleHint = null }) {
     const result = await dispatch(loginWithOtp({ identifier, otp: otpCode, role: roleHint }));
     if (loginWithOtp.fulfilled.match(result)) {
       goToDashboard(result.payload.user.role);
+    } else if (loginWithOtp.rejected.match(result)) {
+      if (isMultipleAccountsError(result.payload)) {
+        pendingLoginRef.current = { type: "otp-verify", identifier, otp: otpCode };
+        setMultipleAccounts(true);
+      }
+    }
+  };
+
+  // ── Handle role selection after multiple-accounts detection ──
+  const handleRoleSelect = async (selectedRole) => {
+    setMultipleAccounts(false);
+    setLocalError("");
+    const ctx = pendingLoginRef.current;
+    if (!ctx) return;
+
+    if (ctx.type === "password") {
+      const payload = { identifier: ctx.identifier, password: ctx.password, role: selectedRole };
+      const result = await dispatch(loginUser(payload));
+      if (loginUser.fulfilled.match(result)) {
+        const user = result.payload.user;
+        if (user.isPhoneVerified) {
+          goToDashboard(user.role);
+          return;
+        }
+        const otpResult = await dispatch(sendPhoneOtp());
+        if (sendPhoneOtp.rejected.match(otpResult)) {
+          setOtpSendError(otpResult.payload || "Could not send verification code. Please try again.");
+          return;
+        }
+        setPendingVerification({ phone: user.phone, role: user.role });
+      }
+    } else if (ctx.type === "otp-send") {
+      const result = await dispatch(sendLoginOtp({ identifier: ctx.identifier, role: selectedRole }));
+      if (sendLoginOtp.fulfilled.match(result)) {
+        setOtpChannel(result.payload?.data?.channel || (ctx.identifier.includes("@") ? "email" : "phone"));
+        setOtpStage("enter-code");
+        setCooldown(30);
+        setOtpCode("");
+      }
+    } else if (ctx.type === "otp-verify") {
+      const result = await dispatch(loginWithOtp({ identifier: ctx.identifier, otp: ctx.otp, role: selectedRole }));
+      if (loginWithOtp.fulfilled.match(result)) {
+        goToDashboard(result.payload.user.role);
+      }
     }
   };
 
   const switchMethod = (m) => {
     setMethod(m);
     setLocalError("");
+    setMultipleAccounts(false);
     setOtpStage("enter-identifier");
     setOtpCode("");
   };
@@ -114,7 +185,8 @@ export default function LoginForm({ roleHint = null }) {
     );
   }
 
-  const shownError = error || otpError || otpSendError || localError;
+  // When multiple accounts detected, show role picker instead of the error
+  const shownError = multipleAccounts ? "" : (error || otpError || otpSendError || localError);
 
   return (
     <div className="lf-wrap">
@@ -153,138 +225,184 @@ export default function LoginForm({ roleHint = null }) {
         </div>
       )}
 
-      {method === "password" ? (
-        <form onSubmit={handlePasswordSubmit} className="lf-form" noValidate>
-          <div className="lf-field">
-            <label className="lf-label" htmlFor="login-identifier">Email or mobile number</label>
-            <div className="lf-input-wrap">
-              <svg className="lf-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              <input
-                id="login-identifier"
-                type="text"
-                placeholder="you@example.com or 9876543210"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                className="lf-input"
-                required
-                autoComplete="username"
-              />
-            </div>
+      {/* ── Multiple-accounts role picker ── */}
+      {multipleAccounts && (
+        <div className="lf-multi-wrap">
+          <div className="lf-multi-icon">👥</div>
+          <p className="lf-multi-title">Multiple accounts found</p>
+          <p className="lf-multi-sub">
+            This {identifier.includes("@") ? "email" : "phone number"} is linked to more than one account.
+            Which role would you like to sign into?
+          </p>
+          <div className="lf-role-cards">
+            <button
+              type="button"
+              className="lf-role-card"
+              onClick={() => handleRoleSelect("farmer")}
+              disabled={loading || otpLoading}
+            >
+              <span className="lf-role-card-icon">🌾</span>
+              <span className="lf-role-card-label">Farmer</span>
+              <span className="lf-role-card-desc">Sell crops &amp; manage listings</span>
+            </button>
+            <button
+              type="button"
+              className="lf-role-card"
+              onClick={() => handleRoleSelect("buyer")}
+              disabled={loading || otpLoading}
+            >
+              <span className="lf-role-card-icon">🛒</span>
+              <span className="lf-role-card-label">Buyer</span>
+              <span className="lf-role-card-desc">Browse &amp; purchase crops</span>
+            </button>
           </div>
-
-          <div className="lf-field">
-            <div className="lf-label-row">
-              <label className="lf-label" htmlFor="login-password">Password</label>
-              <Link to="/forgot-password" className="lf-forgot">Forgot password?</Link>
-            </div>
-            <div className="lf-input-wrap">
-              <svg className="lf-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              <input
-                id="login-password"
-                type={showPass ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="lf-input"
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="lf-eye"
-                onClick={() => setShowPass((p) => !p)}
-                aria-label={showPass ? "Hide password" : "Show password"}
-              >
-                {showPass ? (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 8s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5Z" stroke="currentColor" strokeWidth="1.3"/>
-                    <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
-                    <path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 8s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5Z" stroke="currentColor" strokeWidth="1.3"/>
-                    <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" className="lf-btn" disabled={loading}>
-            {loading && <span className="lf-spinner" aria-hidden="true" />}
-            {loading ? "Signing in…" : "Sign in"}
+          <button
+            type="button"
+            className="lf-resend"
+            style={{ marginTop: 12, fontSize: 13 }}
+            onClick={() => setMultipleAccounts(false)}
+          >
+            ← Go back
           </button>
-        </form>
-      ) : (
-        <div className="lf-form">
-          {otpStage === "enter-identifier" ? (
-            <>
+        </div>
+      )}
+
+      {!multipleAccounts && (
+        <>
+          {method === "password" ? (
+            <form onSubmit={handlePasswordSubmit} className="lf-form" noValidate>
               <div className="lf-field">
-                <label className="lf-label" htmlFor="login-otp-identifier">Email or mobile number</label>
+                <label className="lf-label" htmlFor="login-identifier">Email or mobile number</label>
                 <div className="lf-input-wrap">
                   <svg className="lf-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
                     <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                   </svg>
                   <input
-                    id="login-otp-identifier"
+                    id="login-identifier"
                     type="text"
                     placeholder="you@example.com or 9876543210"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="lf-input"
+                    required
+                    autoComplete="username"
                   />
                 </div>
               </div>
-              <button type="button" className="lf-btn" onClick={handleSendOtp} disabled={otpLoading}>
-                {otpLoading && <span className="lf-spinner" aria-hidden="true" />}
-                {otpLoading ? "Sending…" : "Send code"}
-              </button>
-            </>
-          ) : (
-            <form onSubmit={handleVerifyLoginOtp}>
-              <p className="lf-otp-sent-to">
-                Code sent to your {otpChannel === "email" ? "email" : "phone"} — enter it below
-              </p>
+
               <div className="lf-field">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit code"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="lf-input lf-otp-code-input"
-                  autoFocus
-                />
+                <div className="lf-label-row">
+                  <label className="lf-label" htmlFor="login-password">Password</label>
+                  <Link to="/forgot-password" className="lf-forgot">Forgot password?</Link>
+                </div>
+                <div className="lf-input-wrap">
+                  <svg className="lf-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    id="login-password"
+                    type={showPass ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="lf-input"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="lf-eye"
+                    onClick={() => setShowPass((p) => !p)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                  >
+                    {showPass ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5Z" stroke="currentColor" strokeWidth="1.3"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
+                        <path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8s2.5-5 6-5 6 5 6 5-2.5 5-6 5-6-5-6-5Z" stroke="currentColor" strokeWidth="1.3"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
+
               <button type="submit" className="lf-btn" disabled={loading}>
                 {loading && <span className="lf-spinner" aria-hidden="true" />}
-                {loading ? "Verifying…" : "Verify & sign in"}
+                {loading ? "Signing in…" : "Sign in"}
               </button>
-              <div className="lf-otp-actions">
-                <button
-                  type="button"
-                  className="lf-resend"
-                  onClick={handleSendOtp}
-                  disabled={cooldown > 0 || otpLoading}
-                >
-                  {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
-                </button>
-                <button type="button" className="lf-resend" onClick={() => setOtpStage("enter-identifier")}>
-                  ← Change email/phone
-                </button>
-              </div>
             </form>
+          ) : (
+            <div className="lf-form">
+              {otpStage === "enter-identifier" ? (
+                <>
+                  <div className="lf-field">
+                    <label className="lf-label" htmlFor="login-otp-identifier">Email or mobile number</label>
+                    <div className="lf-input-wrap">
+                      <svg className="lf-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+                        <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                      <input
+                        id="login-otp-identifier"
+                        type="text"
+                        placeholder="you@example.com or 9876543210"
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        className="lf-input"
+                      />
+                    </div>
+                  </div>
+                  <button type="button" className="lf-btn" onClick={handleSendOtp} disabled={otpLoading}>
+                    {otpLoading && <span className="lf-spinner" aria-hidden="true" />}
+                    {otpLoading ? "Sending…" : "Send code"}
+                  </button>
+                </>
+              ) : (
+                <form onSubmit={handleVerifyLoginOtp}>
+                  <p className="lf-otp-sent-to">
+                    Code sent to your {otpChannel === "email" ? "email" : "phone"} — enter it below
+                  </p>
+                  <div className="lf-field">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit code"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      className="lf-input lf-otp-code-input"
+                      autoFocus
+                    />
+                  </div>
+                  <button type="submit" className="lf-btn" disabled={loading}>
+                    {loading && <span className="lf-spinner" aria-hidden="true" />}
+                    {loading ? "Verifying…" : "Verify & sign in"}
+                  </button>
+                  <div className="lf-otp-actions">
+                    <button
+                      type="button"
+                      className="lf-resend"
+                      onClick={handleSendOtp}
+                      disabled={cooldown > 0 || otpLoading}
+                    >
+                      {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+                    </button>
+                    <button type="button" className="lf-resend" onClick={() => setOtpStage("enter-identifier")}>
+                      ← Change email/phone
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       <p className="lf-switch">
@@ -367,6 +485,76 @@ export default function LoginForm({ roleHint = null }) {
           color: #B91C1C;
           font-size: 13px;
           margin-bottom: 18px;
+        }
+
+        /* ── Multiple-accounts role picker ── */
+        .lf-multi-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 20px 0 10px;
+          animation: lf-fadein 0.25s ease;
+        }
+        @keyframes lf-fadein {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .lf-multi-icon {
+          font-size: 36px;
+          margin-bottom: 4px;
+        }
+        .lf-multi-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1A2E14;
+          margin: 0;
+        }
+        .lf-multi-sub {
+          font-size: 13px;
+          color: #6B7C65;
+          text-align: center;
+          margin: 0 0 16px;
+          line-height: 1.6;
+        }
+        .lf-role-cards {
+          display: flex;
+          gap: 12px;
+          width: 100%;
+        }
+        .lf-role-card {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 18px 12px;
+          border: 2px solid #D8E4CC;
+          border-radius: 14px;
+          background: #F7FAF4;
+          cursor: pointer;
+          transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s;
+          font-family: inherit;
+        }
+        .lf-role-card:hover:not(:disabled) {
+          border-color: #3D7A2B;
+          background: #fff;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(61,122,43,0.15);
+        }
+        .lf-role-card:active:not(:disabled) { transform: scale(0.97); }
+        .lf-role-card:disabled { opacity: 0.6; cursor: not-allowed; }
+        .lf-role-card-icon { font-size: 28px; }
+        .lf-role-card-label {
+          font-size: 15px;
+          font-weight: 700;
+          color: #1A2E14;
+        }
+        .lf-role-card-desc {
+          font-size: 11px;
+          color: #7A8F6E;
+          text-align: center;
+          line-height: 1.4;
         }
 
         .lf-form { display: flex; flex-direction: column; gap: 18px; }

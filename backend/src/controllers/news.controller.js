@@ -17,58 +17,95 @@ const detectCategory = (title = "", description = "") => {
 };
 
 
-const getAllNews = asyncHandler(async (req, res) => {
-    const { category } = req.query;
+// ── In-memory GNews cache (avoids burning the 100 req/day quota on every page load)
+let gnewsCache = null;       // { articles: [], fetchedAt: Date }
+const GNEWS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-    let liveArticles = [];
+// Fire a single GNews request and return normalised article objects (or [])
+const fetchGnews = async (query) => {
     try {
-        // GNews API — free tier allows server-side requests (100 req/day)
-        // NewsAPI free plan blocks server calls (ECONNRESET), so we use GNews instead
         const response = await axios.get("https://gnews.io/api/v4/search", {
             params: {
-                q: "agriculture OR farmer OR farming OR crop OR kisan OR mandi OR MSP OR fertilizer OR irrigation OR harvest",
+                q: query,
                 lang: "en",
                 country: "in",
-                max: 20,
+                max: 10,               // free-tier hard cap per request
                 sortby: "publishedAt",
                 apikey: process.env.GNEWS_API_KEY,
             },
             timeout: 8000,
         });
+        return response.data.articles || [];
+    } catch {
+        return [];
+    }
+};
 
-        const agricultureKeywords = [
-            "agriculture", "agricultural", "farmer", "farmers", "farming",
-            "crop", "crops", "cultivation", "harvest", "wheat", "rice",
-            "maize", "corn", "cotton", "mustard", "soybean", "sugarcane",
-            "millet", "paddy", "fertilizer", "fertilisers", "pesticide",
-            "seed", "seeds", "irrigation", "monsoon", "mandi", "msp",
-            "horticulture", "livestock", "dairy", "agri", "kisan"
-        ];
+const agricultureKeywords = [
+    "agriculture", "agricultural", "farmer", "farmers", "farming",
+    "crop", "crops", "cultivation", "harvest", "wheat", "rice",
+    "maize", "corn", "cotton", "mustard", "soybean", "sugarcane",
+    "millet", "paddy", "fertilizer", "fertilisers", "pesticide",
+    "seed", "seeds", "irrigation", "monsoon", "mandi", "msp",
+    "horticulture", "livestock", "dairy", "agri", "kisan",
+];
 
-        liveArticles = (response.data.articles || [])
-            .filter(article => {
-                if (!article.title || !article.description || !article.image)
-                    return false;
-                const text = (article.title + " " + article.description).toLowerCase();
-                const matches = agricultureKeywords.filter(kw => text.includes(kw)).length;
-                return matches >= 1; // GNews already filters by query, so 1 match is enough
-            })
-            .map((a, index) => ({
-                _id: `live_${index}_${Date.now()}`,
-                title: a.title,
-                content: a.description || a.content || "",
-                image: a.image,
-                category: detectCategory(a.title, a.description),
-                createdAt: a.publishedAt,
-                sourceUrl: a.url,
-                sourceName: a.source?.name || "News Source",
-                isLive: true,
-            }));
-    } catch (err) {
-        // GNews unavailable (quota exceeded or network issue) — falling back to DB news
-        console.warn("GNews fetch failed, serving DB news only:", err.message);
+const normaliseGnewsArticle = (a, index, prefix) => ({
+    _id: `live_${prefix}_${index}_${Date.now()}`,
+    title: a.title,
+    content: a.description || a.content || "",
+    image: a.image,
+    category: detectCategory(a.title, a.description),
+    createdAt: a.publishedAt,
+    sourceUrl: a.url,
+    sourceName: a.source?.name || "News Source",
+    isLive: true,
+});
+
+const getLiveArticles = async () => {
+    // Return cached result if still fresh
+    if (gnewsCache && (Date.now() - gnewsCache.fetchedAt) < GNEWS_CACHE_TTL_MS) {
+        return gnewsCache.articles;
     }
 
+    // Two parallel queries — each returns up to 10 on the free tier → ~20 articles total
+    const [generalRaw, marketRaw] = await Promise.all([
+        fetchGnews("agriculture OR farmer OR farming OR crop OR kisan OR mandi OR harvest OR irrigation"),
+        fetchGnews("MSP OR fertilizer OR government scheme farmer OR agri policy OR crop price India"),
+    ]);
+
+    const filterAndMap = (raw, prefix) =>
+        raw
+            .filter(a => {
+                if (!a.title || !a.description || !a.image) return false;
+                const text = (a.title + " " + a.description).toLowerCase();
+                return agricultureKeywords.some(kw => text.includes(kw));
+            })
+            .map((a, i) => normaliseGnewsArticle(a, i, prefix));
+
+    const fromGeneral = filterAndMap(generalRaw, "g");
+    const fromMarket  = filterAndMap(marketRaw,  "m");
+
+    // Deduplicate by title (in case both queries return the same headline)
+    const seen = new Set();
+    const merged = [...fromGeneral, ...fromMarket].filter(a => {
+        const key = a.title.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
+    // Sort by date descending
+    merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    gnewsCache = { articles: merged, fetchedAt: Date.now() };
+    return merged;
+};
+
+const getAllNews = asyncHandler(async (req, res) => {
+    const { category } = req.query;
+
+    const liveArticles = await getLiveArticles();
 
     const filter = {};
     if (category) filter.category = category;
@@ -76,7 +113,6 @@ const getAllNews = asyncHandler(async (req, res) => {
     const dbNews = await News.find(filter)
         .populate("createdBy", "name email")
         .sort({ createdAt: -1 });
-
 
     let allNews = [...dbNews, ...liveArticles];
 
@@ -89,6 +125,7 @@ const getAllNews = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, allNews, "News fetched successfully"));
 });
+
 
 
 const getNewsById = asyncHandler(async (req, res) => {

@@ -19,6 +19,7 @@ const BuyerDashboard = lazy(() =>
 
 // Order form — buyer places an order
 import OrderForm from '../pages/order/OrderForm';
+import ProfileSettings from '../pages/ProfileSettings';
 import OrderDetail from '../pages/order/OrderDetail';
 
 // ── Wrapper ────────────────────────────────────────────────────
@@ -65,6 +66,16 @@ export default function BuyerRoutes() {
         element={
           <BuyerOnly>
             <OrderDetail />
+          </BuyerOnly>
+        }
+      />
+
+      {/* /buyer/profile */}
+      <Route
+        path="profile"
+        element={
+          <BuyerOnly>
+            <ProfileSettings />
           </BuyerOnly>
         }
       />

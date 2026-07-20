@@ -9,6 +9,7 @@ import FarmerDashboard  from '../pages/dashboard/FarmerDashboard';
 import AddListing       from '../pages/marketplace/AddListing';
 import OrderForm        from '../pages/order/OrderForm';
 import OrderDetail      from '../pages/order/OrderDetail';
+import ProfileSettings  from '../pages/ProfileSettings';
 
 // ── Wrappers ───────────────────────────────────────────────────
 
@@ -63,6 +64,16 @@ export default function FarmerRoutes() {
         element={
           <FarmerOnly>
             <OrderDetail />
+          </FarmerOnly>
+        }
+      />
+
+      {/* /farmer/profile */}
+      <Route
+        path="profile"
+        element={
+          <FarmerOnly>
+            <ProfileSettings />
           </FarmerOnly>
         }
       />
