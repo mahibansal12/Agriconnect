@@ -1,5 +1,5 @@
 // src/components/common/Navbar.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import useAuth from "../../hooks/useAuth";
@@ -32,7 +32,14 @@ export default function Navbar() {
   const { isLoggedIn, user, role } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { switching, switchRole } = useRoleSwitch(role);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Sign out clears ALL role caches so the user must log in fresh
   const handleLogout = () => {
@@ -66,7 +73,7 @@ export default function Navbar() {
       </div>
 
       {/* ── Main navbar ──────────────────────────────────────── */}
-      <nav className="nb">
+      <nav className={`nb${scrolled ? " nb--scrolled" : ""}`}>
         <div className="nb-inner">
 
           {/* Logo */}
@@ -243,11 +250,22 @@ export default function Navbar() {
 
         /* ── Navbar ── */
         .nb {
-          background: rgba(255,255,255,0.94);
+          background: rgba(255,255,255,0.92);
           border-bottom: 1px solid #D8E8C8;
           position: sticky; top: 0; z-index: 100;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+          transition: background 0.3s, box-shadow 0.3s, backdrop-filter 0.3s, height 0.3s;
+          backdrop-filter: blur(0px);
         }
+        .nb--scrolled {
+          background: rgba(255,255,255,0.82) !important;
+          backdrop-filter: blur(18px) saturate(1.6);
+          -webkit-backdrop-filter: blur(18px) saturate(1.6);
+          box-shadow: 0 4px 24px rgba(10,46,12,0.10) !important;
+          border-bottom-color: rgba(216,232,200,0.7) !important;
+        }
+        .nb--scrolled .nb-inner { height: 50px; }
+        .nb-inner { transition: height 0.3s; }
         .nb-inner {
           width: 100%; margin: 0;
           padding: 0 clamp(24px, 6vw, 96px);
