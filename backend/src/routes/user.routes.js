@@ -6,6 +6,7 @@ import {
     refreshAccessToken,
     getCurrentUser,
     changeCurrentPassword,
+    sendEmailChangeOtp,
     updateAccountDetails,
     updateUserAvatar,
     updatePayoutDetails,
@@ -54,6 +55,8 @@ router.route("/change-password").patch(verifyJWT, changeCurrentPassword);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.route("/payout-details").patch(verifyJWT, authorizeRoles("farmer"), updatePayoutDetails);
+// Email-change OTP: sends a code to the new email before confirming the switch
+router.route("/send-email-change-otp").post(verifyJWT, otpLimiter, sendEmailChangeOtp);
 // Post-account phone OTP — kept as a safety net; registration verifies
 // phone before the account exists now, so this should rarely be hit.
 router.route("/send-otp").post(verifyJWT, otpLimiter, sendPhoneOtp);

@@ -667,22 +667,119 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
+// ── Send OTP to a new email before allowing an email-address change ──
+// POST /v1/user/send-email-change-otp  (private)
+const sendEmailChangeOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) throw new ApiError(400, "email is required");
+
+    const newEmail = normalizeEmail(email);
+
+    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(newEmail)) {
+        throw new ApiError(400, "Invalid email format");
+    }
+
+    // Don't allow changing to the same email
+    const currentUser = await User.findById(req.user._id);
+    if (!currentUser) throw new ApiError(404, "User not found");
+    if (currentUser.email === newEmail) {
+        throw new ApiError(400, "This is already your current email address");
+    }
+
+    // Check if another account already uses that email + same role
+    const conflict = await User.findOne({ email: newEmail, role: currentUser.role, _id: { $ne: currentUser._id } });
+    if (conflict) {
+        throw new ApiError(409, "An account with this email already exists for your role");
+    }
+
+    // Rate-limit: reuse the emailOtpLastSentAt field
+    const userWithOtp = await User.findById(req.user._id).select("+emailOtpLastSentAt +pendingEmail");
+    if (userWithOtp.emailOtpLastSentAt) {
+        const secondsSince = (Date.now() - userWithOtp.emailOtpLastSentAt.getTime()) / 1000;
+        if (secondsSince < OTP_RESEND_COOLDOWN_SECONDS) {
+            throw new ApiError(
+                429,
+                `Please wait ${Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - secondsSince)}s before requesting another code`
+            );
+        }
+    }
+
+    const otp = generateOtp();
+
+    try {
+        await sendOtpEmail(newEmail, otp);
+    } catch (err) {
+        console.error("Failed to send email-change OTP:", err.message);
+        throw new ApiError(502, "Could not send verification email. Please try again.");
+    }
+
+    // Store hash + pending new email on the user document
+    userWithOtp.emailOtp = hashOtp(otp);
+    userWithOtp.emailOtpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    userWithOtp.emailOtpAttempts = 0;
+    userWithOtp.emailOtpLastSentAt = new Date();
+    userWithOtp.pendingEmail = newEmail;
+    await userWithOtp.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { sentTo: newEmail }, "Verification code sent to new email address"));
+});
+
 const updateAccountDetails = asyncHandler(async (req, res) => {
-    const { name, email } = req.body;
+    const { name, email, otp } = req.body;
 
     if (!name && !email) {
         throw new ApiError(400, "Name or email is required to update");
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        { $set: { name, email } },
-        { new: true }
-    ).select("-password -refreshToken");
+    const currentUser = await User.findById(req.user?._id)
+        .select("+emailOtp +emailOtpExpiry +emailOtpAttempts +pendingEmail");
+    if (!currentUser) throw new ApiError(404, "User not found");
+
+    const isChangingEmail = email && normalizeEmail(email) !== currentUser.email;
+
+    if (isChangingEmail) {
+        // Require OTP to confirm the new email
+        if (!otp) throw new ApiError(400, "A verification code is required to change your email address");
+
+        const targetEmail = normalizeEmail(email);
+        if (currentUser.pendingEmail !== targetEmail) {
+            throw new ApiError(400, "This email does not match the address you requested a code for. Please request a new code.");
+        }
+        if (!currentUser.emailOtp || !currentUser.emailOtpExpiry) {
+            throw new ApiError(400, "No verification code found. Please request one first.");
+        }
+        if (currentUser.emailOtpExpiry.getTime() < Date.now()) {
+            throw new ApiError(400, "Verification code has expired. Please request a new one.");
+        }
+        if (currentUser.emailOtpAttempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+            throw new ApiError(429, "Too many incorrect attempts. Please request a new code.");
+        }
+        if (hashOtp(otp) !== currentUser.emailOtp) {
+            currentUser.emailOtpAttempts += 1;
+            await currentUser.save({ validateBeforeSave: false });
+            throw new ApiError(400, "Incorrect verification code");
+        }
+
+        // OTP valid — clear it and apply the change
+        currentUser.email = targetEmail;
+        currentUser.isEmailVerified = true;
+        currentUser.emailOtp = undefined;
+        currentUser.emailOtpExpiry = undefined;
+        currentUser.emailOtpAttempts = 0;
+        currentUser.emailOtpLastSentAt = undefined; // clear rate-limit so next change is immediate
+        currentUser.pendingEmail = undefined;
+    }
+
+    if (name) currentUser.name = name.trim();
+    await currentUser.save({ validateBeforeSave: false });
+
+    const updated = await User.findById(currentUser._id).select("-password -refreshToken");
 
     return res
         .status(200)
-        .json(new ApiResponse(200, user, "Account details updated successfully"));
+        .json(new ApiResponse(200, updated, "Account details updated successfully"));
 });
 
 const updatePayoutDetails = asyncHandler(async (req, res) => {
@@ -898,6 +995,7 @@ export {
     refreshAccessToken,
     getCurrentUser,
     changeCurrentPassword,
+    sendEmailChangeOtp,
     updateAccountDetails,
     updateUserAvatar,
     updatePayoutDetails,

@@ -96,6 +96,7 @@ function AdminDashboard() {
   const [error, setError] = useState(null);
   const [payouts, setPayouts] = useState([]);
   const [payoutHistory, setPayoutHistory] = useState([]);
+  const [payoutMethod, setPayoutMethod] = useState({}); // { [farmerId]: 'upi'|'bank_transfer'|'cash' }
   const [rejectNote, setRejectNote] = useState({});  // { [id]: noteText }
 
   // User detail drawer state
@@ -239,13 +240,14 @@ function AdminDashboard() {
   };
 
   const markPayoutPaid = async (farmerId) => {
-    if (!window.confirm("Confirm you've actually sent this money?")) return;
+    const method = payoutMethod[farmerId] || "upi";
+    if (!window.confirm(`Confirm you've sent ₹${payouts.find(p => p.farmerId === farmerId)?.totalOwed?.toLocaleString("en-IN")} via ${method === "upi" ? "UPI" : method === "bank_transfer" ? "Bank Transfer" : "Cash"}?`)) return;
     try {
-      await axiosInstance.patch(`/v1/admin/payouts/${farmerId}/mark-paid`);
+      await axiosInstance.patch(`/v1/admin/payouts/${farmerId}/mark-paid`, { paymentMethod: method });
       fetchAllData();
     } catch (err) {
       console.error(err);
-      alert("Failed to mark payout as paid");
+      alert(err.response?.data?.message || "Failed to mark payout as paid");
     }
   };
 
@@ -612,66 +614,123 @@ function AdminDashboard() {
 
                   {activeTab === "payouts" && (
                     <>
-                      <SectionHeader title="Farmer payouts" subtitle="Amounts owed for delivered orders & received donations" />
+                      <SectionHeader title="Farmer Payouts" subtitle="Amounts owed for delivered orders & received donations — choose payment method before marking paid" />
                       <div className="adm-table-wrap">
-                        <table className="adm-table">
-                          <thead>
-                            <tr>
-                              <th>Farmer</th>
-                              <th>UPI ID</th>
-                              <th>Orders Owed</th>
-                              <th>Donations Owed</th>
-                              <th>Total Owed</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {payouts.length === 0 ? (
-                              <tr>
-                                <td colSpan="6" style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
-                                  No pending payouts to farmers.
-                                </td>
-                              </tr>
-                            ) : (
-                              payouts.map((p) => (
-                                <tr key={p.farmerId}>
-                                  <td className="adm-td-strong">{p.farmerName}</td>
-                                  <td className="adm-td-muted">{p.payoutDetails?.upiId || "Not set"}</td>
-                                  <td className="adm-td-muted">
-                                    {p.orderCount || 0} orders
-                                    <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
-                                      ₹{(p.ordersOwed || 0).toLocaleString("en-IN")}
-                                    </span>
-                                  </td>
-                                  <td className="adm-td-muted">
-                                    {p.donationCount || 0} donations
-                                    <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
-                                      ₹{(p.donationsOwed || 0).toLocaleString("en-IN")}
-                                    </span>
-                                  </td>
-                                  <td className="adm-td-strong" style={{ color: "#16A34A" }}>
-                                    ₹{p.totalOwed.toLocaleString("en-IN")}
-                                  </td>
-                                  <td>
-                                    <button className="adm-btn adm-btn--approve" onClick={() => markPayoutPaid(p.farmerId)}>
-                                      Mark as paid
+                        {payouts.length === 0 ? (
+                          <div style={{ textAlign: "center", padding: "48px 20px", color: "#9ca3af", fontSize: 14 }}>No pending payouts to farmers.</div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "0 4px 4px" }}>
+                            {payouts.map((p) => {
+                              const pd = p.payoutDetails || {};
+                              const hasUpi = !!pd.upiId;
+                              const hasBank = !!(pd.bankAccountNumber && pd.ifscCode);
+                              const method = payoutMethod[p.farmerId] || "upi";
+                              return (
+                                <div key={p.farmerId} style={{
+                                  background: "#fff", borderRadius: 14,
+                                  border: "1.5px solid #e5e7eb",
+                                  padding: "18px 22px",
+                                  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+                                }}>
+                                  {/* Farmer header row */}
+                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+                                    <div>
+                                      <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: "#1f2937" }}>🌾 {p.farmerName}</p>
+                                      <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
+                                        {p.orderCount || 0} orders (₹{(p.ordersOwed || 0).toLocaleString("en-IN")})
+                                        &nbsp;·&nbsp;
+                                        {p.donationCount || 0} donations (₹{(p.donationsOwed || 0).toLocaleString("en-IN")})
+                                      </p>
+                                    </div>
+                                    <div style={{ textAlign: "right" }}>
+                                      <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#16a34a" }}>₹{p.totalOwed.toLocaleString("en-IN")}</p>
+                                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af" }}>total owed</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Payout details panel */}
+                                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                                    <div style={{
+                                      flex: 1, minWidth: 160,
+                                      background: hasUpi ? "#f0fdf4" : "#f9fafb",
+                                      border: `1.5px solid ${hasUpi ? "#bbf7d0" : "#e5e7eb"}`,
+                                      borderRadius: 10, padding: "10px 14px",
+                                    }}>
+                                      <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, color: hasUpi ? "#15803d" : "#9ca3af", letterSpacing: "0.05em" }}>💳 UPI</p>
+                                      <p style={{ margin: 0, fontSize: 13, color: hasUpi ? "#1f2937" : "#9ca3af", fontFamily: "monospace", wordBreak: "break-all" }}>
+                                        {hasUpi ? pd.upiId : "Not set"}
+                                      </p>
+                                    </div>
+                                    <div style={{
+                                      flex: 2, minWidth: 200,
+                                      background: hasBank ? "#eff6ff" : "#f9fafb",
+                                      border: `1.5px solid ${hasBank ? "#bfdbfe" : "#e5e7eb"}`,
+                                      borderRadius: 10, padding: "10px 14px",
+                                    }}>
+                                      <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, color: hasBank ? "#1d4ed8" : "#9ca3af", letterSpacing: "0.05em" }}>🏦 Bank Account</p>
+                                      {hasBank ? (
+                                        <div style={{ fontSize: 12, color: "#1f2937" }}>
+                                          <span style={{ fontFamily: "monospace" }}>{pd.bankAccountNumber}</span>
+                                          {pd.ifscCode && <span style={{ marginLeft: 8, color: "#6b7280" }}>IFSC: {pd.ifscCode}</span>}
+                                          {pd.accountHolderName && <div style={{ marginTop: 2, color: "#374151" }}>{pd.accountHolderName}</div>}
+                                        </div>
+                                      ) : (
+                                        <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>Not set</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Payment method selector + action */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Pay via:</span>
+                                    {[
+                                      { value: "upi", label: "💳 UPI", disabled: !hasUpi },
+                                      { value: "bank_transfer", label: "🏦 Bank Transfer", disabled: !hasBank },
+                                      { value: "cash", label: "💵 Cash", disabled: false },
+                                    ].map((opt) => (
+                                      <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => !opt.disabled && setPayoutMethod(prev => ({ ...prev, [p.farmerId]: opt.value }))}
+                                        title={opt.disabled ? "Farmer has not set up this payment method" : undefined}
+                                        style={{
+                                          padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                                          border: `1.5px solid ${method === opt.value ? "#3b82f6" : "#d1d5db"}`,
+                                          background: method === opt.value ? "#dbeafe" : opt.disabled ? "#f3f4f6" : "#fff",
+                                          color: method === opt.value ? "#1d4ed8" : opt.disabled ? "#9ca3af" : "#374151",
+                                          cursor: opt.disabled ? "not-allowed" : "pointer",
+                                          opacity: opt.disabled ? 0.6 : 1,
+                                          fontFamily: "inherit",
+                                          transition: "border-color 0.15s, background 0.15s",
+                                        }}
+                                      >
+                                        {opt.label}
+                                      </button>
+                                    ))}
+                                    <button
+                                      className="adm-btn adm-btn--approve"
+                                      style={{ marginLeft: "auto" }}
+                                      onClick={() => markPayoutPaid(p.farmerId)}
+                                    >
+                                      ✓ Mark as Paid
                                     </button>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       <div style={{ marginTop: "32px" }}>
-                        <SectionHeader title="Payout history" subtitle="Every payout that has been made to farmers so far" />
+                        <SectionHeader title="Payout History" subtitle="Every payout that has been made to farmers so far" />
                         <div className="adm-table-wrap">
                           <table className="adm-table">
                             <thead>
                               <tr>
                                 <th>Farmer</th>
-                                <th>UPI ID</th>
+                                <th>Method</th>
+                                <th>Payment Details</th>
                                 <th>Orders</th>
                                 <th>Donations</th>
                                 <th>Total Paid</th>
@@ -681,35 +740,42 @@ function AdminDashboard() {
                             <tbody>
                               {payoutHistory.length === 0 ? (
                                 <tr>
-                                  <td colSpan="6" style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
+                                  <td colSpan="7" style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
                                     No payouts have been made yet.
                                   </td>
                                 </tr>
                               ) : (
-                                payoutHistory.map((p) => (
-                                  <tr key={p._id}>
-                                    <td className="adm-td-strong">{p.farmerName}</td>
-                                    <td className="adm-td-muted">{p.upiId || "Not set"}</td>
-                                    <td className="adm-td-muted">
-                                      {p.orderCount || 0} orders
-                                      <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
-                                        ₹{(p.ordersAmount || 0).toLocaleString("en-IN")}
-                                      </span>
-                                    </td>
-                                    <td className="adm-td-muted">
-                                      {p.donationCount || 0} donations
-                                      <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
-                                        ₹{(p.donationsAmount || 0).toLocaleString("en-IN")}
-                                      </span>
-                                    </td>
-                                    <td className="adm-td-strong" style={{ color: "#16A34A" }}>
-                                      ₹{(p.totalAmount || 0).toLocaleString("en-IN")}
-                                    </td>
-                                    <td className="adm-td-muted">
-                                      {new Date(p.paidAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                    </td>
-                                  </tr>
-                                ))
+                                payoutHistory.map((p) => {
+                                  const methodLabel = p.paymentMethod === "bank_transfer" ? "🏦 Bank" : p.paymentMethod === "cash" ? "💵 Cash" : "💳 UPI";
+                                  const methodDetails = p.paymentMethod === "bank_transfer"
+                                    ? [p.accountHolderName, p.bankAccountNumber, p.ifscCode].filter(Boolean).join(" · ")
+                                    : p.paymentMethod === "cash" ? "Cash payment" : (p.upiId || "—");
+                                  return (
+                                    <tr key={p._id}>
+                                      <td className="adm-td-strong">{p.farmerName}</td>
+                                      <td><span style={{ fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 8, background: p.paymentMethod === "bank_transfer" ? "#dbeafe" : p.paymentMethod === "cash" ? "#fef9c3" : "#dcfce7", color: p.paymentMethod === "bank_transfer" ? "#1d4ed8" : p.paymentMethod === "cash" ? "#a16207" : "#15803d" }}>{methodLabel}</span></td>
+                                      <td className="adm-td-muted" style={{ fontFamily: "monospace", fontSize: 11 }}>{methodDetails}</td>
+                                      <td className="adm-td-muted">
+                                        {p.orderCount || 0} orders
+                                        <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
+                                          ₹{(p.ordersAmount || 0).toLocaleString("en-IN")}
+                                        </span>
+                                      </td>
+                                      <td className="adm-td-muted">
+                                        {p.donationCount || 0} donations
+                                        <span style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#6B7280" }}>
+                                          ₹{(p.donationsAmount || 0).toLocaleString("en-IN")}
+                                        </span>
+                                      </td>
+                                      <td className="adm-td-strong" style={{ color: "#16A34A" }}>
+                                        ₹{(p.totalAmount || 0).toLocaleString("en-IN")}
+                                      </td>
+                                      <td className="adm-td-muted">
+                                        {new Date(p.paidAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                      </td>
+                                    </tr>
+                                  );
+                                })
                               )}
                             </tbody>
                           </table>

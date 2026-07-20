@@ -84,7 +84,12 @@ export default function Sidebar() {
 
       {/* User info */}
       <div className="sb-user">
-        <div className="sb-avatar">{initials}</div>
+        <div className="sb-avatar">
+          {user?.avatar
+            ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            : initials
+          }
+        </div>
         <div className="sb-user-info">
           <div className="sb-user-name">{user?.name || "User"}</div>
           <div className="sb-user-role">{role} · {user?.state || "India"}</div>

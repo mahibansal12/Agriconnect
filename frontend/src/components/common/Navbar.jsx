@@ -117,8 +117,12 @@ export default function Navbar() {
                     onClick={() => setDropOpen((p) => !p)}
                     aria-label="Account menu"
                     aria-expanded={dropOpen}
+                    style={{ overflow: 'hidden', padding: 0 }}
                   >
-                    {initials}
+                    {user?.avatar
+                      ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      : initials
+                    }
                   </button>
 
                   {dropOpen && (
@@ -154,6 +158,15 @@ export default function Navbar() {
                             {switching ? "Switching…" : `Switch to ${role === "farmer" ? "Buyer" : "Farmer"}`}
                           </button>
                         )}
+                        <div className="nb-drop-divider" />
+                        <Link
+                          to={role === 'farmer' ? '/farmer/profile' : role === 'buyer' ? '/buyer/profile' : '/admin/profile'}
+                          className="nb-drop-item"
+                          onClick={() => setDropOpen(false)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          Profile Settings
+                        </Link>
                         <div className="nb-drop-divider" />
                         <button className="nb-drop-item nb-drop-logout" onClick={handleLogout}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>

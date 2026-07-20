@@ -330,6 +330,12 @@ const getPendingPayouts = asyncHandler(async (req, res) => {
 // PATCH /admin/payouts/:farmerId/mark-paid — you paid them manually, record it
 const markPayoutPaid = asyncHandler(async (req, res) => {
     const { farmerId } = req.params;
+    const { paymentMethod = "upi" } = req.body;
+
+    const validMethods = ["upi", "bank_transfer", "cash"];
+    if (!validMethods.includes(paymentMethod)) {
+        throw new ApiError(400, `paymentMethod must be one of: ${validMethods.join(", ")}`);
+    }
 
     const farmerUser = await User.findById(farmerId);
     if (!farmerUser) throw new ApiError(404, "Farmer not found");
@@ -375,11 +381,16 @@ const markPayoutPaid = asyncHandler(async (req, res) => {
         { payoutStatus: "paid", payoutDate: paidAt }
     );
 
-    // 5. Write a permanent payout history record
+    // 5. Build payout record — include the details relevant to the chosen method
+    const pd = farmerUser.payoutDetails || {};
     const payoutRecord = await Payout.create({
         farmer: farmerId,
         farmerName: farmerUser.name,
-        upiId: farmerUser.payoutDetails?.upiId || "",
+        paymentMethod,
+        upiId:             paymentMethod === "upi"           ? (pd.upiId || "")             : "",
+        bankAccountNumber: paymentMethod === "bank_transfer" ? (pd.bankAccountNumber || "") : "",
+        ifscCode:          paymentMethod === "bank_transfer" ? (pd.ifscCode || "")          : "",
+        accountHolderName: paymentMethod === "bank_transfer" ? (pd.accountHolderName || "") : "",
         orderCount: duePayoutOrders.length,
         ordersAmount,
         donationCount: dueDonations.length,
@@ -410,6 +421,7 @@ const markPayoutPaid = asyncHandler(async (req, res) => {
         )
     );
 });
+
 
 // GET /admin/payouts/history — full record of every payout ever made
 const getPayoutHistory = asyncHandler(async (req, res) => {

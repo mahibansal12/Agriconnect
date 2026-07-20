@@ -17,10 +17,22 @@ const payoutSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // ── Payment method chosen by admin ──
+    paymentMethod: {
+      type: String,
+      enum: ["upi", "bank_transfer", "cash"],
+      default: "upi",
+    },
+    // UPI details (used when paymentMethod === "upi")
     upiId: {
       type: String,
       default: "",
     },
+    // Bank details (used when paymentMethod === "bank_transfer")
+    bankAccountNumber: { type: String, default: "" },
+    ifscCode:          { type: String, default: "" },
+    accountHolderName: { type: String, default: "" },
+
     orderCount: { type: Number, default: 0 },
     ordersAmount: { type: Number, default: 0 },
     donationCount: { type: Number, default: 0 },
@@ -37,4 +49,4 @@ const payoutSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Payout = mongoose.model("Payout", payoutSchema);
+export const Payout = mongoose.model("Payout", payoutSchema);
