@@ -269,9 +269,7 @@ export default function BuyerDashboard() {
               <p className="bd-topbar-eyebrow">Buyer Console</p>
               <h1 className="bd-topbar-title">{activeLabel}</h1>
             </div>
-            <button className="bd-bell-btn">
-              <Icon.bell width={18} height={18} />
-            </button>
+
           </header>
 
           <main className="bd-content">

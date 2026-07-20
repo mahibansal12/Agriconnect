@@ -337,9 +337,7 @@ const FarmerDashboard = () => {
               <p className="fd-topbar-eyebrow">Farmer Console</p>
               <h1 className="fd-topbar-title">{activeTab.replace('-', ' ')}</h1>
             </div>
-            <button className="fd-bell-btn">
-              <Icon.bell width={18} height={18} />
-            </button>
+
           </header>
 
           <main className="fd-content">

@@ -350,10 +350,7 @@ function AdminDashboard() {
               <p className="adm-topbar-eyebrow">Admin Console</p>
               <h1 className="adm-topbar-title">{activeTab.replace("-", " ")}</h1>
             </div>
-            <button className="adm-bell-btn">
-              <Icon.bell width={18} height={18} />
-              <span className="adm-bell-dot" />
-            </button>
+
           </header>
 
           <main className="adm-content">
