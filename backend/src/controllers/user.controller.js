@@ -768,7 +768,6 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         currentUser.emailOtp = undefined;
         currentUser.emailOtpExpiry = undefined;
         currentUser.emailOtpAttempts = 0;
-        currentUser.emailOtpLastSentAt = undefined; // clear rate-limit so next change is immediate
         currentUser.pendingEmail = undefined;
     }
 
