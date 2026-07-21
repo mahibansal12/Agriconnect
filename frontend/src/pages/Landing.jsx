@@ -1,13 +1,13 @@
-// src/pages/Landing.jsx
+// src/pages/Landing.jsx  ── Premium UI Enhancements ─────────────────────────
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from "framer-motion";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import { formatPrice, formatDate } from "../utils/formatters";
 import axiosInstance from "../utils/axiosInstance";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const SCHEME_CATEGORY_ICON = {
   subsidy:   "💰",
@@ -17,15 +17,6 @@ const SCHEME_CATEGORY_ICON = {
   other:     "📋",
 };
 
-const QUICK_LINKS = [
-  { to: "/marketplace",          icon: "🛒", label: "Marketplace",  sub: "Buy & sell crops",       color: "#E0F2FE", border: "#7DD3FC", accent: "#0EA5E9" },
-  { to: "/mandi",                icon: "📊", label: "Mandi Rates",  sub: "Live prices",             color: "#FFF7D6", border: "#FDE68A", accent: "#D97706" },
-  { to: "/recommendations/crop", icon: "🌱", label: "Crop Advisor", sub: "Smart suggestions",       color: "#D1FAE5", border: "#6EE7B7", accent: "#059669" },
-  { to: "/schemes",              icon: "📋", label: "Schemes",      sub: "Govt benefits",           color: "#EDE9FE", border: "#C4B5FD", accent: "#7C3AED" },
-  { to: "/shops",                icon: "📍", label: "Shops",        sub: "Nearby stores",           color: "#FFE4E6", border: "#FECDD3", accent: "#E11D48" },
-  { to: "/donations",            icon: "❤️", label: "Donate",       sub: "Support farmers",         color: "#FEF3C7", border: "#FCD34D", accent: "#B45309" },
-];
-
 const CAT_COLORS = {
   government: { bg: "#dbeafe", color: "#1d4ed8", label: "Government" },
   market:     { bg: "#fef3c7", color: "#92400e", label: "Market" },
@@ -34,13 +25,21 @@ const CAT_COLORS = {
   general:    { bg: "#d1fae5", color: "#064e3b", label: "General" },
 };
 
-const HOW_IT_WORKS = [
-  { step: "01", icon: "🌾", title: "List Your Crops", desc: "Register as a farmer and list your crops with quantity, quality, and expected price in minutes." },
-  { step: "02", icon: "🤝", title: "Connect with Buyers", desc: "Our platform matches your crops with verified buyers across India. No middlemen, no hidden fees." },
-  { step: "03", icon: "💰", title: "Earn Better Returns", desc: "Negotiate directly, access live Mandi rates, and get AI-powered pricing suggestions for maximum profit." },
+// All features of the platform
+const ALL_FEATURES = [
+  { to: "/marketplace", icon: "🛒", label: "Marketplace", sub: "Buy & sell crops directly to buyers across India", photo: "/marketplace_photo.png", color: "#0EA5E9", grad: "linear-gradient(135deg, #0EA5E9, #0284C7)", tag: "Trade" },
+  { to: "/mandi", icon: "📊", label: "Mandi Rates", sub: "Live commodity price updates from mandis", photo: "/mandi_photo.png", color: "#D97706", grad: "linear-gradient(135deg, #F59E0B, #D97706)", tag: "Live" },
+  { to: "/recommendations/crop", icon: "🌱", label: "Crop Advisor", sub: "AI-powered personalised crop suggestions", photo: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80", color: "#059669", grad: "linear-gradient(135deg, #10B981, #059669)", tag: "AI Powered" },
+  { to: "/schemes", icon: "📋", label: "Govt Schemes", sub: "Explore subsidies, loans, insurance & training", photo: "/schemes_photo.png", color: "#7C3AED", grad: "linear-gradient(135deg, #8B5CF6, #7C3AED)", tag: "Benefits" },
+  { to: "/news", icon: "📰", label: "Agri News", sub: "Latest agriculture news, policies & market trends", photo: "/news_photo.png", color: "#DC2626", grad: "linear-gradient(135deg, #EF4444, #DC2626)", tag: "Breaking" },
+  { to: "/weather", icon: "⛅", label: "Weather", sub: "Hyper-local weather forecasts for farming decisions", photo: "/weather_photo.png", color: "#0284C7", grad: "linear-gradient(135deg, #38BDF8, #0284C7)", tag: "Real-time" },
+  { to: "/shops", icon: "📍", label: "Shop Finder", sub: "Locate nearby seed, fertilizer & equipment dealers", photo: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80", color: "#E11D48", grad: "linear-gradient(135deg, #F43F5E, #E11D48)", tag: "Nearby" },
+  { to: "/donations", icon: "❤️", label: "Donations", sub: "Support fellow farmers and build a stronger community", photo: "/donation_photo_1.jpg", color: "#B45309", grad: "linear-gradient(135deg, #F59E0B, #B45309)", tag: "Community" },
+  { to: "/ai-assistant", icon: "🤖", label: "AI Assistant", sub: "24/7 intelligent farming assistant", photo: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&q=80", color: "#6366F1", grad: "linear-gradient(135deg, #818CF8, #6366F1)", tag: "Smart" },
+  { to: "/community", icon: "👥", label: "Community", sub: "Connect with farmers across India", photo: "/community_photo_1.jpg", color: "#0891B2", grad: "linear-gradient(135deg, #22D3EE, #0891B2)", tag: "Connect" },
+  { to: "/pest-library", icon: "🐛", label: "Pest Library", sub: "Identify crop pests instantly and get treatment guides", photo: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80", color: "#65A30D", grad: "linear-gradient(135deg, #84CC16, #65A30D)", tag: "Identify" },
+  { to: "/crop-knowledge", icon: "📖", label: "Crop Knowledge", sub: "Deep-dive library of crop profiles and best practices", photo: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&q=80", color: "#15803D", grad: "linear-gradient(135deg, #22C55E, #15803D)", tag: "Learn" },
 ];
-
-
 
 const timeAgo = (dateString) => {
   if (!dateString) return "";
@@ -54,56 +53,160 @@ const timeAgo = (dateString) => {
   return `${days} day${days !== 1 ? "s" : ""} ago`;
 };
 
-// ─── Animation Variants ──────────────────────────────────────────────────────
-
+// ─── Animation Variants ───────────────────────────────────────────────────────
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
 };
-
-const fadeUpSlow = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } },
-};
-
 const staggerContainer = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.09 } },
+  visible: { transition: { staggerChildren: 0.1 } },
 };
-
 const staggerFast = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.06 } },
 };
-
 const scaleIn = {
-  hidden: { opacity: 0, scale: 0.94 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// Carousel slide variants (Smoother)
+const slideVariants = {
+  enter: (dir) => ({ x: dir > 0 ? 60 : -60, opacity: 0, scale: 0.98, filter: "blur(4px)" }),
+  center: { x: 0, opacity: 1, scale: 1, filter: "blur(0px)", transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  exit: (dir) => ({ x: dir > 0 ? -60 : 60, opacity: 0, scale: 0.98, filter: "blur(4px)", transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }),
+};
 
-
-// ─── Scroll-triggered section wrapper ────────────────────────────────────────
-
-function RevealSection({ children, className = "", delay = 0 }) {
+// ─── Scroll Reveal Wrapper ────────────────────────────────────────────────────
+function Reveal({ children, className = "", delay = 0, once = true }) {
   return (
     <motion.div
       className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-60px" }}
-      variants={{
-        hidden: { opacity: 0, y: 30 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay, ease: [0.25, 0.46, 0.45, 0.94] } },
-      }}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once, margin: "-100px" }}
+      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Auto-Carousel Hook ───────────────────────────────────────────────────────
+function useAutoCarousel(length, interval = 3500) {
+  const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState(1);
+  const timerRef = useRef(null);
+  const [progress, setProgress] = useState(0);
 
+  const go = (next) => {
+    setDir(next > idx ? 1 : -1);
+    setIdx((next + length) % length);
+    setProgress(0);
+  };
+
+  useEffect(() => {
+    if (length <= 1) return;
+    const startTime = Date.now();
+    let animFrame;
+
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const p = Math.min((elapsed / interval) * 100, 100);
+      setProgress(p);
+      if (p < 100) {
+        animFrame = requestAnimationFrame(tick);
+      }
+    };
+    animFrame = requestAnimationFrame(tick);
+
+    timerRef.current = setInterval(() => {
+      setDir(1);
+      setIdx((i) => (i + 1) % length);
+      setProgress(0);
+    }, interval);
+
+    return () => {
+      clearInterval(timerRef.current);
+      cancelAnimationFrame(animFrame);
+    };
+  }, [length, interval, idx]);
+
+  return { idx, dir, go, progress };
+}
+
+// ─── Animated SVG Spark Graph ─────────────────────────────────────────────────
+function SparkGraph({ color = "#16A34A" }) {
+  const pts = [30, 55, 40, 70, 45, 85, 60, 50, 80, 65, 95, 40, 120, 58, 145, 35, 165, 52, 190, 30, 215, 48, 240, 25, 265, 44, 290, 20];
+  const pathD = pts.reduce((acc, v, i) => (i % 2 === 0 ? `${acc}${i === 0 ? "M" : " L"}${v},` : `${acc}${100 - v * 0.65}`), "");
+  return (
+    <svg viewBox="0 0 300 80" fill="none" style={{ width: "100%", maxWidth: 340, overflow: "visible" }}>
+      <defs>
+        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <motion.path
+        d={pathD + " L290,80 L30,80 Z"}
+        fill="url(#sg)"
+        initial={{ scaleY: 0 }}
+        whileInView={{ scaleY: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformOrigin: "bottom" }}
+      />
+      <motion.path
+        d={pathD}
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        initial={{ pathLength: 0 }}
+        whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 2, ease: "easeInOut" }}
+        style={{ filter: `drop-shadow(0px 4px 6px ${color}40)` }}
+      />
+    </svg>
+  );
+}
+
+// ─── Animated Connecting Line (How it works) ──────────────────────────────────
+function AnimatedDashedLine() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <div ref={ref} className="lp-how-connector-wrap">
+      <svg width="100%" height="40" viewBox="0 0 400 40" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+        <motion.path
+          d="M 0 20 Q 200 -20 400 20"
+          fill="none"
+          stroke="#A7F3D0"
+          strokeWidth="3"
+          strokeDasharray="8 8"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={isInView ? { pathLength: 1, opacity: 1 } : {}}
+          transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
+        />
+        {/* Animated dot traveling along the path */}
+        <motion.circle
+          r="4"
+          fill="#10B981"
+          initial={{ offsetDistance: "0%", opacity: 0 }}
+          animate={isInView ? { offsetDistance: "100%", opacity: [0, 1, 1, 0] } : {}}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
+          style={{ offsetPath: `path('M 0 20 Q 200 -20 400 20')` }}
+        />
+      </svg>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Landing() {
   const [weather, setWeather]               = useState(null);
   const [locationName, setLocationName]     = useState("Detecting location...");
@@ -114,101 +217,77 @@ export default function Landing() {
   const [mandiLoading, setMandiLoading]     = useState(true);
   const [schemesLoading, setSchemesLoading] = useState(true);
 
-  // ── Data fetching (identical logic, unchanged) ──────────────────────────────
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  // News carousel
+  const newsLen = news.length || 1;
+  const { idx: newsIdx, dir: newsDir, go: goNews, progress: newsProgress } = useAutoCarousel(newsLen, 5000);
+
+  // Schemes carousel
+  const schemeLen = schemes.length || 1;
+  const { idx: schemeIdx, dir: schemeDir, go: goScheme, progress: schemeProgress } = useAutoCarousel(schemeLen, 5500);
+
+  // Features parallax bg scroll
+  const featRef = useRef(null);
+  const { scrollYProgress: featScroll } = useScroll({ target: featRef, offset: ["start end", "end start"] });
+  const featBgY = useTransform(featScroll, [0, 1], [-80, 80]);
+
+  // ── Data Fetching ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchTopMandiRates = async () => {
-      try {
-        const res = await axiosInstance.get("/v1/mandi/rates", {
-          params: { limit: 5, sortBy: "arrivalDate", order: "desc" },
-        });
-        setMandiRates(res.data?.data?.rates || []);
-      } catch (err) {
-        console.error("Error fetching mandi rates:", err);
-        setMandiRates([]);
-      } finally {
-        setMandiLoading(false);
-      }
-    };
-    fetchTopMandiRates();
+    axiosInstance.get("/v1/mandi/rates", { params: { limit: 6, sortBy: "arrivalDate", order: "desc" } })
+      .then(res => setMandiRates(res.data?.data?.rates || []))
+      .catch(() => setMandiRates([]))
+      .finally(() => setMandiLoading(false));
   }, []);
 
   useEffect(() => {
-    const fetchTopNews = async () => {
-      try {
-        const res = await axiosInstance.get("/v1/news");
+    axiosInstance.get("/v1/news")
+      .then(res => {
         const articles = Array.isArray(res.data?.data) ? res.data.data : [];
-        const sorted = [...articles].sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setNews(sorted.slice(0, 4));
-      } catch (err) {
-        console.error("Error fetching news:", err);
-        setNews([]);
-      }
-    };
-    fetchTopNews();
+        setNews([...articles].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6));
+      })
+      .catch(() => setNews([]));
   }, []);
 
   useEffect(() => {
-    const fetchTopSchemes = async () => {
-      try {
-        const res = await axiosInstance.get("/v1/schemes");
-        setSchemes((res.data.data || []).slice(0, 5));
-      } catch (err) {
-        console.error("Error fetching schemes:", err);
-        setSchemes([]);
-      } finally {
-        setSchemesLoading(false);
-      }
-    };
-    fetchTopSchemes();
+    axiosInstance.get("/v1/schemes")
+      .then(res => setSchemes((res.data.data || []).slice(0, 6)))
+      .catch(() => setSchemes([]))
+      .finally(() => setSchemesLoading(false));
   }, []);
 
   useEffect(() => {
     const getWeatherByCoords = async (lat, lon) => {
       try {
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=7ea1a387eddc4306145926f9a6eec184&units=metric`
-        );
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=7ea1a387eddc4306145926f9a6eec184&units=metric`);
         const data = await res.json();
-        if (data.cod !== 200) throw new Error("Weather API error");
+        if (data.cod !== 200) throw new Error("error");
         setWeather({
-          city: data.name,
-          country: data.sys.country,
-          temperature: data.main.temp,
-          feelsLike: data.main.feels_like,
-          humidity: data.main.humidity,
-          description: data.weather[0].description,
+          city: data.name, country: data.sys.country,
+          temperature: data.main.temp, feelsLike: data.main.feels_like,
+          humidity: data.main.humidity, description: data.weather[0].description,
           windSpeed: data.wind.speed,
         });
         setLocationName(`${data.name}, ${data.sys.country}`);
-      } catch (err) {
-        console.error("Weather fetch failed:", err);
-      } finally {
-        setWeatherLoading(false);
-      }
+      } catch { } finally { setWeatherLoading(false); }
     };
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => getWeatherByCoords(position.coords.latitude, position.coords.longitude),
+        p => getWeatherByCoords(p.coords.latitude, p.coords.longitude),
         async () => {
           try {
-            const ipRes = await fetch("https://ipapi.co/json/");
-            const ipData = await ipRes.json();
-            await getWeatherByCoords(ipData.latitude, ipData.longitude);
-          } catch (e) {
-            setWeatherLoading(false);
-          }
+            const d = await (await fetch("https://ipapi.co/json/")).json();
+            await getWeatherByCoords(d.latitude, d.longitude);
+          } catch { setWeatherLoading(false); }
         }
       );
-    } else {
-      setWeatherLoading(false);
-    }
+    } else { setWeatherLoading(false); }
   }, []);
 
-  const getWeatherIcon = (desc = "") => {
+  const weatherIcon = (desc = "") => {
     const d = desc.toLowerCase();
     if (d.includes("clear") || d.includes("sunny")) return "☀️";
     if (d.includes("cloud")) return "⛅";
@@ -219,69 +298,97 @@ export default function Landing() {
     return "🌤️";
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  const currentNews = news[newsIdx];
+  const currentScheme = schemes[schemeIdx];
+  const currentNewsStyle = currentNews ? (CAT_COLORS[currentNews.category] || { bg: "#f3f4f6", color: "#374151", label: currentNews?.category }) : null;
 
+  // ── Hover Spotlight Effect Logic ─────────────────────────────────────────────
+  const handleMouseMove = (e) => {
+    const cards = document.querySelectorAll('.lp-spotlight-card');
+    cards.forEach(card => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="lp">
       <Navbar />
 
       {/* ══════════════════════════════════════════════════════
-          HERO SECTION
+          HERO
       ══════════════════════════════════════════════════════ */}
-      <section className="lp-hero">
-        {/* Animated gradient background orbs */}
+      <section className="lp-hero" ref={heroRef}>
+        <motion.div className="lp-hero-bg-img" style={{ y: heroY, opacity: heroOpacity }}>
+          <img src="/hero_farm_bg.png" alt="farm landscape" />
+          <div className="lp-hero-bg-overlay" />
+        </motion.div>
+
+        {/* Animated orbs for ambient glow */}
         <div className="lp-hero-orb lp-hero-orb--1" />
         <div className="lp-hero-orb lp-hero-orb--2" />
         <div className="lp-hero-orb lp-hero-orb--3" />
+        <div className="lp-hero-mesh" /> {/* Mesh gradient overlay */}
 
-        {/* Particle dots */}
+        {/* Particles */}
         <div className="lp-particles" aria-hidden="true">
-          {[...Array(18)].map((_, i) => (
-            <span key={i} className="lp-particle" style={{ "--i": i }} />
+          {[...Array(25)].map((_, i) => (
+            <span key={i} className="lp-particle" style={{ "--i": i, "--size": (i%3)+2 + "px" }} />
           ))}
         </div>
 
-        {/* Hero content */}
+        {/* Hero Content */}
         <motion.div
           className="lp-hero-content"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
-          <motion.div variants={fadeUp} className="lp-hero-tag">
+          <motion.div variants={fadeUp} className="lp-hero-tag lp-glass">
             <span className="lp-hero-tag-dot" />
-            <span>🏛️</span>
-            <span>Government Recognised Platform</span>
+            <span>🌾</span>
+            <span>India's Smartest Farming Platform</span>
           </motion.div>
 
-          <motion.h1 variants={fadeUpSlow} className="lp-hero-h1">
-            Connecting Farmers<br />
-            <span className="lp-hero-h1-accent">with Opportunities</span>
+          <motion.h1 variants={fadeUp} className="lp-hero-h1">
+            Empowering Every<br />
+            <span className="lp-hero-h1-accent">Farmer in India</span>
           </motion.h1>
 
           <motion.p variants={fadeUp} className="lp-hero-p">
-            Buy and sell crops directly, get personalised recommendations, check live mandi
-            prices, and access all government schemes — in one official platform.
+            From live mandi prices and government schemes to AI crop advice and a
+            nationwide marketplace — AgriConnect puts the power of modern agriculture
+            right in your hands.
           </motion.p>
 
           <motion.div variants={fadeUp} className="lp-hero-btns">
-            <Link to="/register" className="lp-btn-primary">
-              <span>Get started free</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <Link to="/register" className="lp-btn-primary lp-btn-glow">
+              <span>Start for free</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
-            <Link to="/marketplace" className="lp-btn-outline">
-              <span>View marketplace</span>
+            <Link to="/marketplace" className="lp-btn-outline lp-glass-hover">
+              <span>Browse marketplace</span>
             </Link>
           </motion.div>
 
           <motion.div variants={fadeUp} className="lp-stats">
             {[
-              ["15+",  "Crops available"],
-              ["Free", "Access to schemes"],
-              ["Live", "Mandi rates"],
-              ["24/7", "AI assistance"],
+              ["12+", "Features"],
+              ["Live", "Mandi Rates"],
+              ["Free", "Govt Schemes"],
+              ["24/7", "AI Help"],
             ].map(([val, label]) => (
               <div key={label} className="lp-stat">
                 <div className="lp-stat-val">{val}</div>
@@ -291,68 +398,74 @@ export default function Landing() {
           </motion.div>
         </motion.div>
 
-        {/* Weather widget */}
-        <motion.div
-          className="lp-weather"
-          initial={{ opacity: 0, y: 20, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="lp-weather-inner">
-            <div className="lp-weather-location">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <span>{locationName}</span>
-            </div>
-
-            {weatherLoading ? (
-              <div className="lp-weather-skeleton">
-                <div className="lp-skel lp-skel--circle" />
-                <div className="lp-skel-lines">
-                  <div className="lp-skel lp-skel--wide" />
-                  <div className="lp-skel lp-skel--narrow" />
-                </div>
+        {/* Floating Weather & Market Alerts */}
+        <div className="lp-hero-right">
+          <motion.div
+            className="lp-weather lp-glass-panel"
+            initial={{ opacity: 0, x: 40, filter: "blur(10px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ delay: 0.6, duration: 0.8, type: "spring", bounce: 0.4 }}
+          >
+            <div className="lp-weather-inner">
+              <div className="lp-weather-location">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" /><circle cx="12" cy="10" r="3" />
+                </svg>
+                {locationName}
               </div>
-            ) : weather ? (
-              <>
-                <div className="lp-weather-main">
-                  <motion.span
-                    className="lp-weather-icon"
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                  >
-                    {getWeatherIcon(weather.description)}
-                  </motion.span>
-                  <div>
-                    <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
-                    <div className="lp-weather-desc" style={{ textTransform: "capitalize" }}>
-                      {weather.description}
-                    </div>
-                    <div className="lp-weather-meta">
-                      <span>💧 {weather.humidity}%</span>
-                      <span>🌬️ {Math.round(weather.windSpeed * 3.6)} km/h</span>
-                    </div>
+              {weatherLoading ? (
+                <div className="lp-weather-skeleton">
+                  <div className="lp-skel lp-skel--circle" />
+                  <div className="lp-skel-lines">
+                    <div className="lp-skel lp-skel--wide" />
+                    <div className="lp-skel lp-skel--narrow" />
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="lp-weather-unavail">Weather unavailable</div>
-            )}
-
-            <Link to="/weather" className="lp-weather-link">
-              View full forecast
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-        </motion.div>
+              ) : weather ? (
+                <>
+                  <div className="lp-weather-main">
+                    <motion.span className="lp-weather-icon"
+                      animate={{ y: [0, -8, 0], scale: [1, 1.05, 1] }}
+                      transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}>
+                      {weatherIcon(weather.description)}
+                    </motion.span>
+                    <div>
+                      <div className="lp-weather-temp">{Math.round(weather.temperature)}°C</div>
+                      <div className="lp-weather-desc">{weather.description}</div>
+                      <div className="lp-weather-meta">
+                        <span>💧 {weather.humidity}%</span>
+                        <span>🌬️ {Math.round(weather.windSpeed * 3.6)} km/h</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="lp-weather-unavail">Weather unavailable</div>
+              )}
+              <Link to="/weather" className="lp-weather-link">
+                Full forecast <span className="lp-arrow-icon">→</span>
+              </Link>
+            </div>
+          </motion.div>
+          
+          {/* Floating Market Alert */}
+          <motion.div 
+            className="lp-hero-alert lp-glass-panel"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.6, type: "spring" }}
+          >
+            <div className="lp-alert-icon">📈</div>
+            <div className="lp-alert-content">
+              <div className="lp-alert-title">Wheat Price Up</div>
+              <div className="lp-alert-sub">+2.4% across major mandis today</div>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          QUICK LINKS GRID
+          QUICK LINKS STRIP (Spotlight Glow Cards)
       ══════════════════════════════════════════════════════ */}
       <section className="lp-section lp-section--quicklinks">
         <motion.div
@@ -362,770 +475,1508 @@ export default function Landing() {
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
         >
-          {QUICK_LINKS.map((l, idx) => (
+          {ALL_FEATURES.slice(0, 6).map((l) => (
             <motion.div key={l.to} variants={scaleIn}>
-              <Link
-                to={l.to}
-                className="lp-quick-card"
-                style={{ "--card-bg": l.color, "--card-border": l.border, "--card-accent": l.accent }}
-              >
-                <motion.span
-                  className="lp-quick-icon"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  {l.icon}
-                </motion.span>
-                <span className="lp-quick-label">{l.label}</span>
-                <span className="lp-quick-sub">{l.sub}</span>
-                <span className="lp-quick-arrow">→</span>
+              <Link to={l.to} className="lp-quick-card lp-spotlight-card" style={{ "--card-color": l.color, "--card-grad": l.grad }}>
+                <div className="lp-spotlight-border"></div>
+                <div className="lp-spotlight-content">
+                  <span className="lp-quick-tag">{l.tag}</span>
+                  <motion.span className="lp-quick-icon"
+                    whileHover={{ scale: 1.25, rotate: 10 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+                    {l.icon}
+                  </motion.span>
+                  <span className="lp-quick-label">{l.label}</span>
+                  <span className="lp-quick-sub">{l.sub.split(" ").slice(0, 5).join(" ")}…</span>
+                </div>
               </Link>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
-
-
       {/* ══════════════════════════════════════════════════════
-          HOW IT WORKS (NEW)
+          📰 NEWS SECTION  (full-width split)
       ══════════════════════════════════════════════════════ */}
-      <RevealSection className="lp-section lp-section--how">
-        <div className="lp-how-header">
-          <div className="lp-section-eyebrow">Simple Process</div>
-          <h2 className="lp-section-h2">How AgriConnect Works</h2>
-          <p className="lp-section-sub">From farm to market in three straightforward steps</p>
-        </div>
-        <motion.div
-          className="lp-how-grid"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-        >
-          {HOW_IT_WORKS.map((h, idx) => (
-            <motion.div key={h.step} variants={fadeUp} className="lp-how-card">
-              <div className="lp-how-step">{h.step}</div>
-              <motion.div
-                className="lp-how-icon"
-                whileHover={{ scale: 1.15, rotate: -5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                {h.icon}
-              </motion.div>
-              <h3 className="lp-how-title">{h.title}</h3>
-              <p className="lp-how-desc">{h.desc}</p>
-              {idx < HOW_IT_WORKS.length - 1 && (
-                <div className="lp-how-connector" aria-hidden="true">→</div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </RevealSection>
+      <section className="lp-section lp-split-section lp-split-section--news">
+        {/* Left — info + animated carousel */}
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--red">📰 Stay Informed</div>
+          <h2 className="lp-section-h2">Agriculture News<br /><span className="lp-h2-accent-red">&amp; Updates</span></h2>
+          <p className="lp-section-desc">
+            Get the latest agriculture news — government policy changes, market movements,
+            weather advisories, and technology breakthroughs — all curated for Indian farmers.
+          </p>
 
-      {/* ══════════════════════════════════════════════════════
-          3-COLUMN: MANDI / NEWS / SCHEMES
-      ══════════════════════════════════════════════════════ */}
-      <section className="lp-section">
-        <motion.div
-          className="lp-three-col"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-40px" }}
-        >
-          {/* ── Live Mandi Rates ── */}
-          <motion.div variants={fadeUp} className="lp-card">
-            <div className="lp-card-head">
-              <span className="lp-card-title">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                Live Mandi Rates
-              </span>
-              <Link to="/mandi" className="lp-card-link">View all →</Link>
-            </div>
-
-            <div className="lp-live-row">
-              <div className="lp-live-badge">
-                <motion.span
-                  className="lp-dot"
-                  animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
-                />
-                <span className="lp-live-text">LIVE</span>
-              </div>
-              <span className="lp-live-updated">
-                {mandiRates.length
-                  ? `Updated ${timeAgo(mandiRates[0].arrivalDate)}`
-                  : "Fetching latest rates..."}
-              </span>
-            </div>
-
-            {mandiLoading ? (
-              <div className="lp-table-skeleton">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="lp-table-skel-row">
-                    <div className="lp-skel lp-skel--text" />
-                    <div className="lp-skel lp-skel--text lp-skel--short" />
-                    <div className="lp-skel lp-skel--text lp-skel--price" />
-                  </div>
-                ))}
+          {/* Animated news card */}
+          <div className="lp-carousel-box lp-carousel-box--news">
+            {news.length === 0 ? (
+              <div className="lp-carousel-empty">
+                <div className="lp-carousel-skeleton" />
+                <div className="lp-carousel-skeleton lp-carousel-skeleton--sm" />
+                <div className="lp-carousel-skeleton lp-carousel-skeleton--xs" />
               </div>
             ) : (
-              <table className="lp-table">
-                <thead>
-                  <tr>
-                    <th>Crop</th><th>Mandi</th><th>Price</th><th>Arrival</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mandiRates.length === 0 && (
-                    <tr><td colSpan={4} className="lp-empty-cell">No mandi rates available right now.</td></tr>
-                  )}
-                  {mandiRates.map((r, idx) => (
-                    <motion.tr
-                      key={r._id}
-                      initial={{ opacity: 0, x: -15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                      whileHover={{ backgroundColor: "rgba(20, 83, 45, 0.04)" }}
-                      className="lp-table-row"
-                    >
-                      <td className="lp-td-bold">{r.commodityName}</td>
-                      <td className="lp-td-muted lp-td-sm">{r.mandi}</td>
-                      <td className="lp-td-bold lp-td-green">{formatPrice(r.modalPrice)}</td>
-                      <td className="lp-td-muted lp-td-sm">{formatDate(r.arrivalDate)}</td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </motion.div>
-
-          {/* ── Latest News ── */}
-          <motion.div variants={fadeUp} className="lp-card">
-            <div className="lp-card-head">
-              <span className="lp-card-title">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
-                </svg>
-                Latest News
-              </span>
-              <Link to="/news" className="lp-card-link">View all →</Link>
-            </div>
-            <div className="lp-news-list">
-              {news.length === 0 && (
-                <div className="lp-empty-state">No news available right now.</div>
-              )}
-              {news.map((n, idx) => {
-                const style = CAT_COLORS[n.category] || { bg: "#F3F4F6", color: "#374151", label: n.category };
-                const ItemTag = n.isLive ? "a" : Link;
-                return (
-                  <motion.div
-                    key={n._id}
-                    initial={{ opacity: 0, x: -15 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    whileHover={{ x: 4 }}
-                  >
-                    <ItemTag
-                      className="lp-news-item"
-                      {...(n.isLive
-                        ? { href: n.sourceUrl, target: "_blank", rel: "noopener noreferrer" }
-                        : { to: `/news/${n._id}` })}
-                    >
-                      <span className="lp-news-cat" style={{ background: style.bg, color: style.color }}>
-                        {style.label || n.category}
-                      </span>
-                      <div className="lp-news-title">{n.title}</div>
-                      <div className="lp-news-date">{formatDate(n.createdAt)}</div>
-                    </ItemTag>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          {/* ── Top Schemes ── */}
-          <motion.div variants={fadeUp} className="lp-card">
-            <div className="lp-card-head">
-              <span className="lp-card-title">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                Top Schemes
-              </span>
-              <Link to="/schemes" className="lp-card-link">View all →</Link>
-            </div>
-            <div className="lp-scheme-list">
-              {schemesLoading && (
-                <div className="lp-schemes-skeleton">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="lp-scheme-skel-row">
-                      <div className="lp-skel lp-skel--circle-sm" />
-                      <div className="lp-skel-lines">
-                        <div className="lp-skel lp-skel--wide" />
-                        <div className="lp-skel lp-skel--narrow" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!schemesLoading && schemes.length === 0 && (
-                <div className="lp-empty-state">No schemes available right now.</div>
-              )}
-              {schemes.map((s, idx) => (
+              <AnimatePresence mode="wait" custom={newsDir}>
                 <motion.div
-                  key={s._id}
-                  initial={{ opacity: 0, x: -15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  whileHover={{ x: 4 }}
+                  key={newsIdx}
+                  custom={newsDir}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="lp-news-slide"
                 >
-                  <Link to="/schemes" className="lp-scheme-item">
-                    <span className="lp-scheme-icon">{SCHEME_CATEGORY_ICON[s.category] || "📋"}</span>
-                    <div className="lp-scheme-body">
-                      <div className="lp-scheme-name">{s.title}</div>
-                      <div className="lp-scheme-benefit">{(s.benefits || "").split(",")[0]}</div>
-                    </div>
-                    <motion.svg
-                      className="lp-scheme-arrow"
-                      width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                      whileHover={{ x: 3 }}
-                      transition={{ type: "spring", stiffness: 400 }}
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </motion.svg>
-                  </Link>
+                  <div className="lp-news-slide-cat"
+                    style={{ background: currentNewsStyle?.bg, color: currentNewsStyle?.color }}>
+                    {currentNewsStyle?.label || currentNews?.category}
+                  </div>
+                  <div className="lp-news-slide-title">{currentNews?.title}</div>
+                  <div className="lp-news-slide-excerpt">
+                    {(currentNews?.content || "").slice(0, 140)}…
+                  </div>
+                  <div className="lp-news-slide-meta">
+                    <span className="lp-news-slide-date">🕐 {timeAgo(currentNews?.createdAt)}</span>
+                    <Link
+                      to={`/news/${currentNews?._id}`}
+                      className="lp-news-slide-read">
+                      Read more <span className="lp-arrow-icon">→</span>
+                    </Link>
+                  </div>
                 </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
+              </AnimatePresence>
+            )}
+
+            {/* Progress Dots */}
+            {news.length > 0 && (
+              <div className="lp-carousel-dots">
+                {news.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`lp-dot-btn ${i === newsIdx ? "lp-dot-btn--active lp-dot-btn--red" : ""}`}
+                    onClick={() => goNews(i)}
+                    aria-label={`News ${i + 1}`}
+                  >
+                    {i === newsIdx && <div className="lp-dot-progress" style={{ width: `${newsProgress}%`, background: "#DC2626" }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link to="/news" className="lp-split-cta lp-split-cta--red">
+            Browse all news
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+
+        {/* Right — photo + stats */}
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--news">
+            <motion.img
+              src="/news_photo.png"
+              alt="Farmer reading agriculture news"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            {/* Floating UI Badges */}
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--red" />
+              <span>Live Updates</span>
+            </motion.div>
+
+            <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
+              🌧️ Monsoon alerts active
+            </motion.div>
+          </div>
+          
+          <div className="lp-split-stat-row">
+            {[
+              { val: "5+", label: "Categories" },
+              { val: "Daily", label: "Updates" },
+              { val: "Free", label: "Access" },
+            ].map((s, i) => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--red" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          CTA BANNERS
+          🏛️ SCHEMES SECTION  (full-width split, reversed)
       ══════════════════════════════════════════════════════ */}
-      <RevealSection className="lp-section lp-section--cta">
-        <div className="lp-cta-row">
-          <motion.div
-            className="lp-cta lp-cta--green"
-            whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-          >
-            <div className="lp-cta-bg-orb" />
-            <div className="lp-cta-content">
-              <div className="lp-cta-emoji">🌾</div>
-              <div>
-                <div className="lp-cta-title">Get personalised crop recommendations</div>
-                <div className="lp-cta-sub">Answer a few questions and get the best crop suggestions for your land, soil and season.</div>
+      <section className="lp-section lp-split-section lp-split-section--schemes lp-split-section--reverse">
+        {/* Left — photo + stats */}
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--schemes">
+            <motion.img
+              src="/schemes_photo.png"
+              alt="Farmer receiving government scheme benefits"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            {/* Floating UI Badges */}
+            <motion.div className="lp-floating-badge lp-floating-badge--tr" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}>
+              <span>🏛️ Govt Verified</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
+              💰 PM-Kisan Support
+            </motion.div>
+          </div>
+          
+          <div className="lp-split-stat-row">
+            {[
+              { val: "50+", label: "Schemes" },
+              { val: "₹Free", label: "To Apply" },
+              { val: "All", label: "Farmers" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--purple" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Right — info + animated carousel */}
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--purple">💰 Your Benefits Await</div>
+          <h2 className="lp-section-h2">Government Schemes<br /><span className="lp-h2-accent-purple">&amp; Subsidies</span></h2>
+          <p className="lp-section-desc">
+            Access India's largest collection of farmer welfare programs — from PM-KISAN
+            direct payments and crop insurance to Kisan Credit Cards and skill training.
+            Find out what you're eligible for in seconds.
+          </p>
+
+          {/* Animated scheme card */}
+          <div className="lp-carousel-box lp-carousel-box--schemes">
+            {schemes.length === 0 ? (
+              <div className="lp-carousel-empty">
+                <div className="lp-carousel-skeleton" />
+                <div className="lp-carousel-skeleton lp-carousel-skeleton--sm" />
               </div>
+            ) : (
+              <AnimatePresence mode="wait" custom={schemeDir}>
+                <motion.div
+                  key={schemeIdx}
+                  custom={schemeDir}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="lp-scheme-slide"
+                >
+                  <div className="lp-scheme-slide-header">
+                    <span className="lp-scheme-slide-icon">
+                      {SCHEME_CATEGORY_ICON[currentScheme?.category] || "📋"}
+                    </span>
+                    <span className="lp-scheme-slide-cat">
+                      {currentScheme?.category}
+                    </span>
+                  </div>
+                  <div className="lp-scheme-slide-title">{currentScheme?.title}</div>
+                  <div className="lp-scheme-slide-desc">
+                    {(currentScheme?.description || "").slice(0, 130)}…
+                  </div>
+                  <div className="lp-scheme-slide-benefit">
+                    <span className="lp-scheme-benefit-label">✅ Benefit:</span>
+                    <span>{(currentScheme?.benefits || "").split(",")[0]}</span>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            )}
+            {schemes.length > 0 && (
+              <div className="lp-carousel-dots">
+                {schemes.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`lp-dot-btn ${i === schemeIdx ? "lp-dot-btn--active lp-dot-btn--purple" : ""}`}
+                    onClick={() => goScheme(i)}
+                    aria-label={`Scheme ${i + 1}`}
+                  >
+                    {i === schemeIdx && <div className="lp-dot-progress" style={{ width: `${schemeProgress}%`, background: "#7C3AED" }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link to="/schemes" className="lp-split-cta lp-split-cta--purple">
+            Explore all schemes
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          📊 MANDI RATES SECTION  (full-width split)
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-split-section lp-split-section--mandi">
+        {/* Left — info + graph + rate preview */}
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-mandi-live-row">
+            <motion.span
+              className="lp-live-dot"
+              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.4, 1] }}
+              transition={{ repeat: Infinity, duration: 1.3 }}
+            />
+            <span className="lp-live-text">LIVE PRICES</span>
+          </div>
+          <div className="lp-section-eyebrow lp-section-eyebrow--amber">📊 Market Intelligence</div>
+          <h2 className="lp-section-h2">Live Mandi Rates<br /><span className="lp-h2-accent-amber">&amp; Commodity Prices</span></h2>
+          <p className="lp-section-desc">
+            Real-time commodity prices from hundreds of mandis across every state of India.
+            Check wheat, rice, cotton, vegetables and more — updated every hour.
+          </p>
+
+          {/* Animated graph preview */}
+          <div className="lp-mandi-graph-box">
+            <div className="lp-mandi-graph-header">
+              <div className="lp-mandi-graph-label">Price Trend (Modal Price)</div>
+              <div className="lp-mandi-graph-trend lp-trend-up">↑ 2.4%</div>
             </div>
-            <Link to="/recommendations/crop" className="lp-cta-btn lp-cta-btn--dark">
-              <span>Get started</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </motion.div>
+            <SparkGraph color="#D97706" />
+            <div className="lp-mandi-graph-axis">
+              <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span>
+            </div>
+          </div>
+
+          {/* Rate preview chips */}
+          <div className="lp-mandi-rate-chips">
+            {mandiLoading ? (
+              [1, 2, 3].map(i => <div key={i} className="lp-rate-chip-skel" />)
+            ) : (
+              mandiRates.slice(0, 3).map(r => (
+                <motion.div key={r._id} className="lp-rate-chip" whileHover={{ y: -3, boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}>
+                  <span className="lp-rate-chip-name">{r.commodityName}</span>
+                  <span className="lp-rate-chip-price">{formatPrice(r.modalPrice)}</span>
+                </motion.div>
+              ))
+            )}
+          </div>
+
+          <Link to="/mandi" className="lp-split-cta lp-split-cta--amber">
+            See full price board
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+
+        {/* Right — photo + stats */}
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--mandi">
+            <motion.img
+              src="/mandi_photo.png"
+              alt="Vibrant mandi market with live price boards"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--green" />
+              <span>Updated Hourly</span>
+            </motion.div>
+            
+            {/* Floating Glass Chart Card */}
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}>
+               <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>TOP GAINER</div>
+               <div style={{ fontSize: 16, fontWeight: 800, color: '#0A2E0C', margin: '2px 0' }}>Wheat <span style={{ color: '#16A34A', fontSize: 14 }}>↑ 4%</span></div>
+               <div style={{ width: 80, height: 2, background: '#16A34A', marginTop: 6, borderRadius: 2 }}></div>
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "500+", label: "Mandis" },
+              { val: "200+", label: "Commodities" },
+              { val: "Hourly", label: "Updates" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--amber" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          🌟 ALL FEATURES SHOWCASE  (photo grid, parallax bg, spotlight)
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-features-section" ref={featRef}>
+        <motion.div className="lp-features-bg" style={{ y: featBgY }}>
+          <div className="lp-features-bg-img" />
+        </motion.div>
+        
+        {/* Decorative elements */}
+        <div className="lp-features-decor lp-features-decor--1" />
+        <div className="lp-features-decor lp-features-decor--2" />
+        
+        <div className="lp-features-content">
+          <Reveal>
+            <div className="lp-features-header">
+              <div className="lp-section-eyebrow lp-section-eyebrow--green lp-eyebrow-glow">✨ Complete Platform</div>
+              <h2 className="lp-section-h2 lp-section-h2--white">Every Tool a Farmer Needs</h2>
+              <p className="lp-features-sub">
+                AgriConnect is a complete ecosystem — explore all features below
+              </p>
+            </div>
+          </Reveal>
 
           <motion.div
-            className="lp-cta lp-cta--light"
-            whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+            className="lp-features-grid"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
           >
-            <div className="lp-cta-content">
-              <div className="lp-cta-emoji">
-                <motion.span
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                  style={{ display: "block" }}
-                >
-                  📍
-                </motion.span>
-              </div>
-              <div>
-                <div className="lp-cta-title">Find nearby agriculture shops</div>
-                <div className="lp-cta-sub">Seeds, fertilizers, pesticides and equipment dealers near you on the map.</div>
-              </div>
-            </div>
-            <Link to="/shops" className="lp-cta-btn lp-cta-btn--outline">
-              <span>Find shops</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            {ALL_FEATURES.map((f, i) => (
+              <motion.div key={f.to} variants={fadeUp}>
+                <Link to={f.to} className="lp-feat-card lp-spotlight-card">
+                  <div className="lp-spotlight-border"></div>
+                  <div className="lp-feat-card-inner">
+                    <div className="lp-feat-card-img-wrap">
+                      <img
+                        src={f.photo}
+                        alt={f.label}
+                        className="lp-feat-card-img"
+                        loading="lazy"
+                        onError={e => { e.target.style.display = "none"; }}
+                      />
+                      <div className="lp-feat-card-img-overlay" style={{ background: f.grad + "D9" }} />
+                      <div className="lp-feat-card-tag-top">{f.tag}</div>
+                    </div>
+                    <div className="lp-feat-card-body">
+                      <div className="lp-feat-card-icon-row">
+                        <motion.span
+                          className="lp-feat-card-icon"
+                          whileHover={{ rotate: 12, scale: 1.25 }}
+                          transition={{ type: "spring", stiffness: 400 }}>
+                          {f.icon}
+                        </motion.span>
+                        <span className="lp-feat-card-label">{f.label}</span>
+                      </div>
+                      <p className="lp-feat-card-sub">{f.sub}</p>
+                      <div className="lp-feat-card-arrow" style={{ color: f.color }}>
+                        Explore feature <span className="lp-arrow-icon">→</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          🤖 AI + CROP ADVISOR SPLIT HIGHLIGHT
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-split-section lp-split-section--ai lp-split-section--reverse">
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--ai">
+            <motion.img
+              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=700&q=80"
+              alt="AI assistant for farmers"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tr lp-badge--glow" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}>
+              <span>🤖 AI Powered</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>
+              ✨ "Best crop for clay soil?"
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "24/7", label: "Available" },
+              { val: "Hindi", label: "+ English" },
+              { val: "Free", label: "For All" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--indigo" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--indigo">🤖 Smart Farming</div>
+          <h2 className="lp-section-h2">AI-Powered Crop<br /><span className="lp-h2-accent-indigo">Advisor &amp; Assistant</span></h2>
+          <p className="lp-section-desc">
+            Get instant AI-driven crop recommendations based on your soil type, location,
+            budget and season. Ask our 24/7 AI assistant anything — from disease diagnosis to
+            market timing — in Hindi or English.
+          </p>
+          <div className="lp-ai-chips">
+            {["🌱 Which crop suits my soil?", "📈 When should I sell wheat?", "🐛 Identify this pest", "💧 How much to irrigate?"].map(q => (
+              <motion.div key={q} className="lp-ai-chip" whileHover={{ scale: 1.05, y: -2 }} transition={{ type: "spring", stiffness: 400 }}>
+                {q}
+              </motion.div>
+            ))}
+          </div>
+          <div className="lp-hero-btns" style={{ marginTop: 32 }}>
+            <Link to="/recommendations/crop" className="lp-split-cta lp-split-cta--indigo">
+              Get crop advice
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
+            <Link to="/ai-assistant" className="lp-split-cta-outline">
+              Try AI assistant
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          🛒 MARKETPLACE HIGHLIGHT
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-split-section lp-split-section--marketplace">
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--blue">🛒 Direct Trade</div>
+          <h2 className="lp-section-h2">Sell Your Crops<br /><span className="lp-h2-accent-blue">Directly to Buyers</span></h2>
+          <p className="lp-section-desc">
+            List your harvest in minutes and connect with verified buyers across India. No
+            middlemen, no hidden charges. Negotiate directly and get better prices with
+            AI-powered pricing suggestions.
+          </p>
+          <div className="lp-marketplace-features">
+            {[
+              { icon: "✅", t: "Verified Buyers", s: "All buyers are KYC verified" },
+              { icon: "💬", t: "Direct Chat",     s: "Negotiate price directly" },
+              { icon: "🤖", t: "AI Pricing",      s: "Smart price suggestions" },
+              { icon: "🚀", t: "Quick Listing",   s: "List in under 2 minutes" },
+            ].map((f, i) => (
+              <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
+                <span className="lp-mp-feat-icon">{f.icon}</span>
+                <div>
+                  <div className="lp-mp-feat-title">{f.t}</div>
+                  <div className="lp-mp-feat-sub">{f.s}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <Link to="/marketplace" className="lp-split-cta lp-split-cta--blue">
+            Open marketplace
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--marketplace">
+            <motion.img
+              src="/marketplace_photo.png"
+              alt="Farmer selling crops online"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--blue" />
+              <span>Zero Commission</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✅</div>
+                 <div>
+                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0A2E0C' }}>Order #4092</div>
+                   <div style={{ fontSize: 11, color: '#0284C7', fontWeight: 600 }}>Payment Secured</div>
+                 </div>
+               </div>
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "0%", label: "Commission" },
+              { val: "15+", label: "Crop Types" },
+              { val: "Fast", label: "Settlement" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--blue" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          HOW IT WORKS (With animated connecting line)
+      ══════════════════════════════════════════════════════ */}
+      <Reveal className="lp-section lp-section--how">
+        <div className="lp-how-header">
+          <div className="lp-section-eyebrow lp-section-eyebrow--green">Simple Process</div>
+          <h2 className="lp-section-h2">How AgriConnect Works</h2>
+          <p className="lp-section-sub">From farm to market in three straightforward steps</p>
+        </div>
+        
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Animated Connecting Line behind cards */}
+          <div className="lp-how-line-container">
+            <AnimatedDashedLine />
+          </div>
+
+          <motion.div
+            className="lp-how-grid"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {[
+              { step: "01", icon: "🌾", title: "Register for Free", desc: "Create your account in seconds — no documents needed. Tell us about your farm, location and crops." },
+              { step: "02", icon: "🔍", title: "Explore Features",  desc: "Access mandi rates, get AI crop advice, browse schemes, list crops on marketplace and more." },
+              { step: "03", icon: "💰", title: "Earn Better",       desc: "Sell directly at better prices, claim government benefits, and make smarter farming decisions every day." },
+            ].map((h, i) => (
+              <motion.div key={h.step} variants={fadeUp} className="lp-how-card lp-spotlight-card">
+                <div className="lp-spotlight-border"></div>
+                <div className="lp-how-card-inner">
+                  <div className="lp-how-step-badge">{h.step}</div>
+                  <motion.div className="lp-how-icon"
+                    whileHover={{ scale: 1.15, rotate: -10, y: -5 }}
+                    transition={{ type: "spring", stiffness: 400 }}>
+                    {h.icon}
+                  </motion.div>
+                  <h3 className="lp-how-title">{h.title}</h3>
+                  <p className="lp-how-desc">{h.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
-      </RevealSection>
+      </Reveal>
+
+      {/* ══════════════════════════════════════════════════════
+          WEATHER + SHOP FINDER  (2-column CTAs with photos)
+      ══════════════════════════════════════════════════════ */}
+      <Reveal className="lp-section lp-section--dual-cta">
+        <div className="lp-dual-cta-grid">
+          {/* Weather CTA */}
+          <Link to="/weather" className="lp-dual-cta-card lp-dual-cta-card--weather">
+            <img src="/weather_photo.png" alt="weather forecast for farmers" className="lp-dual-cta-bg-img" />
+            <div className="lp-dual-cta-overlay lp-dual-cta-overlay--blue" />
+            <div className="lp-dual-cta-content">
+              <div className="lp-dual-cta-icon-wrap">⛅</div>
+              <div className="lp-dual-cta-text">
+                <div className="lp-dual-cta-eyebrow">Hyper-local Forecasts</div>
+                <div className="lp-dual-cta-title">Weather for Farmers</div>
+                <p className="lp-dual-cta-sub">Rain predictions, frost alerts and crop-specific advisories tailored to your district.</p>
+                <div className="lp-dual-cta-btn">Check weather <span className="lp-arrow-icon">→</span></div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Shop Finder CTA */}
+          <Link to="/shops" className="lp-dual-cta-card lp-dual-cta-card--shop">
+            <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=700&q=80" alt="agriculture shop finder" className="lp-dual-cta-bg-img" />
+            <div className="lp-dual-cta-overlay lp-dual-cta-overlay--orange" />
+            <div className="lp-dual-cta-content">
+              <div className="lp-dual-cta-icon-wrap">📍</div>
+              <div className="lp-dual-cta-text">
+                <div className="lp-dual-cta-eyebrow">Find Stores Near You</div>
+                <div className="lp-dual-cta-title">Agriculture Shops</div>
+                <p className="lp-dual-cta-sub">Seeds, fertilizers, pesticides and equipment dealers on an interactive map.</p>
+                <div className="lp-dual-cta-btn">Find shops <span className="lp-arrow-icon">→</span></div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Community CTA */}
+          <Link to="/community" className="lp-dual-cta-card lp-dual-cta-card--community">
+            <img src="/community_photo_2.jpg" alt="farmer community" className="lp-dual-cta-bg-img" />
+            <div className="lp-dual-cta-overlay lp-dual-cta-overlay--teal" />
+            <div className="lp-dual-cta-content">
+              <div className="lp-dual-cta-icon-wrap">👥</div>
+              <div className="lp-dual-cta-text">
+                <div className="lp-dual-cta-eyebrow">Farmer Network</div>
+                <div className="lp-dual-cta-title">Community Forum</div>
+                <p className="lp-dual-cta-sub">Ask questions, share experiences and learn from 10,000+ farmers in our community.</p>
+                <div className="lp-dual-cta-btn">Join community <span className="lp-arrow-icon">→</span></div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Donations CTA */}
+          <Link to="/donations" className="lp-dual-cta-card lp-dual-cta-card--donate">
+            <img src="/donation_photo_2.jpg" alt="support farmers" className="lp-dual-cta-bg-img" />
+            <div className="lp-dual-cta-overlay lp-dual-cta-overlay--rose" />
+            <div className="lp-dual-cta-content">
+              <div className="lp-dual-cta-icon-wrap">❤️</div>
+              <div className="lp-dual-cta-text">
+                <div className="lp-dual-cta-eyebrow">Give Back</div>
+                <div className="lp-dual-cta-title">Support Farmers</div>
+                <p className="lp-dual-cta-sub">Donate to support farmers affected by drought, floods and natural disasters.</p>
+                <div className="lp-dual-cta-btn">Donate now <span className="lp-arrow-icon">→</span></div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </Reveal>
+
+      {/* ══════════════════════════════════════════════════════
+          FINAL CTA STRIP
+      ══════════════════════════════════════════════════════ */}
+      <Reveal className="lp-section lp-section--final-cta">
+        <div className="lp-final-cta">
+          <div className="lp-final-cta-mesh" />
+          <div className="lp-final-cta-orb lp-final-cta-orb--1" />
+          <div className="lp-final-cta-orb lp-final-cta-orb--2" />
+          <div className="lp-final-cta-content">
+            <motion.div className="lp-final-cta-emoji"
+              animate={{ y: [0, -10, 0], rotate: [0, 5, 0, -5, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+              🌾
+            </motion.div>
+            <h2 className="lp-final-cta-h2">Ready to Transform Your Farm?</h2>
+            <p className="lp-final-cta-p">
+              Join thousands of farmers already using AgriConnect to get better prices,
+              access more benefits and make smarter decisions every season.
+            </p>
+            <div className="lp-final-cta-btns">
+              <Link to="/register" className="lp-btn-primary lp-btn-primary--lg lp-btn-glow">
+                <span>Create free account</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+              <Link to="/marketplace" className="lp-btn-ghost">
+                Browse marketplace
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Reveal>
 
       <Footer />
 
       {/* ══════════════════════════════════════════════════════
-          SCOPED CSS
+          SCOPED CSS - Premium Enhancements
       ══════════════════════════════════════════════════════ */}
       <style>{`
-        /* ── Base ──────────────────────────────────────────────────── */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        /* Custom Scrollbar for a premium feel */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #F4F7F0; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #F4F7F0; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ── Base ────────────────────────────────────────────────────── */
         .lp {
           display: flex; flex-direction: column; min-height: 100vh;
-          background: linear-gradient(180deg, #EAF7FF 0%, #FFF8E6 42%, #F3F8EC 100%);
+          background: #F4F7F0;
           font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+          overflow-x: hidden;
+          -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Hero ──────────────────────────────────────────────────── */
+        /* Reusable Animations */
+        .lp-arrow-icon { transition: transform 0.25s ease; }
+        a:hover .lp-arrow-icon { transform: translateX(4px); }
+        
+        /* Glassmorphism Utilities */
+        .lp-glass {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .lp-glass-panel {
+          background: rgba(10, 46, 28, 0.4);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 30px 60px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .lp-glass-hover { transition: all 0.3s ease; }
+        .lp-glass-hover:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* ── Spotlight Glow Effect (For Cards) ───────────────────────── */
+        .lp-spotlight-card {
+          position: relative;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 16px;
+          cursor: pointer;
+        }
+        .lp-spotlight-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 16px;
+          padding: 2px; /* Border thickness */
+          background: radial-gradient(
+            800px circle at var(--mouse-x) var(--mouse-y),
+            rgba(22, 163, 74, 0.3),
+            transparent 40%
+          );
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        .lp-spotlight-card:hover::before { opacity: 1; }
+
+        /* ── HERO ────────────────────────────────────────────────────── */
         .lp-hero {
           position: relative; overflow: hidden;
-          background:
-            linear-gradient(90deg, rgba(7,41,18,0.88) 0%, rgba(18,85,28,0.72) 50%, rgba(21,119,80,0.42) 100%),
-            radial-gradient(circle at 82% 18%, rgba(255,205,83,0.95) 0 9%, rgba(255,173,46,0.28) 10% 22%, transparent 34%),
-            linear-gradient(180deg, #74C7F2 0%, #BDEBFF 31%, #FFE19A 45%, #79B54A 46%, #236E2A 100%);
-          padding: 64px clamp(24px, 6vw, 96px) 56px;
+          min-height: 95vh;
+          background: #021a0e;
+          padding: 100px clamp(20px, 6vw, 100px) 80px;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-          gap: clamp(32px, 5vw, 72px);
-          width: 100%; box-sizing: border-box;
+          grid-template-columns: minmax(0,1fr) minmax(320px,400px);
+          gap: clamp(40px, 6vw, 100px);
+          align-items: center;
+        }
+        .lp-hero-bg-img {
+          position: absolute; inset: 0; pointer-events: none;
+        }
+        .lp-hero-bg-img img {
+          width: 100%; height: 100%; object-fit: cover; object-position: center;
+          opacity: 0.35; filter: saturate(1.4) contrast(1.1);
+        }
+        .lp-hero-bg-overlay {
+          position: absolute; inset: 0;
+          background: radial-gradient(circle at 70% 30%, transparent 0%, rgba(2, 26, 14, 0.8) 60%, #021a0e 100%),
+                      linear-gradient(180deg, rgba(2, 26, 14, 0.4) 0%, rgba(2, 26, 14, 0.9) 100%);
+        }
+        
+        .lp-hero-mesh {
+          position: absolute; inset: 0; opacity: 0.4;
+          background-image: 
+            radial-gradient(at 10% 20%, hsla(140,100%,20%,1) 0px, transparent 50%),
+            radial-gradient(at 80% 10%, hsla(45,100%,30%,1) 0px, transparent 50%),
+            radial-gradient(at 90% 90%, hsla(160,100%,15%,1) 0px, transparent 50%);
+          filter: blur(60px);
+          pointer-events: none;
         }
 
-        /* Field grid texture overlay */
-        .lp-hero::before {
-          content: ""; position: absolute; inset: 44% -8% -24% -8%;
-          background:
-            repeating-linear-gradient(104deg, rgba(255,255,255,0.14) 0 2px, transparent 2px 58px),
-            repeating-linear-gradient(76deg, rgba(8,69,22,0.22) 0 3px, transparent 3px 70px);
-          transform: perspective(520px) rotateX(58deg);
-          transform-origin: top; opacity: 0.85; pointer-events: none;
+        .lp-hero > *:not(.lp-hero-bg-img):not(.lp-particles):not(.lp-hero-orb):not(.lp-hero-mesh) {
+          position: relative; z-index: 1;
         }
-        .lp-hero > * { position: relative; z-index: 1; }
 
         /* Orbs */
         .lp-hero-orb {
           position: absolute; border-radius: 50%; pointer-events: none;
-          filter: blur(80px); opacity: 0.25; animation: lp-orb-drift 12s ease-in-out infinite alternate;
+          filter: blur(100px); opacity: 0.25;
+          animation: lp-orb-drift 15s ease-in-out infinite alternate;
         }
-        .lp-hero-orb--1 { width: 500px; height: 500px; background: #FFD700; top: -120px; right: -80px; animation-delay: 0s; }
-        .lp-hero-orb--2 { width: 300px; height: 300px; background: #4CAF50; bottom: 40px; left: 20%; animation-delay: -4s; }
-        .lp-hero-orb--3 { width: 200px; height: 200px; background: #0EA5E9; top: 30%; left: -60px; animation-delay: -8s; }
-        @keyframes lp-orb-drift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(20px,15px) scale(1.08); } }
+        .lp-hero-orb--1 { width: 600px; height: 600px; background: #F59E0B; top: -200px; right: -100px; }
+        .lp-hero-orb--2 { width: 450px; height: 450px; background: #10B981; bottom: -100px; left: 10%; animation-delay: -5s; }
+        .lp-hero-orb--3 { width: 300px; height: 300px; background: #38BDF8; top: 20%; left: -100px; animation-delay: -9s; }
+        @keyframes lp-orb-drift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(30px,25px) scale(1.15)} }
 
         /* Particles */
-        .lp-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .lp-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
         .lp-particle {
           position: absolute;
-          width: calc(2px + (var(--i, 0) % 3) * 1px);
-          height: calc(2px + (var(--i, 0) % 3) * 1px);
-          background: rgba(255,255,255,0.5);
-          border-radius: 50%;
-          left: calc((var(--i, 0) * 5.7% + 3%));
-          top: calc((var(--i, 0) * 4.9% + 5%));
-          animation: lp-float-up 8s ease-in-out infinite;
-          animation-delay: calc(var(--i, 0) * -0.45s);
+          width: var(--size, 3px); height: var(--size, 3px);
+          background: rgba(255,255,255,0.6); border-radius: 50%;
+          box-shadow: 0 0 10px rgba(255,255,255,0.4);
+          left: calc(var(--i,0) * 4.2% + 1%);
+          top: calc(var(--i,0) * 5.5% + 2%);
+          animation: lp-float-up 12s ease-in-out infinite;
+          animation-delay: calc(var(--i,0) * -0.5s);
           opacity: 0;
         }
         @keyframes lp-float-up {
-          0%   { transform: translateY(0)   scale(1);   opacity: 0;    }
-          20%  { opacity: 0.6; }
-          80%  { opacity: 0.3; }
-          100% { transform: translateY(-60px) scale(0.6); opacity: 0; }
+          0%   { transform: translateY(0) scale(1); opacity: 0; }
+          20%  { opacity: 1; }
+          80%  { opacity: 0.5; }
+          100% { transform: translateY(-100px) scale(0.2); opacity: 0; }
         }
 
         /* Hero content */
+        .lp-hero-content { display: flex; flex-direction: column; }
         .lp-hero-tag {
-          display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(255,248,220,0.16); border: 1px solid rgba(255,226,139,0.45);
-          border-radius: 100px; padding: 5px 14px;
-          font-size: 12px; color: #FFE7A3; letter-spacing: 0.07em;
-          text-transform: uppercase; margin-bottom: 20px; width: fit-content;
-          backdrop-filter: blur(8px);
+          display: inline-flex; align-items: center; gap: 8px;
+          border-radius: 100px; padding: 8px 18px; width: fit-content;
+          font-size: 12px; font-weight: 700; color: #FEF08A; letter-spacing: 0.08em;
+          text-transform: uppercase; margin-bottom: 28px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .lp-hero-tag-dot {
-          width: 6px; height: 6px; border-radius: 50%; background: #4CAF50;
-          box-shadow: 0 0 0 3px rgba(76,175,80,0.25);
+          width: 8px; height: 8px; border-radius: 50%; background: #4ADE80;
+          box-shadow: 0 0 0 4px rgba(74,222,128,0.25);
           animation: lp-pulse 2s ease-in-out infinite;
         }
-        @keyframes lp-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.9)} }
+        @keyframes lp-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
 
         .lp-hero-h1 {
-          font-size: clamp(36px, 5vw, 54px); font-weight: 700; color: #fff;
-          line-height: 1.15; margin: 0 0 20px;
-          letter-spacing: -0.02em;
+          font-size: clamp(42px, 6vw, 72px); font-weight: 900;
+          color: #fff; line-height: 1.05; margin: 0 0 24px;
+          letter-spacing: -0.035em; text-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         .lp-hero-h1-accent {
-          background: linear-gradient(135deg, #FFE082, #FFAB40);
+          background: linear-gradient(135deg, #FDE047, #F59E0B, #EF4444);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .lp-hero-p {
-          font-size: 17px; color: rgba(255,255,255,0.85); line-height: 1.8;
-          margin: 0 0 32px; max-width: 560px; font-weight: 400;
+          font-size: 18px; color: rgba(255,255,255,0.85); line-height: 1.8;
+          margin: 0 0 40px; max-width: 580px; font-weight: 400;
         }
 
         /* Buttons */
-        .lp-hero-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+        .lp-hero-btns { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
         .lp-btn-primary {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 13px 26px; border-radius: 10px; font-size: 15px; font-weight: 600;
-          background: linear-gradient(135deg, #F59E0B, #EF4444); color: #fff;
-          text-decoration: none; box-shadow: 0 12px 28px rgba(239,68,68,0.3);
-          transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+          display: inline-flex; align-items: center; gap: 10px;
+          padding: 16px 32px; border-radius: 14px; font-size: 16px; font-weight: 700;
+          background: linear-gradient(135deg, #F59E0B, #EF4444);
+          color: #fff; text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
           position: relative; overflow: hidden;
         }
-        .lp-btn-primary::after {
-          content: ''; position: absolute; inset: 0;
-          background: rgba(255,255,255,0.12); opacity: 0;
-          transition: opacity 0.2s;
+        .lp-btn-glow {
+          box-shadow: 0 12px 30px -10px rgba(239,68,68,0.6), 0 0 20px rgba(245,158,11,0.2);
         }
-        .lp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(239,68,68,0.35); filter: brightness(1.06); }
-        .lp-btn-primary:hover::after { opacity: 1; }
+        .lp-btn-primary:hover { 
+          transform: translateY(-4px); 
+          box-shadow: 0 20px 40px -10px rgba(239,68,68,0.8), 0 0 30px rgba(245,158,11,0.4); 
+          filter: brightness(1.1); 
+        }
         .lp-btn-primary:active { transform: translateY(0) scale(0.98); }
+        .lp-btn-primary--lg { padding: 18px 40px; font-size: 17px; }
 
         .lp-btn-outline {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 600;
-          background: rgba(255,255,255,0.1); color: #fff;
-          border: 1.5px solid rgba(255,235,167,0.55); text-decoration: none;
-          backdrop-filter: blur(8px);
-          transition: background 0.2s, border-color 0.2s, transform 0.2s;
+          padding: 15px 30px; border-radius: 14px; font-size: 16px; font-weight: 600;
+          color: #fff; border: 1.5px solid rgba(255,255,255,0.3); text-decoration: none;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-        .lp-btn-outline:hover { background: rgba(255,214,102,0.2); border-color: rgba(255,226,139,0.8); transform: translateY(-1px); }
+        .lp-btn-outline:hover { transform: translateY(-4px); }
+
+        .lp-btn-ghost {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 16px 32px; border-radius: 14px; font-size: 16px; font-weight: 600;
+          background: transparent; color: rgba(255,255,255,0.9);
+          border: 1.5px solid rgba(255,255,255,0.2); text-decoration: none;
+          transition: all 0.3s;
+        }
+        .lp-btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); }
 
         /* Stats row */
-        .lp-stats {
-          display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 24px;
+        .lp-stats { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 32px; }
+        .lp-stat { flex: 1; position: relative; }
+        .lp-stat + .lp-stat::before {
+           content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 1px;
+           background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent);
         }
-        .lp-stat { flex: 1; }
-        .lp-stat + .lp-stat { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 20px; }
-        .lp-stat-val   { font-size: 26px; font-weight: 700; color: #FFE082; letter-spacing: -0.01em; }
-        .lp-stat-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 3px; font-weight: 400; }
+        .lp-stat + .lp-stat { padding-left: 24px; }
+        .lp-stat-val   { font-size: 32px; font-weight: 900; color: #FDE047; letter-spacing: -0.02em; }
+        .lp-stat-label { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        /* Weather widget */
-        .lp-weather {
-          align-self: start;
-          animation: lp-float 5s ease-in-out infinite;
+        /* Hero Right Side (Weather & Alerts) */
+        .lp-hero-right {
+          display: flex; flex-direction: column; gap: 24px;
         }
-        @keyframes lp-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        /* Weather Widget */
         .lp-weather-inner {
-          background: rgba(9,68,76,0.45); border: 1px solid rgba(179,229,252,0.35);
-          border-radius: 16px; padding: 20px 22px; color: #fff;
-          box-shadow: 0 24px 60px rgba(10,45,30,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
-          backdrop-filter: blur(16px);
+          border-radius: 20px; padding: 28px;
         }
         .lp-weather-location {
-          display: flex; align-items: center; gap: 6px;
-          font-size: 11px; color: #B3E5FC; font-weight: 600;
-          text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;
+          display: flex; align-items: center; gap: 8px;
+          font-size: 12px; color: #BAE6FD; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;
         }
-        .lp-weather-main { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-        .lp-weather-icon { font-size: 44px; display: block; }
-        .lp-weather-temp { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
-        .lp-weather-desc { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 4px; text-transform: capitalize; }
-        .lp-weather-meta { display: flex; gap: 12px; font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 6px; }
+        .lp-weather-main { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; }
+        .lp-weather-icon { font-size: 56px; display: block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+        .lp-weather-temp { font-size: 52px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+        .lp-weather-desc { font-size: 15px; color: rgba(255,255,255,0.8); margin-top: 6px; text-transform: capitalize; font-weight: 500;}
+        .lp-weather-meta { display: flex; gap: 16px; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 10px; font-weight: 500;}
         .lp-weather-link {
-          display: flex; align-items: center; justify-content: flex-end; gap: 5px;
-          font-size: 12px; color: #FFE082; text-decoration: none; margin-top: 12px;
-          font-weight: 500; transition: gap 0.2s;
+          display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+          font-size: 13px; color: #FDE047; text-decoration: none; margin-top: 16px;
+          font-weight: 700;
         }
-        .lp-weather-link:hover { gap: 8px; text-decoration: underline; }
-        .lp-weather-unavail { text-align: center; padding: 20px 0; color: rgba(255,255,255,0.5); font-size: 13px; }
+        
+        .lp-hero-alert {
+           border-radius: 16px; padding: 18px 20px;
+           display: flex; align-items: center; gap: 16px;
+           background: rgba(2, 44, 34, 0.5); /* Dark green glass */
+           box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .lp-alert-icon { font-size: 28px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
+        .lp-alert-title { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .lp-alert-sub { font-size: 13px; color: #A7F3D0; font-weight: 500; }
 
-        /* Weather skeleton */
-        .lp-weather-skeleton { display: flex; align-items: center; gap: 14px; padding: 8px 0; }
-        .lp-skel {
-          border-radius: 6px; background: rgba(255,255,255,0.12);
-          animation: lp-shimmer 1.6s ease-in-out infinite;
-        }
-        @keyframes lp-shimmer {
-          0%,100% { opacity: 0.5; } 50% { opacity: 1; }
-        }
-        .lp-skel--circle  { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; }
-        .lp-skel--circle-sm { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
-        .lp-skel-lines    { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-        .lp-skel--wide    { height: 20px; width: 100%; }
-        .lp-skel--narrow  { height: 14px; width: 65%; }
-        .lp-skel--text    { height: 14px; width: 80%; }
-        .lp-skel--short   { width: 50% !important; }
-        .lp-skel--price   { width: 60% !important; }
-
-        /* ── Sections layout ──────────────────────────────────────── */
+        /* ── Section Wrapper ─────────────────────────────────────────── */
         .lp-section {
-          width: 100%; padding: 28px clamp(24px, 6vw, 96px); box-sizing: border-box;
+          width: 100%; padding: 80px clamp(20px, 6vw, 100px); box-sizing: border-box;
         }
-        .lp-section--quicklinks { padding-top: 20px; }
-        .lp-section--how        { background: rgba(255,255,255,0.5); }
-        .lp-section--stats-wrap { padding-top: 40px; padding-bottom: 40px; }
-        .lp-section--cta        { padding-top: 12px; }
+        .lp-section--quicklinks { padding-top: 32px; padding-bottom: 32px; background: transparent; margin-top: -40px; position: relative; z-index: 10; }
+        .lp-section--how { background: #fff; position: relative; overflow: hidden; }
+        .lp-section--dual-cta { background: #F8FAFC; }
+        .lp-section--final-cta { background: #F8FAFC; padding-bottom: 100px; }
 
-        /* ── Quick Links Grid ─────────────────────────────────────── */
+        /* ── Quick Links Grid ────────────────────────────────────────── */
         .lp-quick-grid {
-          display: grid; grid-template-columns: repeat(6,1fr); gap: 10px;
-          background: rgba(255,255,255,0.78); border: 1px solid #D8E8C8;
-          border-radius: 16px; padding: 18px;
-          box-shadow: 0 20px 48px rgba(45,92,30,0.07);
+          display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;
         }
         .lp-quick-card {
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-          min-height: 130px; padding: 20px 10px; border-radius: 10px;
-          text-decoration: none; border: 1.5px solid var(--card-border, #E0EAD8);
-          background: var(--card-bg, #F8FBF6);
-          transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
-          position: relative; overflow: hidden;
-        }
-        .lp-quick-card::before {
-          content: ''; position: absolute; inset: 0;
-          background: radial-gradient(circle at center, var(--card-accent, #16A34A) 0%, transparent 70%);
-          opacity: 0; transition: opacity 0.3s;
+          display: flex; flex-direction: column; align-items: center;
+          justify-content: center; gap: 10px;
+          min-height: 160px; padding: 24px 16px;
+          text-decoration: none;
+          background: #ffffff;
+          border: 1px solid #E2E8F0;
+          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
         }
         .lp-quick-card:hover {
-          transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 16px 36px rgba(0,0,0,0.1);
-          border-color: var(--card-accent, #F59E0B);
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+          border-color: transparent; /* Spotlight border takes over */
         }
-        .lp-quick-card:hover::before { opacity: 0.06; }
-        .lp-quick-icon  { font-size: 24px; position: relative; }
-        .lp-quick-label { font-size: 13px; font-weight: 600; color: #0A2E0C; position: relative; }
-        .lp-quick-sub   { font-size: 11px; color: #7A8F76; text-align: center; position: relative; }
-        .lp-quick-arrow {
-          font-size: 12px; color: var(--card-accent, #16A34A);
-          opacity: 0; transform: translateX(-4px);
-          transition: opacity 0.2s, transform 0.2s;
+        .lp-spotlight-border {
+           position: absolute; inset: 0; border-radius: 16px; padding: 2px;
+           background: var(--card-grad, #16A34A);
+           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+           -webkit-mask-composite: xor; mask-composite: exclude;
+           opacity: 0; transition: opacity 0.3s;
         }
-        .lp-quick-card:hover .lp-quick-arrow { opacity: 1; transform: translateX(0); }
+        .lp-quick-card:hover .lp-spotlight-border { opacity: 1; }
+        
+        .lp-spotlight-content {
+           display: flex; flex-direction: column; align-items: center; justify-content: center;
+           position: relative; z-index: 2; height: 100%; width: 100%;
+        }
 
-        /* ── Platform Stats ───────────────────────────────────────── */
-        .lp-platform-stats {
-          background: linear-gradient(135deg, #0A2E0C, #1B5E20);
-          border-radius: 20px; padding: 48px 40px;
-          box-shadow: 0 32px 80px rgba(10,46,12,0.22);
-          position: relative; overflow: hidden;
+        .lp-quick-tag {
+          position: absolute; top: -10px; right: -10px; /* adjusted relative to content */
+          font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
+          text-transform: uppercase; padding: 4px 8px; border-radius: 100px;
+          background: var(--card-color, #16A34A); color: #fff;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
-        .lp-platform-stats::before {
-          content: ''; position: absolute; inset: 0;
-          background: repeating-linear-gradient(
-            45deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 40px
-          );
-        }
-        .lp-stats-grid {
-          display: grid; grid-template-columns: repeat(4,1fr); gap: 24px;
-          position: relative;
-        }
-        .lp-pstat {
-          text-align: center; padding: 24px 16px;
-          border-radius: 12px; background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          transition: background 0.2s, transform 0.2s;
-        }
-        .lp-pstat:hover { background: rgba(255,255,255,0.10); transform: translateY(-3px); }
-        .lp-pstat-icon  { font-size: 32px; margin-bottom: 12px; display: block; }
-        .lp-pstat-value { font-size: 38px; font-weight: 700; color: #FFE082; letter-spacing: -0.02em; line-height: 1; }
-        .lp-pstat-label { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 8px; font-weight: 400; }
+        .lp-quick-icon  { font-size: 32px; margin-bottom: 4px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .lp-quick-label { font-size: 14px; font-weight: 800; color: #0F172A; text-align: center; }
+        .lp-quick-sub   { font-size: 11px; color: #64748B; text-align: center; line-height: 1.4; display: none; margin-top: 4px; }
+        .lp-quick-card:hover .lp-quick-sub { display: block; animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from {opacity: 0; transform: translateY(4px);} to {opacity: 1; transform: translateY(0);} }
 
-        /* ── How It Works ─────────────────────────────────────────── */
-        .lp-section--how { padding-top: 52px; padding-bottom: 52px; }
-        .lp-how-header { text-align: center; margin-bottom: 44px; }
+        /* ── Split Sections ──────────────────────────────────────────── */
+        .lp-split-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(40px, 8vw, 100px);
+          align-items: center;
+        }
+        .lp-split-section--news       { background: #ffffff; }
+        .lp-split-section--schemes    { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; }
+        .lp-split-section--mandi      { background: #ffffff; }
+        .lp-split-section--ai         { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;}
+        .lp-split-section--marketplace { background: #ffffff; }
+        .lp-split-section--reverse    { direction: rtl; }
+        .lp-split-section--reverse > * { direction: ltr; }
+
+        /* Section labels & headings */
         .lp-section-eyebrow {
-          display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
-          text-transform: uppercase; color: #16A34A;
-          background: #DCFCE7; border: 1px solid #BBF7D0;
-          border-radius: 100px; padding: 4px 14px; margin-bottom: 12px;
+          display: inline-block; font-size: 13px; font-weight: 800;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          border-radius: 100px; padding: 6px 16px; margin-bottom: 16px;
         }
-        .lp-section-h2  { font-size: clamp(24px, 3.5vw, 34px); font-weight: 700; color: #0A2E0C; margin-bottom: 10px; letter-spacing: -0.02em; }
-        .lp-section-sub { font-size: 16px; color: #6B7280; font-weight: 400; }
+        .lp-section-eyebrow--green  { color: #15803D; background: #DCFCE7; border: 1px solid #BBF7D0; }
+        .lp-section-eyebrow--red    { color: #B91C1C; background: #FEE2E2; border: 1px solid #FCA5A5; }
+        .lp-section-eyebrow--purple { color: #6D28D9; background: #EDE9FE; border: 1px solid #C4B5FD; }
+        .lp-section-eyebrow--amber  { color: #B45309; background: #FEF3C7; border: 1px solid #FCD34D; }
+        .lp-section-eyebrow--indigo { color: #4338CA; background: #E0E7FF; border: 1px solid #A5B4FC; }
+        .lp-section-eyebrow--blue   { color: #0369A1; background: #E0F2FE; border: 1px solid #7DD3FC; }
+        .lp-eyebrow-glow { box-shadow: 0 0 20px rgba(22, 163, 74, 0.4); }
 
-        .lp-how-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; position: relative; }
-        .lp-how-card {
-          background: rgba(255,255,255,0.85); border: 1px solid #E0EAD8;
-          border-radius: 16px; padding: 32px 28px; position: relative;
-          box-shadow: 0 4px 24px rgba(50,84,35,0.06);
-          transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+        .lp-section-h2 {
+          font-size: clamp(32px, 4.5vw, 48px); font-weight: 900;
+          color: #0F172A; margin: 0 0 18px; line-height: 1.1; letter-spacing: -0.03em;
         }
-        .lp-how-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 48px rgba(50,84,35,0.12);
-          border-color: #A7F3D0;
-        }
-        .lp-how-step {
-          font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-          color: #16A34A; text-transform: uppercase; margin-bottom: 16px;
-        }
-        .lp-how-icon  { font-size: 40px; display: block; margin-bottom: 16px; }
-        .lp-how-title { font-size: 18px; font-weight: 700; color: #0A2E0C; margin-bottom: 10px; letter-spacing: -0.01em; }
-        .lp-how-desc  { font-size: 14px; color: #6B7280; line-height: 1.7; }
-        .lp-how-connector {
-          position: absolute; right: -18px; top: 50%;
-          transform: translateY(-50%); font-size: 22px; color: #D1FAE5; z-index: 2;
-        }
+        .lp-section-h2--white { color: #fff; }
+        .lp-h2-accent-red    { color: #DC2626; }
+        .lp-h2-accent-purple { color: #7C3AED; }
+        .lp-h2-accent-amber  { color: #D97706; }
+        .lp-h2-accent-indigo { color: #4F46E5; }
+        .lp-h2-accent-blue   { color: #0284C7; }
 
-        /* ── 3-col data row ───────────────────────────────────────── */
-        .lp-three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+        .lp-section-desc {
+          font-size: 18px; color: #475569; line-height: 1.8;
+          margin: 0 0 32px; max-width: 540px; font-weight: 400;
+        }
+        .lp-section-sub { font-size: 18px; color: #94A3B8; font-weight: 500; }
 
-        .lp-card {
-          background: rgba(255,255,255,0.92); border: 1px solid #DCE6CF;
-          border-radius: 14px; overflow: hidden;
-          box-shadow: 0 4px 24px rgba(50,84,35,0.07);
-          transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+        /* Split CTA buttons */
+        .lp-split-cta {
+          display: inline-flex; align-items: center; gap: 10px;
+          padding: 15px 30px; border-radius: 14px; font-size: 16px; font-weight: 700;
+          text-decoration: none; width: fit-content; margin-top: 10px;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .lp-card:hover {
-          box-shadow: 0 16px 48px rgba(50,84,35,0.12);
-          transform: translateY(-2px); border-color: #BDE8A0;
-        }
-        .lp-card-head {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 16px; border-bottom: 1px solid #E0EAD8;
-          background: linear-gradient(90deg, rgba(224,242,254,0.7), rgba(255,247,214,0.6));
-        }
-        .lp-card-title {
-          display: flex; align-items: center; gap: 7px;
-          font-size: 13px; font-weight: 700; color: #0A2E0C;
-          text-transform: uppercase; letter-spacing: 0.06em;
-        }
-        .lp-card-link {
-          font-size: 12px; color: #1B5E20; text-decoration: none; font-weight: 500;
-          transition: color 0.15s;
-        }
-        .lp-card-link:hover { color: #059669; text-decoration: underline; }
+        .lp-split-cta:hover { transform: translateY(-4px); }
+        .lp-split-cta--red    { background: #DC2626; color: #fff; box-shadow: 0 10px 24px -6px rgba(220,38,38,0.5); }
+        .lp-split-cta--red:hover { box-shadow: 0 16px 32px -8px rgba(220,38,38,0.6); }
+        .lp-split-cta--purple { background: #7C3AED; color: #fff; box-shadow: 0 10px 24px -6px rgba(124,58,237,0.5); }
+        .lp-split-cta--purple:hover { box-shadow: 0 16px 32px -8px rgba(124,58,237,0.6); }
+        .lp-split-cta--amber  { background: #D97706; color: #fff; box-shadow: 0 10px 24px -6px rgba(217,119,6,0.5); }
+        .lp-split-cta--amber:hover { box-shadow: 0 16px 32px -8px rgba(217,119,6,0.6); }
+        .lp-split-cta--indigo { background: #4F46E5; color: #fff; box-shadow: 0 10px 24px -6px rgba(79,70,229,0.5); }
+        .lp-split-cta--indigo:hover { box-shadow: 0 16px 32px -8px rgba(79,70,229,0.6); }
+        .lp-split-cta--blue   { background: #0284C7; color: #fff; box-shadow: 0 10px 24px -6px rgba(2,132,199,0.5); }
+        .lp-split-cta--blue:hover { box-shadow: 0 16px 32px -8px rgba(2,132,199,0.6); }
 
-        /* Live badge */
-        .lp-live-row {
-          display: flex; align-items: center; gap: 8px;
-          padding: 7px 16px; border-bottom: 1px solid #F0F5EE;
-          background: #F7FEE7;
+        .lp-split-cta-outline {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 14px 28px; border-radius: 14px; font-size: 16px; font-weight: 700;
+          text-decoration: none; background: transparent;
+          border: 2px solid #C7D2FE; color: #4338CA;
+          transition: all 0.3s;
         }
-        .lp-live-badge {
-          display: flex; align-items: center; gap: 5px;
-          background: #DCFCE7; border: 1px solid #86EFAC;
-          border-radius: 100px; padding: 2px 8px;
-        }
-        .lp-dot { width: 6px; height: 6px; background: #22C55E; border-radius: 50%; display: block; }
-        .lp-live-text { font-size: 10px; font-weight: 700; color: #15803D; letter-spacing: 0.08em; }
-        .lp-live-updated { font-size: 12px; color: #6B7280; }
+        .lp-split-cta-outline:hover { background: #EEF2FF; border-color: #818CF8; transform: translateY(-2px); }
 
-        /* Table */
-        .lp-table { width: 100%; border-collapse: collapse; }
-        .lp-table th {
-          font-size: 11px; font-weight: 600; color: #9AAF94; letter-spacing: 0.05em;
-          text-align: left; padding: 8px 16px; text-transform: uppercase;
-          background: #F8FBF6; border-bottom: 1px solid #E0EAD8;
-        }
-        .lp-table td { padding: 10px 16px; border-bottom: 1px solid #F4F7F2; }
-        .lp-table tr:last-child td { border-bottom: none; }
-        .lp-table-row { transition: background 0.15s; cursor: default; }
-        .lp-table-row:hover { background: #F7FEF4; }
-        .lp-td-bold  { font-size: 14px; font-weight: 600; color: #0A2E0C; }
-        .lp-td-muted { font-size: 13px; color: #7A8F76; }
-        .lp-td-sm    { font-size: 12px; }
-        .lp-td-green { color: #15803D; font-weight: 700; }
-        .lp-empty-cell { padding: 18px 16px; font-size: 13px; color: #7A8F76; }
+        /* Photo side */
+        .lp-split-photo-side { display: flex; flex-direction: column; gap: 20px; position: relative; }
 
-        /* Table skeleton */
-        .lp-table-skeleton { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-        .lp-table-skel-row { display: flex; gap: 12px; align-items: center; }
-
-        /* News */
-        .lp-news-list { display: flex; flex-direction: column; }
-        .lp-news-item {
-          padding: 12px 16px; border-bottom: 1px solid #F4F7F2;
-          text-decoration: none; display: flex; flex-direction: column; gap: 5px;
-          transition: background 0.15s;
+        .lp-split-photo-wrap {
+          border-radius: 24px; overflow: hidden; position: relative;
+          box-shadow: 0 30px 60px -15px rgba(0,0,0,0.15);
+          aspect-ratio: 4/3;
         }
-        .lp-news-item:last-child { border-bottom: none; }
-        .lp-news-item:hover { background: #F8FBF6; }
-        .lp-news-cat   { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 100px; font-size: 11px; font-weight: 600; align-self: flex-start; }
-        .lp-news-title { font-size: 14px; font-weight: 600; color: #0A2E0C; line-height: 1.45; }
-        .lp-news-date  { font-size: 12px; color: #9AAF94; }
-
-        /* Schemes */
-        .lp-scheme-list { display: flex; flex-direction: column; }
-        .lp-scheme-item {
-          display: flex; align-items: center; gap: 12px;
-          padding: 12px 16px; border-bottom: 1px solid #F4F7F2;
-          text-decoration: none; transition: background 0.15s;
-        }
-        .lp-scheme-item:last-child { border-bottom: none; }
-        .lp-scheme-item:hover { background: #F8FBF6; }
-        .lp-scheme-icon   { font-size: 22px; flex-shrink: 0; }
-        .lp-scheme-body   { flex: 1; min-width: 0; }
-        .lp-scheme-name   { font-size: 13px; font-weight: 600; color: #0A2E0C; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .lp-scheme-benefit { font-size: 12px; color: #7A8F76; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .lp-scheme-arrow  { color: #C5D9C0; flex-shrink: 0; }
-
-        /* Schemes skeleton */
-        .lp-schemes-skeleton { padding: 12px 16px; display: flex; flex-direction: column; gap: 14px; }
-        .lp-scheme-skel-row { display: flex; gap: 12px; align-items: center; }
-
-        /* Empty states */
-        .lp-empty-state { padding: 20px 16px; font-size: 13px; color: #7A8F76; }
-
-        /* ── CTA Banners ──────────────────────────────────────────── */
-        .lp-cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .lp-cta {
-          display: flex; align-items: center; justify-content: space-between;
-          gap: 20px; padding: 28px 32px; border-radius: 16px;
-          position: relative; overflow: hidden;
-        }
-        .lp-cta--green {
-          background: linear-gradient(135deg, #065F46, #0EA5E9, #16A34A);
-          background-size: 200% 200%; animation: lp-gradient-shift 6s ease infinite;
-        }
-        @keyframes lp-gradient-shift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .lp-cta-bg-orb {
-          position: absolute; width: 200px; height: 200px; border-radius: 50%;
-          background: rgba(255,255,255,0.07); right: 100px; top: -60px;
+        .lp-split-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .lp-split-photo-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%);
           pointer-events: none;
         }
-        .lp-cta--light { background: linear-gradient(135deg, #FFF7D6, #FFE4E6); border: 1px solid #FED7AA; }
-        .lp-cta-content { display: flex; align-items: center; gap: 16px; flex: 1; position: relative; }
-        .lp-cta-emoji   { font-size: 36px; flex-shrink: 0; }
-        .lp-cta-title   { font-size: 17px; font-weight: 700; margin-bottom: 5px; letter-spacing: -0.01em; }
-        .lp-cta--green .lp-cta-title { color: #fff; }
-        .lp-cta--light .lp-cta-title { color: #0A2E0C; }
-        .lp-cta-sub { font-size: 13px; line-height: 1.6; }
-        .lp-cta--green .lp-cta-sub { color: rgba(255,255,255,0.72); }
-        .lp-cta--light .lp-cta-sub { color: #7A8F76; }
+        
+        /* Floating Elements on Photos */
+        .lp-floating-badge {
+          position: absolute; z-index: 2;
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.95); border-radius: 100px;
+          padding: 8px 18px; font-size: 13px; font-weight: 800; color: #0F172A;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+          backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5);
+        }
+        .lp-floating-badge--tl { top: 20px; left: 20px; }
+        .lp-floating-badge--tr { top: 20px; right: 20px; }
+        
+        .lp-floating-glass-pill {
+           position: absolute; z-index: 2;
+           background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+           padding: 12px 20px; border-radius: 100px;
+           font-size: 14px; font-weight: 700; color: #1E293B;
+           box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.6);
+        }
+        .lp-floating-glass-pill--br { bottom: 30px; right: 30px; }
+        .lp-floating-glass-pill--bl { bottom: 30px; left: 30px; }
+        
+        .lp-floating-glass-card {
+           position: absolute; z-index: 2;
+           background: rgba(255,255,255,0.9); backdrop-filter: blur(16px);
+           padding: 16px 20px; border-radius: 16px;
+           box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.6);
+        }
+        .lp-floating-glass-card--br { bottom: 20px; right: 20px; }
 
-        .lp-cta-btn {
-          display: inline-flex; align-items: center; gap: 7px;
-          white-space: nowrap; padding: 11px 22px; border-radius: 10px;
-          font-size: 14px; font-weight: 600; text-decoration: none; flex-shrink: 0;
-          transition: transform 0.2s, box-shadow 0.2s, gap 0.2s;
-          position: relative;
+        .lp-badge-dot {
+          width: 8px; height: 8px; border-radius: 50%; display: block; flex-shrink: 0;
+          animation: lp-pulse 1.5s ease-in-out infinite;
         }
-        .lp-cta-btn:hover { transform: translateY(-1px); gap: 10px; }
-        .lp-cta-btn--dark {
-          background: #F59E0B; color: #fff;
-          box-shadow: 0 8px 20px rgba(245,158,11,0.32);
+        .lp-badge-dot--red   { background: #DC2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.25); }
+        .lp-badge-dot--green { background: #16A34A; box-shadow: 0 0 0 3px rgba(22,163,74,0.25); }
+        .lp-badge-dot--blue  { background: #0284C7; box-shadow: 0 0 0 3px rgba(2,132,199,0.25); }
+
+        /* Stat row under photo */
+        .lp-split-stat-row {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
         }
-        .lp-cta-btn--dark:hover { background: #D97706; box-shadow: 0 14px 28px rgba(245,158,11,0.4); }
-        .lp-cta-btn--outline {
-          background: #fff; color: #B45309; border: 1.5px solid #FED7AA;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        .lp-split-stat {
+          border-radius: 16px; padding: 18px 16px; text-align: center;
+          cursor: default;
         }
-        .lp-cta-btn--outline:hover { background: #FFFBEB; box-shadow: 0 10px 24px rgba(0,0,0,0.1); }
+        .lp-split-stat--red    { background: #FEF2F2; border: 1px solid #FECACA; }
+        .lp-split-stat--purple { background: #F5F3FF; border: 1px solid #DDD6FE; }
+        .lp-split-stat--amber  { background: #FFFBEB; border: 1px solid #FDE68A; }
+        .lp-split-stat--indigo { background: #EEF2FF; border: 1px solid #C7D2FE; }
+        .lp-split-stat--blue   { background: #F0F9FF; border: 1px solid #BAE6FD; }
+        .lp-split-stat-val {
+          font-size: 26px; font-weight: 900; letter-spacing: -0.02em; color: #0F172A; line-height: 1.1;
+        }
+        .lp-split-stat-label { font-size: 12px; color: #64748B; margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;}
+
+        /* ── Carousel Box ──────────────────────────────────────────── */
+        .lp-carousel-box {
+          border-radius: 20px; overflow: hidden; margin-bottom: 24px;
+          position: relative; min-height: 200px;
+          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+        }
+        .lp-carousel-box--news    { background: linear-gradient(135deg, #ffffff, #FEF2F2); border: 1.5px solid #FECACA; }
+        .lp-carousel-box--schemes { background: linear-gradient(135deg, #ffffff, #F5F3FF); border: 1.5px solid #DDD6FE; }
+
+        .lp-carousel-empty { padding: 32px; display: flex; flex-direction: column; gap: 16px; }
+        .lp-carousel-skeleton { height: 20px; border-radius: 10px; background: rgba(0,0,0,0.06); animation: lp-shimmer 1.5s infinite; }
+        .lp-carousel-skeleton--sm { width: 75%; }
+        .lp-carousel-skeleton--xs { width: 50%; height: 16px; }
+
+        /* News slide */
+        .lp-news-slide { padding: 28px 32px; }
+        .lp-news-slide-cat {
+          display: inline-flex; padding: 4px 12px; border-radius: 100px;
+          font-size: 12px; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .lp-news-slide-title {
+          font-size: 20px; font-weight: 800; color: #0F172A; line-height: 1.3;
+          margin-bottom: 12px; letter-spacing: -0.01em;
+        }
+        .lp-news-slide-excerpt {
+          font-size: 15px; color: #475569; line-height: 1.7; margin-bottom: 18px;
+        }
+        .lp-news-slide-meta { display: flex; align-items: center; justify-content: space-between; }
+        .lp-news-slide-date { font-size: 13px; font-weight: 600; color: #94A3B8; }
+        .lp-news-slide-read {
+          font-size: 14px; font-weight: 800; color: #DC2626; text-decoration: none;
+          display: flex; align-items: center; gap: 6px;
+        }
+
+        /* Scheme slide */
+        .lp-scheme-slide { padding: 28px 32px; }
+        .lp-scheme-slide-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .lp-scheme-slide-icon { font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));}
+        .lp-scheme-slide-cat {
+          font-size: 12px; font-weight: 800; text-transform: uppercase;
+          letter-spacing: 0.08em; color: #7C3AED;
+          background: #F5F3FF; border: 1px solid #DDD6FE;
+          padding: 4px 12px; border-radius: 100px;
+        }
+        .lp-scheme-slide-title {
+          font-size: 20px; font-weight: 900; color: #0F172A; margin-bottom: 12px; letter-spacing: -0.01em;
+        }
+        .lp-scheme-slide-desc {
+          font-size: 15px; color: #475569; line-height: 1.7; margin-bottom: 16px;
+        }
+        .lp-scheme-slide-benefit {
+          display: flex; gap: 8px; align-items: flex-start;
+          font-size: 14px; color: #15803D; font-weight: 700;
+          background: #F0FDF4; border: 1px solid #BBF7D0;
+          padding: 12px 16px; border-radius: 12px;
+        }
+        .lp-scheme-benefit-label { color: #15803D; flex-shrink: 0; }
+
+        /* Carousel dots */
+        .lp-carousel-dots {
+          display: flex; gap: 8px; padding: 0 32px 24px;
+          justify-content: flex-start;
+        }
+        .lp-dot-btn {
+          width: 10px; height: 10px; border-radius: 50%;
+          background: rgba(0,0,0,0.1); border: none; cursor: pointer; padding: 0;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+          position: relative; overflow: hidden;
+        }
+        .lp-dot-btn:hover { transform: scale(1.2); }
+        .lp-dot-btn--active { width: 32px; border-radius: 5px; background: rgba(0,0,0,0.05); }
+        .lp-dot-progress { position: absolute; left: 0; top: 0; height: 100%; }
+
+        /* ── Mandi Section Specifics ───────────────────────────────── */
+        .lp-mandi-live-row {
+          display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+        }
+        .lp-live-dot {
+          width: 10px; height: 10px; background: #22C55E;
+          border-radius: 50%; display: block;
+          box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
+        }
+        .lp-live-text {
+          font-size: 13px; font-weight: 900; color: #15803D;
+          letter-spacing: 0.15em; text-transform: uppercase;
+        }
+
+        .lp-mandi-graph-box {
+          background: #ffffff; border: 1.5px solid #FDE68A;
+          border-radius: 20px; padding: 24px 28px; margin-bottom: 24px;
+          box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.1);
+        }
+        .lp-mandi-graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .lp-mandi-graph-label {
+          font-size: 13px; font-weight: 800; color: #B45309;
+          text-transform: uppercase; letter-spacing: 0.08em; 
+        }
+        .lp-mandi-graph-trend { font-size: 13px; font-weight: 700; background: #F0FDF4; color: #16A34A; padding: 4px 10px; border-radius: 100px; }
+        
+        .lp-mandi-graph-axis {
+          display: flex; justify-content: space-between;
+          font-size: 12px; font-weight: 600; color: #94A3B8; margin-top: 10px; padding: 0 8px;
+        }
+
+        .lp-mandi-rate-chips { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+        .lp-rate-chip {
+          display: flex; align-items: center; gap: 10px;
+          background: #ffffff; border: 1.5px solid #FDE68A;
+          border-radius: 12px; padding: 10px 18px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+          cursor: pointer;
+        }
+        .lp-rate-chip-name  { font-size: 14px; font-weight: 800; color: #0F172A; }
+        .lp-rate-chip-price { font-size: 15px; font-weight: 900; color: #D97706; }
+        .lp-rate-chip-skel  { width: 130px; height: 50px; border-radius: 12px; background: #FEF3C7; animation: lp-shimmer 1.5s ease-in-out infinite; }
+
+        /* ── Features Grid Section ─────────────────────────────────── */
+        .lp-features-section {
+          position: relative; overflow: hidden;
+          background: #022c22; /* Very dark green */
+          padding: 100px clamp(20px, 6vw, 100px);
+        }
+        .lp-features-bg {
+          position: absolute; inset: -20%; pointer-events: none;
+        }
+        .lp-features-bg-img {
+          width: 100%; height: 100%;
+          background:
+            radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 60%),
+            radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 60%),
+            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .lp-features-decor { position: absolute; filter: blur(80px); opacity: 0.3; border-radius: 50%; pointer-events: none; }
+        .lp-features-decor--1 { width: 500px; height: 500px; background: #10B981; top: -100px; left: -100px; }
+        .lp-features-decor--2 { width: 400px; height: 400px; background: #38BDF8; bottom: 100px; right: -50px; }
+
+        .lp-features-content { position: relative; z-index: 1; }
+        .lp-features-header { text-align: center; margin-bottom: 64px; }
+        .lp-features-sub {
+          font-size: 19px; color: rgba(255,255,255,0.7); margin-top: 16px; font-weight: 500;
+        }
+
+        .lp-features-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+        }
+
+        .lp-feat-card {
+          display: flex; flex-direction: column;
+          text-decoration: none; border-radius: 20px; overflow: hidden;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+          transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s;
+        }
+        .lp-feat-card-inner {
+           position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column;
+           background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+        }
+        .lp-feat-card:hover {
+          transform: translateY(-10px) scale(1.02);
+          box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+          border-color: transparent;
+        }
+
+        .lp-feat-card-img-wrap {
+          position: relative; height: 180px; overflow: hidden;
+        }
+        .lp-feat-card-img {
+          width: 100%; height: 100%; object-fit: cover;
+          transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .lp-feat-card:hover .lp-feat-card-img { transform: scale(1.1); }
+        .lp-feat-card-img-overlay {
+          position: absolute; inset: 0; opacity: 0.75;
+          transition: opacity 0.4s;
+        }
+        .lp-feat-card:hover .lp-feat-card-img-overlay { opacity: 0.5; }
+        .lp-feat-card-tag-top {
+          position: absolute; top: 16px; left: 16px;
+          background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+          color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.15em;
+          text-transform: uppercase; padding: 6px 12px; border-radius: 100px;
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lp-feat-card-body { padding: 24px 20px; flex: 1; display: flex; flex-direction: column;}
+        .lp-feat-card-icon-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .lp-feat-card-icon  { font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));}
+        .lp-feat-card-label { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+        .lp-feat-card-sub   { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 20px; flex: 1;}
+        .lp-feat-card-arrow {
+          font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px;
+          transition: gap 0.2s;
+        }
+
+        /* ── AI Section Specifics ─────────────────────────────────── */
+        .lp-ai-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+        .lp-ai-chip {
+          font-size: 14px; font-weight: 700; color: #4338CA;
+          background: #ffffff; border: 1.5px solid #C7D2FE;
+          border-radius: 100px; padding: 10px 18px;
+          box-shadow: 0 4px 10px rgba(67, 56, 202, 0.05);
+          cursor: pointer;
+        }
+
+        /* ── Marketplace Section Specifics ────────────────────────── */
+        .lp-marketplace-features { display: flex; flex-direction: column; gap: 20px; margin-bottom: 32px; }
+        .lp-mp-feat { display: flex; align-items: center; gap: 18px; }
+        .lp-mp-feat-icon { font-size: 24px; flex-shrink: 0; width: 50px; height: 50px; background: #E0F2FE; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2,132,199,0.1); }
+        .lp-mp-feat-title { font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 2px;}
+        .lp-mp-feat-sub   { font-size: 14px; color: #64748B; }
+
+        /* ── How It Works ─────────────────────────────────────────── */
+        .lp-how-header { text-align: center; margin-bottom: 60px; }
+        .lp-how-line-container { position: absolute; top: 110px; left: 15%; width: 70%; z-index: -1; }
+        
+        .lp-how-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 32px; }
+        .lp-how-card {
+          background: #ffffff; border: 1px solid #E2E8F0;
+          border-radius: 24px; text-align: center;
+          box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+        }
+        .lp-how-card-inner { padding: 40px 32px; position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; align-items: center;}
+        
+        .lp-how-step-badge {
+           background: #DCFCE7; color: #16A34A; font-weight: 900; font-size: 12px;
+           padding: 6px 16px; border-radius: 100px; letter-spacing: 0.1em;
+           margin-bottom: 24px; border: 1px solid #BBF7D0;
+        }
+        .lp-how-icon { font-size: 52px; display: block; margin-bottom: 24px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+        .lp-how-title { font-size: 22px; font-weight: 900; color: #0F172A; margin-bottom: 14px; letter-spacing: -0.02em; }
+        .lp-how-desc  { font-size: 15px; color: #475569; line-height: 1.7; }
+
+        /* ── Dual CTA Grid ─────────────────────────────────────────── */
+        .lp-dual-cta-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+        }
+        .lp-dual-cta-card {
+          position: relative; border-radius: 24px; overflow: hidden;
+          min-height: 320px; display: flex; flex-direction: column; justify-content: flex-end;
+          text-decoration: none;
+          box-shadow: 0 15px 40px -10px rgba(0,0,0,0.15);
+        }
+        .lp-dual-cta-bg-img {
+          position: absolute; inset: 0; width: 100%; height: 100%;
+          object-fit: cover; transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .lp-dual-cta-card:hover .lp-dual-cta-bg-img { transform: scale(1.08); }
+        .lp-dual-cta-overlay {
+          position: absolute; inset: 0; transition: opacity 0.3s;
+        }
+        .lp-dual-cta-overlay--blue   { background: linear-gradient(to top, rgba(2,100,200,0.95) 0%, rgba(2,100,200,0.5) 60%, transparent 100%); }
+        .lp-dual-cta-overlay--orange { background: linear-gradient(to top, rgba(180,83,9,0.95) 0%, rgba(180,83,9,0.5) 60%, transparent 100%); }
+        .lp-dual-cta-overlay--teal   { background: linear-gradient(to top, rgba(8,145,178,0.95) 0%, rgba(8,145,178,0.5) 60%, transparent 100%); }
+        .lp-dual-cta-overlay--rose   { background: linear-gradient(to top, rgba(159,18,57,0.95) 0%, rgba(159,18,57,0.5) 60%, transparent 100%); }
+        
+        .lp-dual-cta-card:hover .lp-dual-cta-overlay { opacity: 0.9; }
+        
+        .lp-dual-cta-content {
+          position: relative; z-index: 1; padding: 40px 32px; color: #fff;
+          display: flex; gap: 24px; align-items: flex-end;
+        }
+        .lp-dual-cta-icon-wrap {
+           font-size: 44px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+           width: 72px; height: 72px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
+           flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3);
+           box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .lp-dual-cta-text { flex: 1; }
+        
+        .lp-dual-cta-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); margin-bottom: 8px; }
+        .lp-dual-cta-title   { font-size: 26px; font-weight: 900; margin-bottom: 12px; letter-spacing: -0.02em; }
+        .lp-dual-cta-sub     { font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 20px; font-weight: 400;}
+        .lp-dual-cta-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: #ffffff; color: #0F172A;
+          font-size: 14px; font-weight: 800;
+          padding: 12px 24px; border-radius: 12px;
+          transition: all 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .lp-dual-cta-card:hover .lp-dual-cta-btn { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+
+        /* ── Final CTA ────────────────────────────────────────────── */
+        .lp-final-cta {
+          background: linear-gradient(135deg, #022c22 0%, #065f46 50%, #047857 100%);
+          border-radius: 32px; padding: 80px 60px;
+          position: relative; overflow: hidden; text-align: center;
+          box-shadow: 0 40px 100px -20px rgba(2, 44, 34, 0.5);
+        }
+        
+        .lp-final-cta-mesh {
+          position: absolute; inset: 0; opacity: 0.3;
+          background-image: 
+            radial-gradient(at 20% 80%, hsla(140,100%,40%,1) 0px, transparent 50%),
+            radial-gradient(at 80% 20%, hsla(45,100%,50%,1) 0px, transparent 50%);
+          filter: blur(50px); pointer-events: none;
+        }
+        
+        .lp-final-cta-orb {
+          position: absolute; border-radius: 50%; pointer-events: none;
+          filter: blur(90px); opacity: 0.25;
+        }
+        .lp-final-cta-orb--1 { width: 500px; height: 500px; background: #FDE047; top: -200px; right: -100px; }
+        .lp-final-cta-orb--2 { width: 400px; height: 400px; background: #34D399; bottom: -150px; left: -100px; }
+        
+        .lp-final-cta-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+        .lp-final-cta-emoji { font-size: 64px; margin-bottom: 24px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); }
+        .lp-final-cta-h2 { font-size: clamp(32px, 5vw, 56px); font-weight: 900; color: #fff; margin: 0 0 20px; letter-spacing: -0.03em; }
+        .lp-final-cta-p  { font-size: 20px; color: rgba(255,255,255,0.85); line-height: 1.7; margin: 0 auto 40px; max-width: 600px; font-weight: 400;}
+        .lp-final-cta-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
         /* ── Responsive ───────────────────────────────────────────── */
-        @media (max-width: 1100px) {
-          .lp-hero       { grid-template-columns: 1fr; }
-          .lp-weather    { display: none; }
-          .lp-three-col  { grid-template-columns: 1fr; }
-          .lp-quick-grid { grid-template-columns: repeat(3,1fr); }
-          .lp-cta-row    { grid-template-columns: 1fr; }
-          .lp-stats-grid { grid-template-columns: repeat(2,1fr); }
-          .lp-how-grid   { grid-template-columns: 1fr; }
-          .lp-how-connector { display: none; }
+        @media (max-width: 1280px) {
+          .lp-features-grid { grid-template-columns: repeat(3, 1fr); }
         }
-        @media (max-width: 640px) {
-          .lp-hero-h1    { font-size: 32px; }
-          .lp-hero       { padding: 44px 18px 36px; }
-          .lp-section    { padding: 20px 18px; }
-          .lp-quick-grid { grid-template-columns: repeat(2,1fr); }
-          .lp-stats      { flex-wrap: wrap; }
-          .lp-platform-stats { padding: 32px 20px; }
-          .lp-stats-grid { grid-template-columns: repeat(2,1fr); }
-          .lp-cta        { flex-direction: column; align-items: flex-start; }
-          .lp-cta-btn    { width: 100%; justify-content: center; }
+        @media (max-width: 1024px) {
+          .lp-hero          { grid-template-columns: 1fr; min-height: auto; padding-top: 120px;}
+          .lp-hero-right    { display: none; }
+          .lp-split-section { grid-template-columns: 1fr; gap: 60px; }
+          .lp-split-section--reverse { direction: ltr; }
+          .lp-quick-grid    { grid-template-columns: repeat(3, 1fr); }
+          .lp-features-grid { grid-template-columns: repeat(2, 1fr); }
+          .lp-how-grid      { grid-template-columns: 1fr; }
+          .lp-how-line-container { display: none; }
+        }
+        @media (max-width: 768px) {
+          .lp-hero { padding: 100px 24px 60px; }
+          .lp-section { padding: 60px 24px; }
+          .lp-quick-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+          .lp-features-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+          .lp-dual-cta-grid { grid-template-columns: 1fr; }
+          .lp-dual-cta-content { flex-direction: column; align-items: flex-start; gap: 16px; }
+          .lp-final-cta { padding: 60px 30px; border-radius: 24px; }
+          .lp-split-stat-row { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+          .lp-hero-h1 { font-size: 38px; }
+          .lp-quick-grid { grid-template-columns: repeat(2, 1fr); }
+          .lp-features-grid { grid-template-columns: 1fr; }
+          .lp-stats { flex-wrap: wrap; gap: 16px; }
+          .lp-stat { flex: 1 1 40%; }
         }
       `}</style>
     </div>
