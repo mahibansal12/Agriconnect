@@ -66,7 +66,7 @@ function Donations() {
             <div>
               <div style={{ color: "#86efac", fontSize: "11px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "5px" }}>AgriConnect • Donations</div>
               <h1 style={{ margin: 0, color: "#fff", fontSize: "30px", fontWeight: 900 }}>Support Farmers in Need</h1>
-              <p style={{ margin: "7px 0 0", color: "#a7f3d0", fontSize: "14px" }}>Your contribution can change a farmer's life. Every rupee matters.</p>
+              <p style={{ margin: "7px 0 0", color: "#a7f3d0", fontSize: "14px" }}>You can raise a donation campaign as a farmer, or you can donate to others to help the community. Every rupee matters.</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>

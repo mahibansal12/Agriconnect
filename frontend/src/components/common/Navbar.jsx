@@ -16,6 +16,7 @@ const PUBLIC_LINKS = [
   { to: "/news", label: "News" },
   { to: "/shops", label: "Shops" },
   { to: "/community", label: "Community" },
+  { to: "/donations", label: "Donations" },
   { to: "/calculators", label: "Calculators" },
 ];
 
@@ -256,6 +257,8 @@ export default function Navbar() {
           box-shadow: 0 1px 4px rgba(0,0,0,0.04);
           transition: background 0.3s, box-shadow 0.3s, backdrop-filter 0.3s, height 0.3s;
           backdrop-filter: blur(0px);
+          transform: translateZ(0);
+          will-change: backdrop-filter, background;
         }
         .nb--scrolled {
           background: rgba(255,255,255,0.82) !important;
