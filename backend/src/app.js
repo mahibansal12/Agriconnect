@@ -39,8 +39,10 @@ import aiRouter from "./routes/ai.routes.js"
 import communityRoutes from "./routes/community.routes.js"
 import adminRouter from "./routes/admin.routes.js"
 import cropCalendarRoutes from "./routes/cropCalendar.routes.js"
+import farmerEventRoutes from "./routes/farmerEvent.routes.js"
 
 app.use("/api/v1/crop-calendar", cropCalendarRoutes)
+app.use("/api/v1/farmer-events", farmerEventRoutes)
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/crop-knowledge", cropKnowledgeRoutes)
 app.use("/api/v1/news", newsRoutes)
