@@ -5,7 +5,8 @@
     "affectedCrops": ["Wheat", "Mustard", "Cotton", "Potato"],
     "symptoms": "Yellowing and curling of leaves, stunted plant growth, sticky honeydew secretion on leaves and stems",
     "treatment": "Spray Imidacloprid 17.8 SL at 0.5ml per litre of water or Dimethoate 30 EC at 1.5ml per litre",
-    "prevention": "Use resistant varieties, avoid excessive nitrogen fertilization, encourage natural predators like ladybirds"
+    "prevention": "Use resistant varieties, avoid excessive nitrogen fertilization, encourage natural predators like ladybirds",
+    "image": "/images/pests/1.jpg"
   },
   {
     "name": "Powdery Mildew",
@@ -13,7 +14,8 @@
     "affectedCrops": ["Wheat", "Tomato", "Onion", "Mango"],
     "symptoms": "White powdery coating on leaves, stems and fruits, leaves turn yellow and dry out eventually",
     "treatment": "Spray Carbendazim 50 WP at 1g per litre of water or Sulfur 80 WP at 2g per litre",
-    "prevention": "Ensure proper spacing between plants for air circulation, avoid overhead irrigation, remove infected plant parts"
+    "prevention": "Ensure proper spacing between plants for air circulation, avoid overhead irrigation, remove infected plant parts",
+    "image": "/images/pests/2.jpg"
   },
   {
     "name": "Root Rot",
@@ -21,7 +23,8 @@
     "affectedCrops": ["Tomato", "Potato", "Chickpea", "Soybean"],
     "symptoms": "Wilting of plants despite adequate water, yellowing of lower leaves, dark brown discoloration of roots",
     "treatment": "Drench soil with Carbendazim 50 WP at 2g per litre, remove and destroy infected plants",
-    "prevention": "Ensure proper drainage, avoid waterlogging, use disease-free seeds, practice crop rotation"
+    "prevention": "Ensure proper drainage, avoid waterlogging, use disease-free seeds, practice crop rotation",
+    "image": "/images/pests/3.jpg"
   },
   {
     "name": "Stem Borer",
@@ -29,7 +32,8 @@
     "affectedCrops": ["Rice", "Maize", "Sugarcane"],
     "symptoms": "Dead heart in young plants, white ear in older plants, entry holes visible on stem with frass",
     "treatment": "Apply Chlorpyrifos 20 EC at 2.5ml per litre of water, use pheromone traps to monitor adult moths",
-    "prevention": "Remove and destroy crop stubble after harvest, use resistant varieties, timely sowing"
+    "prevention": "Remove and destroy crop stubble after harvest, use resistant varieties, timely sowing",
+    "image": "/images/pests/4.jpg"
   },
   {
     "name": "Bacterial Blight",
@@ -37,7 +41,8 @@
     "affectedCrops": ["Rice", "Cotton", "Soybean"],
     "symptoms": "Water-soaked lesions on leaves turning yellow to brown, wilting of leaves, milky bacterial ooze",
     "treatment": "Spray Streptomycin Sulphate at 0.5g per litre combined with Copper Oxychloride at 3g per litre",
-    "prevention": "Use certified disease-free seeds, avoid injuring plants during field operations, maintain field hygiene"
+    "prevention": "Use certified disease-free seeds, avoid injuring plants during field operations, maintain field hygiene",
+    "image": "/images/pests/5.jpg"
   },
   {
     "name": "Whitefly",
@@ -45,7 +50,8 @@
     "affectedCrops": ["Cotton", "Tomato", "Potato", "Sugarcane"],
     "symptoms": "Yellowing of leaves, sticky honeydew deposits, sooty mould growth on leaves, leaf curl in severe cases",
     "treatment": "Spray Thiamethoxam 25 WG at 0.3g per litre or Acetamiprid 20 SP at 0.2g per litre",
-    "prevention": "Use yellow sticky traps, reflective mulches, remove weeds around field, avoid planting near infected fields"
+    "prevention": "Use yellow sticky traps, reflective mulches, remove weeds around field, avoid planting near infected fields",
+    "image": "/images/pests/6.jpg"
   },
   {
     "name": "Late Blight",
@@ -53,7 +59,8 @@
     "affectedCrops": ["Potato", "Tomato"],
     "symptoms": "Dark water-soaked lesions on leaves and stems, white fungal growth on underside of leaves, tuber rot",
     "treatment": "Spray Mancozeb 75 WP at 2.5g per litre or Metalaxyl MZ 72 WP at 2g per litre every 7 days",
-    "prevention": "Use certified disease-free seed tubers, avoid overhead irrigation, destroy infected plant debris"
+    "prevention": "Use certified disease-free seed tubers, avoid overhead irrigation, destroy infected plant debris",
+    "image": "/images/pests/7.jpg"
   },
   {
     "name": "Mosaic Virus",
@@ -61,6 +68,7 @@
     "affectedCrops": ["Tomato", "Potato", "Soybean", "Banana"],
     "symptoms": "Mosaic pattern of light and dark green on leaves, leaf distortion and curling, stunted plant growth",
     "treatment": "No direct cure — remove and destroy infected plants immediately to prevent spread",
-    "prevention": "Control aphid vectors by spraying Imidacloprid, use virus-free planting material, rogue out infected plants early"
+    "prevention": "Control aphid vectors by spraying Imidacloprid, use virus-free planting material, rogue out infected plants early",
+    "image": "/images/pests/8.jpg"
   }
 ]
