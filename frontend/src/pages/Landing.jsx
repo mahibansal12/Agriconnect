@@ -1289,14 +1289,14 @@ export default function Landing() {
 
         /* Custom Scrollbar for a premium feel */
         ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #F4F7F0; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #F4F7F0; }
+        ::-webkit-scrollbar-track { background: #FBF5E7; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #FBF5E7; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* ── Base ────────────────────────────────────────────────────── */
         .lp {
           display: flex; flex-direction: column; min-height: 100vh;
-          background: #F4F7F0;
+          background: #FBF5E7;
           font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
           overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
@@ -1356,13 +1356,13 @@ export default function Landing() {
         /* ── HERO ────────────────────────────────────────────────────── */
         .lp-hero {
           position: relative; overflow: hidden;
-          min-height: 95vh;
+          min-height: 38vh;
           background: #021a0e;
-          padding: 100px clamp(20px, 6vw, 100px) 80px;
+          padding: 48px clamp(20px, 6vw, 100px) 36px;
           display: grid;
-          grid-template-columns: minmax(0,1fr) minmax(320px,400px);
-          gap: clamp(40px, 6vw, 100px);
-          align-items: center;
+          grid-template-columns: minmax(0,1fr) minmax(260px,320px);
+          gap: clamp(24px, 4vw, 60px);
+          align-items: stretch;
         }
         .lp-hero-bg-img {
           position: absolute; inset: 0; pointer-events: none;
@@ -1423,25 +1423,25 @@ export default function Landing() {
         }
 
         /* Hero content */
-        .lp-hero-content { display: flex; flex-direction: column; }
+        .lp-hero-content { display: flex; flex-direction: column; justify-content: center; }
         .lp-hero-tag {
-          display: inline-flex; align-items: center; gap: 8px;
-          border-radius: 100px; padding: 8px 18px; width: fit-content;
-          font-size: 12px; font-weight: 700; color: #FEF08A; letter-spacing: 0.08em;
-          text-transform: uppercase; margin-bottom: 28px;
+          display: inline-flex; align-items: center; gap: 6px;
+          border-radius: 100px; padding: 5px 14px; width: fit-content;
+          font-size: 10px; font-weight: 700; color: #FEF08A; letter-spacing: 0.08em;
+          text-transform: uppercase; margin-bottom: 14px;
           box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .lp-hero-tag-dot {
-          width: 8px; height: 8px; border-radius: 50%; background: #4ADE80;
-          box-shadow: 0 0 0 4px rgba(74,222,128,0.25);
+          width: 6px; height: 6px; border-radius: 50%; background: #4ADE80;
+          box-shadow: 0 0 0 3px rgba(74,222,128,0.25);
           animation: lp-pulse 2s ease-in-out infinite;
         }
         @keyframes lp-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
 
         .lp-hero-h1 {
-          font-size: clamp(42px, 6vw, 72px); font-weight: 900;
-          color: #fff; line-height: 1.05; margin: 0 0 24px;
-          letter-spacing: -0.035em; text-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          font-size: clamp(26px, 3.2vw, 40px); font-weight: 900;
+          color: #fff; line-height: 1.1; margin: 0 0 12px;
+          letter-spacing: -0.03em; text-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         .lp-hero-h1-accent {
           background: linear-gradient(135deg, #FDE047, #F59E0B, #EF4444);
@@ -1449,15 +1449,15 @@ export default function Landing() {
           background-clip: text;
         }
         .lp-hero-p {
-          font-size: 18px; color: rgba(255,255,255,0.85); line-height: 1.8;
-          margin: 0 0 40px; max-width: 580px; font-weight: 400;
+          font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.6;
+          margin: 0 0 20px; max-width: 520px; font-weight: 400;
         }
 
         /* Buttons */
-        .lp-hero-btns { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
+        .lp-hero-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
         .lp-btn-primary {
-          display: inline-flex; align-items: center; gap: 10px;
-          padding: 16px 32px; border-radius: 14px; font-size: 16px; font-weight: 700;
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 11px 22px; border-radius: 12px; font-size: 13px; font-weight: 700;
           background: linear-gradient(135deg, #F59E0B, #EF4444);
           color: #fff; text-decoration: none;
           transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1472,11 +1472,11 @@ export default function Landing() {
           filter: brightness(1.1); 
         }
         .lp-btn-primary:active { transform: translateY(0) scale(0.98); }
-        .lp-btn-primary--lg { padding: 18px 40px; font-size: 17px; }
+        .lp-btn-primary--lg { padding: 14px 32px; font-size: 15px; }
 
         .lp-btn-outline {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 15px 30px; border-radius: 14px; font-size: 16px; font-weight: 600;
+          padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 600;
           color: #fff; border: 1.5px solid rgba(255,255,255,0.3); text-decoration: none;
           box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
@@ -1484,7 +1484,7 @@ export default function Landing() {
 
         .lp-btn-ghost {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 16px 32px; border-radius: 14px; font-size: 16px; font-weight: 600;
+          padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 600;
           background: transparent; color: rgba(255,255,255,0.9);
           border: 1.5px solid rgba(255,255,255,0.2); text-decoration: none;
           transition: all 0.3s;
@@ -1492,59 +1492,64 @@ export default function Landing() {
         .lp-btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); }
 
         /* Stats row */
-        .lp-stats { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 32px; }
+        .lp-stats { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 16px; }
         .lp-stat { flex: 1; position: relative; }
         .lp-stat + .lp-stat::before {
            content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 1px;
            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent);
         }
-        .lp-stat + .lp-stat { padding-left: 24px; }
-        .lp-stat-val   { font-size: 32px; font-weight: 900; color: #FDE047; letter-spacing: -0.02em; }
-        .lp-stat-label { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .lp-stat + .lp-stat { padding-left: 16px; }
+        .lp-stat-val   { font-size: 20px; font-weight: 900; color: #FDE047; letter-spacing: -0.02em; }
+        .lp-stat-label { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
         /* Hero Right Side (Weather & Alerts) */
         .lp-hero-right {
-          display: flex; flex-direction: column; gap: 24px;
+          display: flex; flex-direction: column; gap: 16px; height: 100%;
         }
 
         /* Weather Widget */
+        .lp-weather {
+          flex: 1; display: flex;
+        }
         .lp-weather-inner {
-          border-radius: 20px; padding: 28px;
+          border-radius: 20px; padding: 24px 26px;
+          display: flex; flex-direction: column; justify-content: center;
+          width: 100%;
         }
         .lp-weather-location {
-          display: flex; align-items: center; gap: 8px;
-          font-size: 12px; color: #BAE6FD; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;
+          display: flex; align-items: center; gap: 6px;
+          font-size: 11px; color: #BAE6FD; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;
         }
-        .lp-weather-main { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; }
-        .lp-weather-icon { font-size: 56px; display: block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
-        .lp-weather-temp { font-size: 52px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
-        .lp-weather-desc { font-size: 15px; color: rgba(255,255,255,0.8); margin-top: 6px; text-transform: capitalize; font-weight: 500;}
-        .lp-weather-meta { display: flex; gap: 16px; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 10px; font-weight: 500;}
+        .lp-weather-main { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
+        .lp-weather-icon { font-size: 48px; display: block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+        .lp-weather-temp { font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+        .lp-weather-desc { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 6px; text-transform: capitalize; font-weight: 500;}
+        .lp-weather-meta { display: flex; gap: 14px; font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px; font-weight: 500;}
         .lp-weather-link {
-          display: flex; align-items: center; justify-content: flex-end; gap: 6px;
-          font-size: 13px; color: #FDE047; text-decoration: none; margin-top: 16px;
+          display: flex; align-items: center; justify-content: flex-end; gap: 5px;
+          font-size: 12px; color: #FDE047; text-decoration: none; margin-top: 16px;
           font-weight: 700;
         }
         
         .lp-hero-alert {
-           border-radius: 16px; padding: 18px 20px;
-           display: flex; align-items: center; gap: 16px;
+           border-radius: 16px; padding: 16px 18px;
+           display: flex; align-items: center; gap: 14px;
            background: rgba(2, 44, 34, 0.5); /* Dark green glass */
            box-shadow: 0 20px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        .lp-alert-icon { font-size: 28px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
-        .lp-alert-title { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-        .lp-alert-sub { font-size: 13px; color: #A7F3D0; font-weight: 500; }
+        .lp-alert-icon { font-size: 22px; background: rgba(255,255,255,0.1); padding: 9px; border-radius: 11px; }
+        .lp-alert-title { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+        .lp-alert-sub { font-size: 12px; color: #A7F3D0; font-weight: 500; }
 
         /* ── Section Wrapper ─────────────────────────────────────────── */
         .lp-section {
           width: 100%; padding: 50px clamp(20px, 6vw, 100px); box-sizing: border-box;
         }
-        .lp-section--quicklinks { padding-top: 32px; padding-bottom: 32px; background: transparent; margin-top: -40px; position: relative; z-index: 10; }
-        .lp-section--how { background: #fff; position: relative; overflow: hidden; }
-        .lp-section--dual-cta { background: #F8FAFC; }
-        .lp-section--final-cta { background: #F8FAFC; padding-bottom: 100px; }
+        .lp-section--quicklinks { padding-top: 48px; padding-bottom: 32px; background: transparent; margin-top: 0; position: relative; z-index: 10; }
+        .lp-section--how { background: #FFFAF0; position: relative; overflow: hidden; }
+        .lp-section--dual-cta { background: #FDF4E3; }
+        .lp-section--final-cta { background: #FDF4E3; padding-bottom: 100px; }
 
         /* ── Quick Links Grid ────────────────────────────────────────── */
         .lp-quick-grid {
@@ -1599,13 +1604,13 @@ export default function Landing() {
           gap: clamp(40px, 8vw, 100px);
           align-items: center;
         }
-        .lp-split-section--community  { background: #ffffff; }
-        .lp-split-section--schemes    { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; }
-        .lp-split-section--mandi      { background: #ffffff; }
-        .lp-split-section--ai         { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;}
-        .lp-split-section--knowledge  { background: #ffffff; }
-        .lp-split-section--donations  { background: #FAFAFA; border-top: 1px solid #F1F5F9; }
-        .lp-split-section--marketplace { background: #ffffff; }
+        .lp-split-section--community  { background: #FFFAF0; }
+        .lp-split-section--schemes    { background: #FBF2DF; border-top: 1px solid #F3E6C8; border-bottom: 1px solid #F3E6C8; }
+        .lp-split-section--mandi      { background: #FFFAF0; }
+        .lp-split-section--ai         { background: #FBF2DF; border-top: 1px solid #F3E6C8; border-bottom: 1px solid #F3E6C8;}
+        .lp-split-section--knowledge  { background: #FFFAF0; }
+        .lp-split-section--donations  { background: #FBF2DF; border-top: 1px solid #F3E6C8; }
+        .lp-split-section--marketplace { background: #FFFAF0; }
         .lp-split-section--reverse    { direction: rtl; }
         .lp-split-section--reverse > * { direction: ltr; }
 
@@ -2058,7 +2063,7 @@ export default function Landing() {
           .lp-features-grid { grid-template-columns: repeat(3, 1fr); }
         }
         @media (max-width: 1024px) {
-          .lp-hero          { grid-template-columns: 1fr; min-height: auto; padding-top: 120px;}
+          .lp-hero          { grid-template-columns: 1fr; min-height: auto; padding-top: 90px;}
           .lp-hero-right    { display: none; }
           .lp-split-section { grid-template-columns: 1fr; gap: 60px; }
           .lp-split-section--reverse { direction: ltr; }
@@ -2068,7 +2073,7 @@ export default function Landing() {
           .lp-how-line-container { display: none; }
         }
         @media (max-width: 768px) {
-          .lp-hero { padding: 100px 24px 60px; }
+          .lp-hero { padding: 80px 24px 32px; }
           .lp-section { padding: 60px 24px; }
           .lp-quick-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
           .lp-features-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -2078,10 +2083,10 @@ export default function Landing() {
           .lp-split-stat-row { grid-template-columns: repeat(3, 1fr); }
         }
         @media (max-width: 480px) {
-          .lp-hero-h1 { font-size: 38px; }
+          .lp-hero-h1 { font-size: 26px; }
           .lp-quick-grid { grid-template-columns: repeat(2, 1fr); }
           .lp-features-grid { grid-template-columns: 1fr; }
-          .lp-stats { flex-wrap: wrap; gap: 16px; }
+          .lp-stats { flex-wrap: wrap; gap: 10px; }
           .lp-stat { flex: 1 1 40%; }
         }
       `}</style>
