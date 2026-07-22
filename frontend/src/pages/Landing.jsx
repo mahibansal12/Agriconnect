@@ -32,11 +32,11 @@ const ALL_FEATURES = [
   { to: "/recommendations/crop", icon: "🌱", label: "Crop Advisor", sub: "AI-powered personalised crop suggestions", photo: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80", color: "#059669", grad: "linear-gradient(135deg, #10B981, #059669)", tag: "AI Powered" },
   { to: "/schemes", icon: "📋", label: "Govt Schemes", sub: "Explore subsidies, loans, insurance & training", photo: "/schemes_photo.png", color: "#7C3AED", grad: "linear-gradient(135deg, #8B5CF6, #7C3AED)", tag: "Benefits" },
   { to: "/news", icon: "📰", label: "Agri News", sub: "Latest agriculture news, policies & market trends", photo: "/news_photo.png", color: "#DC2626", grad: "linear-gradient(135deg, #EF4444, #DC2626)", tag: "Breaking" },
-  { to: "/weather", icon: "⛅", label: "Weather", sub: "Hyper-local weather forecasts for farming decisions", photo: "/weather_photo.png", color: "#0284C7", grad: "linear-gradient(135deg, #38BDF8, #0284C7)", tag: "Real-time" },
+  { to: "/community", icon: "👥", label: "Community", sub: "Connect with farmers across India", photo: "/community_photo_1.jpg", color: "#0891B2", grad: "linear-gradient(135deg, #22D3EE, #0891B2)", tag: "Connect" },
   { to: "/shops", icon: "📍", label: "Shop Finder", sub: "Locate nearby seed, fertilizer & equipment dealers", photo: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80", color: "#E11D48", grad: "linear-gradient(135deg, #F43F5E, #E11D48)", tag: "Nearby" },
   { to: "/donations", icon: "❤️", label: "Donations", sub: "Support fellow farmers and build a stronger community", photo: "/donation_photo_1.jpg", color: "#B45309", grad: "linear-gradient(135deg, #F59E0B, #B45309)", tag: "Community" },
   { to: "/ai-assistant", icon: "🤖", label: "AI Assistant", sub: "24/7 intelligent farming assistant", photo: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&q=80", color: "#6366F1", grad: "linear-gradient(135deg, #818CF8, #6366F1)", tag: "Smart" },
-  { to: "/community", icon: "👥", label: "Community", sub: "Connect with farmers across India", photo: "/community_photo_1.jpg", color: "#0891B2", grad: "linear-gradient(135deg, #22D3EE, #0891B2)", tag: "Connect" },
+  { to: "/calendar", icon: "📅", label: "Crop Calendar", sub: "Track your sowing and harvesting timeline", photo: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=600&q=80", color: "#0284C7", grad: "linear-gradient(135deg, #38BDF8, #0284C7)", tag: "Planning" },
   { to: "/pest-library", icon: "🐛", label: "Pest Library", sub: "Identify crop pests instantly and get treatment guides", photo: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80", color: "#65A30D", grad: "linear-gradient(135deg, #84CC16, #65A30D)", tag: "Identify" },
   { to: "/crop-knowledge", icon: "📖", label: "Crop Knowledge", sub: "Deep-dive library of crop profiles and best practices", photo: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&q=80", color: "#15803D", grad: "linear-gradient(135deg, #22C55E, #15803D)", tag: "Learn" },
 ];
@@ -334,18 +334,7 @@ export default function Landing() {
           <div className="lp-hero-bg-overlay" />
         </motion.div>
 
-        {/* Animated orbs for ambient glow */}
-        <div className="lp-hero-orb lp-hero-orb--1" />
-        <div className="lp-hero-orb lp-hero-orb--2" />
-        <div className="lp-hero-orb lp-hero-orb--3" />
-        <div className="lp-hero-mesh" /> {/* Mesh gradient overlay */}
 
-        {/* Particles */}
-        <div className="lp-particles" aria-hidden="true">
-          {[...Array(25)].map((_, i) => (
-            <span key={i} className="lp-particle" style={{ "--i": i, "--size": (i%3)+2 + "px" }} />
-          ))}
-        </div>
 
         {/* Hero Content */}
         <motion.div
@@ -498,14 +487,197 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════
           📰 NEWS SECTION  (full-width split)
       ══════════════════════════════════════════════════════ */}
-      <section className="lp-section lp-split-section lp-split-section--news">
+
+
+      <section className="lp-section lp-split-section lp-split-section--marketplace">
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--blue">🛒 Direct Trade</div>
+          <h2 className="lp-section-h2">Sell Your Crops<br /><span className="lp-h2-accent-blue">Directly to Buyers</span></h2>
+          <p className="lp-section-desc">
+            List your harvest in minutes and connect with verified buyers across India. No
+            middlemen, no hidden charges. Negotiate directly and get better prices with
+            AI-powered pricing suggestions.
+          </p>
+          <div className="lp-marketplace-features">
+            {[
+              { icon: "✅", t: "Verified Buyers", s: "All buyers are KYC verified" },
+              { icon: "💬", t: "Direct Chat",     s: "Negotiate price directly" },
+              { icon: "🤖", t: "AI Pricing",      s: "Smart price suggestions" },
+              { icon: "🚀", t: "Quick Listing",   s: "List in under 2 minutes" },
+            ].map((f, i) => (
+              <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
+                <span className="lp-mp-feat-icon">{f.icon}</span>
+                <div>
+                  <div className="lp-mp-feat-title">{f.t}</div>
+                  <div className="lp-mp-feat-sub">{f.s}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <Link to="/marketplace" className="lp-split-cta lp-split-cta--blue">
+            Open marketplace
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--marketplace">
+            <motion.img
+              src="/marketplace_photo.png"
+              alt="Farmer selling crops online"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--blue" />
+              <span>Zero Commission</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✅</div>
+                 <div>
+                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0A2E0C' }}>Order #4092</div>
+                   <div style={{ fontSize: 11, color: '#0284C7', fontWeight: 600 }}>Payment Secured</div>
+                 </div>
+               </div>
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "0%", label: "Commission" },
+              { val: "15+", label: "Crop Types" },
+              { val: "Fast", label: "Settlement" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--blue" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+
+
+
+
+      
+
+      
+
+      {/* ══════════════════════════════════════════════════════
+          FINAL CTA STRIP
+      ══════════════════════════════════════════════════════ */}
+      
+      <section className="lp-section lp-split-section lp-split-section--mandi">
+        {/* Left — info + graph + rate preview */}
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-mandi-live-row">
+            <motion.span
+              className="lp-live-dot"
+              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.4, 1] }}
+              transition={{ repeat: Infinity, duration: 1.3 }}
+            />
+            <span className="lp-live-text">LIVE PRICES</span>
+          </div>
+          <div className="lp-section-eyebrow lp-section-eyebrow--amber">📊 Market Intelligence</div>
+          <h2 className="lp-section-h2">Live Mandi Rates<br /><span className="lp-h2-accent-amber">&amp; Commodity Prices</span></h2>
+          <p className="lp-section-desc">
+            Real-time commodity prices from hundreds of mandis across every state of India.
+            Check wheat, rice, cotton, vegetables and more — updated every hour.
+          </p>
+
+          {/* Animated graph preview */}
+          <div className="lp-mandi-graph-box">
+            <div className="lp-mandi-graph-header">
+              <div className="lp-mandi-graph-label">Price Trend (Modal Price)</div>
+              <div className="lp-mandi-graph-trend lp-trend-up">↑ 2.4%</div>
+            </div>
+            <SparkGraph color="#D97706" />
+            <div className="lp-mandi-graph-axis">
+              <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span>
+            </div>
+          </div>
+
+          {/* Rate preview chips */}
+          <div className="lp-mandi-rate-chips">
+            {mandiLoading ? (
+              [1, 2, 3].map(i => <div key={i} className="lp-rate-chip-skel" />)
+            ) : (
+              mandiRates.slice(0, 3).map(r => (
+                <motion.div key={r._id} className="lp-rate-chip" whileHover={{ y: -3, boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}>
+                  <span className="lp-rate-chip-name">{r.commodityName}</span>
+                  <span className="lp-rate-chip-price">{formatPrice(r.modalPrice)}</span>
+                </motion.div>
+              ))
+            )}
+          </div>
+
+          <Link to="/mandi" className="lp-split-cta lp-split-cta--amber">
+            See full price board
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </Reveal>
+
+        {/* Right — photo + stats */}
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--mandi">
+            <motion.img
+              src="/mandi_photo.png"
+              alt="Vibrant mandi market with live price boards"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--green" />
+              <span>Updated Hourly</span>
+            </motion.div>
+            
+            {/* Floating Glass Chart Card */}
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}>
+               <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>TOP GAINER</div>
+               <div style={{ fontSize: 16, fontWeight: 800, color: '#0A2E0C', margin: '2px 0' }}>Wheat <span style={{ color: '#16A34A', fontSize: 14 }}>↑ 4%</span></div>
+               <div style={{ width: 80, height: 2, background: '#16A34A', marginTop: 6, borderRadius: 2 }}></div>
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "500+", label: "Mandis" },
+              { val: "200+", label: "Commodities" },
+              { val: "Hourly", label: "Updates" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--amber" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      
+
+      {/* ══════════════════════════════════════════════════════
+          🤖 AI + CROP ADVISOR SPLIT HIGHLIGHT
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-split-section lp-split-section--community">
         {/* Left — info + animated carousel */}
         <Reveal className="lp-split-info" delay={0}>
-          <div className="lp-section-eyebrow lp-section-eyebrow--red">📰 Stay Informed</div>
-          <h2 className="lp-section-h2">Agriculture News<br /><span className="lp-h2-accent-red">&amp; Updates</span></h2>
+          <div className="lp-section-eyebrow lp-section-eyebrow--red">👥 Farmer Community</div>
+          <h2 className="lp-section-h2">Community Discussions<br /><span className="lp-h2-accent-red">&amp; Insights</span></h2>
           <p className="lp-section-desc">
-            Get the latest agriculture news — government policy changes, market movements,
-            weather advisories, and technology breakthroughs — all curated for Indian farmers.
+            Connect with fellow farmers, share your experiences, and learn from the community. A dedicated space for Indian farmers to grow together.
           </p>
 
           {/* Animated news card */}
@@ -564,8 +736,8 @@ export default function Landing() {
             )}
           </div>
 
-          <Link to="/news" className="lp-split-cta lp-split-cta--red">
-            Browse all news
+          <Link to="/community" className="lp-split-cta lp-split-cta--red">
+            Join community
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -725,64 +897,47 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════════════
           📊 MANDI RATES SECTION  (full-width split)
       ══════════════════════════════════════════════════════ */}
-      <section className="lp-section lp-split-section lp-split-section--mandi">
-        {/* Left — info + graph + rate preview */}
+      <section className="lp-section lp-split-section lp-split-section--knowledge">
         <Reveal className="lp-split-info" delay={0}>
-          <div className="lp-mandi-live-row">
-            <motion.span
-              className="lp-live-dot"
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.4, 1] }}
-              transition={{ repeat: Infinity, duration: 1.3 }}
-            />
-            <span className="lp-live-text">LIVE PRICES</span>
-          </div>
-          <div className="lp-section-eyebrow lp-section-eyebrow--amber">📊 Market Intelligence</div>
-          <h2 className="lp-section-h2">Live Mandi Rates<br /><span className="lp-h2-accent-amber">&amp; Commodity Prices</span></h2>
+          <div className="lp-section-eyebrow lp-section-eyebrow--green">📖 Knowledge Hub</div>
+          <h2 className="lp-section-h2">Master Your Crops &<br /><span className="lp-h2-accent-green">Defeat Pests Instantly</span></h2>
           <p className="lp-section-desc">
-            Real-time commodity prices from hundreds of mandis across every state of India.
-            Check wheat, rice, cotton, vegetables and more — updated every hour.
+            Access our deep-dive library of crop profiles, best practices, and a comprehensive pest identification guide. Everything you need to grow healthier yields and protect your harvest.
           </p>
-
-          {/* Animated graph preview */}
-          <div className="lp-mandi-graph-box">
-            <div className="lp-mandi-graph-header">
-              <div className="lp-mandi-graph-label">Price Trend (Modal Price)</div>
-              <div className="lp-mandi-graph-trend lp-trend-up">↑ 2.4%</div>
-            </div>
-            <SparkGraph color="#D97706" />
-            <div className="lp-mandi-graph-axis">
-              <span>Jan</span><span>Mar</span><span>May</span><span>Jul</span>
-            </div>
+          <div className="lp-marketplace-features">
+            {[
+              { icon: "🌱", t: "Crop Profiles", s: "A-Z guides for farming" },
+              { icon: "🐛", t: "Pest Library", s: "Identify and treat diseases" },
+              { icon: "🛡️", t: "Treatment Plans", s: "Organic & chemical solutions" },
+              { icon: "📅", t: "Crop Calendar", s: "When to sow, harvest & spray" },
+            ].map((f, i) => (
+              <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
+                <span className="lp-mp-feat-icon">{f.icon}</span>
+                <div>
+                  <div className="lp-mp-feat-title">{f.t}</div>
+                  <div className="lp-mp-feat-sub">{f.s}</div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-
-          {/* Rate preview chips */}
-          <div className="lp-mandi-rate-chips">
-            {mandiLoading ? (
-              [1, 2, 3].map(i => <div key={i} className="lp-rate-chip-skel" />)
-            ) : (
-              mandiRates.slice(0, 3).map(r => (
-                <motion.div key={r._id} className="lp-rate-chip" whileHover={{ y: -3, boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}>
-                  <span className="lp-rate-chip-name">{r.commodityName}</span>
-                  <span className="lp-rate-chip-price">{formatPrice(r.modalPrice)}</span>
-                </motion.div>
-              ))
-            )}
+          <div className="lp-hero-btns" style={{ marginTop: 32 }}>
+            <Link to="/crop-knowledge" className="lp-split-cta lp-split-cta--green">
+              Crop Knowledge
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link to="/pests" className="lp-split-cta-outline">
+              Pest Library
+            </Link>
           </div>
-
-          <Link to="/mandi" className="lp-split-cta lp-split-cta--amber">
-            See full price board
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
         </Reveal>
 
-        {/* Right — photo + stats */}
         <Reveal className="lp-split-photo-side" delay={0.15}>
-          <div className="lp-split-photo-wrap lp-split-photo-wrap--mandi">
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--knowledge">
             <motion.img
-              src="/mandi_photo.png"
-              alt="Vibrant mandi market with live price boards"
+              src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=700&q=80"
+              alt="Farmer inspecting crops"
               className="lp-split-photo"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
@@ -791,23 +946,26 @@ export default function Landing() {
             
             <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
               <span className="lp-badge-dot lp-badge-dot--green" />
-              <span>Updated Hourly</span>
+              <span>100+ Crop Guides</span>
             </motion.div>
             
-            {/* Floating Glass Chart Card */}
-            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}>
-               <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>TOP GAINER</div>
-               <div style={{ fontSize: 16, fontWeight: 800, color: '#0A2E0C', margin: '2px 0' }}>Wheat <span style={{ color: '#16A34A', fontSize: 14 }}>↑ 4%</span></div>
-               <div style={{ width: 80, height: 2, background: '#16A34A', marginTop: 6, borderRadius: 2 }}></div>
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🐛</div>
+                 <div>
+                   <div style={{ fontSize: 13, fontWeight: 800, color: '#064e3b' }}>Fall Armyworm</div>
+                   <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>Treatment Found</div>
+                 </div>
+               </div>
             </motion.div>
           </div>
           <div className="lp-split-stat-row">
             {[
-              { val: "500+", label: "Mandis" },
-              { val: "200+", label: "Commodities" },
-              { val: "Hourly", label: "Updates" },
+              { val: "100+", label: "Crop Varieties" },
+              { val: "300+", label: "Pest Solutions" },
+              { val: "Free", label: "For Everyone" },
             ].map(s => (
-              <motion.div key={s.label} className="lp-split-stat lp-split-stat--amber" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--green" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
                 <div className="lp-split-stat-val">{s.val}</div>
                 <div className="lp-split-stat-label">{s.label}</div>
               </motion.div>
@@ -815,6 +973,148 @@ export default function Landing() {
           </div>
         </Reveal>
       </section>
+
+      <section className="lp-section lp-split-section lp-split-section--ai lp-split-section--reverse">
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--ai">
+            <motion.img
+              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=700&q=80"
+              alt="AI assistant for farmers"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tr lp-badge--glow" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}>
+              <span>🤖 AI Powered</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>
+              ✨ "Best crop for clay soil?"
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "24/7", label: "Available" },
+              { val: "Hindi", label: "+ English" },
+              { val: "Free", label: "For All" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--indigo" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--indigo">🤖 Smart Farming</div>
+          <h2 className="lp-section-h2">AI-Powered Crop<br /><span className="lp-h2-accent-indigo">Advisor &amp; Assistant</span></h2>
+          <p className="lp-section-desc">
+            Get instant AI-driven crop recommendations based on your soil type, location,
+            budget and season. Ask our 24/7 AI assistant anything — from disease diagnosis to
+            market timing — in Hindi or English.
+          </p>
+          <div className="lp-ai-chips">
+            {["🌱 Which crop suits my soil?", "📈 When should I sell wheat?", "🐛 Identify this pest", "💧 How much to irrigate?"].map(q => (
+              <motion.div key={q} className="lp-ai-chip" whileHover={{ scale: 1.05, y: -2 }} transition={{ type: "spring", stiffness: 400 }}>
+                {q}
+              </motion.div>
+            ))}
+          </div>
+          <div className="lp-hero-btns" style={{ marginTop: 32 }}>
+            <Link to="/recommendations/crop" className="lp-split-cta lp-split-cta--indigo">
+              Get crop advice
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link to="/ai-assistant" className="lp-split-cta-outline">
+              Try AI assistant
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          🛒 MARKETPLACE HIGHLIGHT
+      ══════════════════════════════════════════════════════ */}
+      <section className="lp-section lp-split-section lp-split-section--donations lp-split-section--reverse">
+        <Reveal className="lp-split-info" delay={0}>
+          <div className="lp-section-eyebrow lp-section-eyebrow--orange">❤️ Community Support</div>
+          <h2 className="lp-section-h2">Raise a Campaign &<br /><span className="lp-h2-accent-orange">Help Fellow Farmers</span></h2>
+          <p className="lp-section-desc">
+            Whether you need financial support to recover from crop loss, or you want to contribute to the community, our donations platform connects farmers in need with people who care.
+          </p>
+          <div className="lp-marketplace-features">
+            {[
+              { icon: "🤝", t: "Raise Funds", s: "Start a campaign for your needs" },
+              { icon: "💸", t: "Zero Fees", s: "100% goes to the farmer" },
+              { icon: "🛡️", t: "Verified", s: "All campaigns are KYC verified" },
+            ].map((f, i) => (
+              <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
+                <span className="lp-mp-feat-icon">{f.icon}</span>
+                <div>
+                  <div className="lp-mp-feat-title">{f.t}</div>
+                  <div className="lp-mp-feat-sub">{f.s}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="lp-hero-btns" style={{ marginTop: 32 }}>
+            <Link to="/donations" className="lp-split-cta lp-split-cta--orange">
+              View Campaigns
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </Reveal>
+
+        <Reveal className="lp-split-photo-side" delay={0.15}>
+          <div className="lp-split-photo-wrap lp-split-photo-wrap--donations">
+            <motion.img
+              src="/donation_photo_1.jpg"
+              alt="Farmers community"
+              className="lp-split-photo"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            />
+            <div className="lp-split-photo-overlay" />
+            
+            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="lp-badge-dot lp-badge-dot--orange" />
+              <span>Verified Campaigns</span>
+            </motion.div>
+            
+            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>❤️</div>
+                 <div>
+                   <div style={{ fontSize: 13, fontWeight: 800, color: '#9a3412' }}>₹5,000 Donated</div>
+                   <div style={{ fontSize: 11, color: '#c2410c', fontWeight: 600 }}>Just now</div>
+                 </div>
+               </div>
+            </motion.div>
+          </div>
+          <div className="lp-split-stat-row">
+            {[
+              { val: "100%", label: "Direct Transfer" },
+              { val: "24h", label: "Verification" },
+              { val: "Free", label: "To Use" },
+            ].map(s => (
+              <motion.div key={s.label} className="lp-split-stat lp-split-stat--orange" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <div className="lp-split-stat-val">{s.val}</div>
+                <div className="lp-split-stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+
+      
 
       {/* ══════════════════════════════════════════════════════
           🌟 ALL FEATURES SHOWCASE  (photo grid, parallax bg, spotlight)
@@ -886,195 +1186,6 @@ export default function Landing() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          🤖 AI + CROP ADVISOR SPLIT HIGHLIGHT
-      ══════════════════════════════════════════════════════ */}
-      <section className="lp-section lp-split-section lp-split-section--ai lp-split-section--reverse">
-        <Reveal className="lp-split-photo-side" delay={0.15}>
-          <div className="lp-split-photo-wrap lp-split-photo-wrap--ai">
-            <motion.img
-              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=700&q=80"
-              alt="AI assistant for farmers"
-              className="lp-split-photo"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            />
-            <div className="lp-split-photo-overlay" />
-            
-            <motion.div className="lp-floating-badge lp-floating-badge--tr lp-badge--glow" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}>
-              <span>🤖 AI Powered</span>
-            </motion.div>
-            
-            <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>
-              ✨ "Best crop for clay soil?"
-            </motion.div>
-          </div>
-          <div className="lp-split-stat-row">
-            {[
-              { val: "24/7", label: "Available" },
-              { val: "Hindi", label: "+ English" },
-              { val: "Free", label: "For All" },
-            ].map(s => (
-              <motion.div key={s.label} className="lp-split-stat lp-split-stat--indigo" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
-                <div className="lp-split-stat-val">{s.val}</div>
-                <div className="lp-split-stat-label">{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </Reveal>
-
-        <Reveal className="lp-split-info" delay={0}>
-          <div className="lp-section-eyebrow lp-section-eyebrow--indigo">🤖 Smart Farming</div>
-          <h2 className="lp-section-h2">AI-Powered Crop<br /><span className="lp-h2-accent-indigo">Advisor &amp; Assistant</span></h2>
-          <p className="lp-section-desc">
-            Get instant AI-driven crop recommendations based on your soil type, location,
-            budget and season. Ask our 24/7 AI assistant anything — from disease diagnosis to
-            market timing — in Hindi or English.
-          </p>
-          <div className="lp-ai-chips">
-            {["🌱 Which crop suits my soil?", "📈 When should I sell wheat?", "🐛 Identify this pest", "💧 How much to irrigate?"].map(q => (
-              <motion.div key={q} className="lp-ai-chip" whileHover={{ scale: 1.05, y: -2 }} transition={{ type: "spring", stiffness: 400 }}>
-                {q}
-              </motion.div>
-            ))}
-          </div>
-          <div className="lp-hero-btns" style={{ marginTop: 32 }}>
-            <Link to="/recommendations/crop" className="lp-split-cta lp-split-cta--indigo">
-              Get crop advice
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
-            <Link to="/ai-assistant" className="lp-split-cta-outline">
-              Try AI assistant
-            </Link>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════
-          🛒 MARKETPLACE HIGHLIGHT
-      ══════════════════════════════════════════════════════ */}
-      <section className="lp-section lp-split-section lp-split-section--marketplace">
-        <Reveal className="lp-split-info" delay={0}>
-          <div className="lp-section-eyebrow lp-section-eyebrow--blue">🛒 Direct Trade</div>
-          <h2 className="lp-section-h2">Sell Your Crops<br /><span className="lp-h2-accent-blue">Directly to Buyers</span></h2>
-          <p className="lp-section-desc">
-            List your harvest in minutes and connect with verified buyers across India. No
-            middlemen, no hidden charges. Negotiate directly and get better prices with
-            AI-powered pricing suggestions.
-          </p>
-          <div className="lp-marketplace-features">
-            {[
-              { icon: "✅", t: "Verified Buyers", s: "All buyers are KYC verified" },
-              { icon: "💬", t: "Direct Chat",     s: "Negotiate price directly" },
-              { icon: "🤖", t: "AI Pricing",      s: "Smart price suggestions" },
-              { icon: "🚀", t: "Quick Listing",   s: "List in under 2 minutes" },
-            ].map((f, i) => (
-              <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
-                <span className="lp-mp-feat-icon">{f.icon}</span>
-                <div>
-                  <div className="lp-mp-feat-title">{f.t}</div>
-                  <div className="lp-mp-feat-sub">{f.s}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <Link to="/marketplace" className="lp-split-cta lp-split-cta--blue">
-            Open marketplace
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="lp-arrow-icon">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </Reveal>
-
-        <Reveal className="lp-split-photo-side" delay={0.15}>
-          <div className="lp-split-photo-wrap lp-split-photo-wrap--marketplace">
-            <motion.img
-              src="/marketplace_photo.png"
-              alt="Farmer selling crops online"
-              className="lp-split-photo"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            />
-            <div className="lp-split-photo-overlay" />
-            
-            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
-              <span className="lp-badge-dot lp-badge-dot--blue" />
-              <span>Zero Commission</span>
-            </motion.div>
-            
-            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✅</div>
-                 <div>
-                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0A2E0C' }}>Order #4092</div>
-                   <div style={{ fontSize: 11, color: '#0284C7', fontWeight: 600 }}>Payment Secured</div>
-                 </div>
-               </div>
-            </motion.div>
-          </div>
-          <div className="lp-split-stat-row">
-            {[
-              { val: "0%", label: "Commission" },
-              { val: "15+", label: "Crop Types" },
-              { val: "Fast", label: "Settlement" },
-            ].map(s => (
-              <motion.div key={s.label} className="lp-split-stat lp-split-stat--blue" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
-                <div className="lp-split-stat-val">{s.val}</div>
-                <div className="lp-split-stat-label">{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════
-          HOW IT WORKS (With animated connecting line)
-      ══════════════════════════════════════════════════════ */}
-      <Reveal className="lp-section lp-section--how">
-        <div className="lp-how-header">
-          <div className="lp-section-eyebrow lp-section-eyebrow--green">Simple Process</div>
-          <h2 className="lp-section-h2">How AgriConnect Works</h2>
-          <p className="lp-section-sub">From farm to market in three straightforward steps</p>
-        </div>
-        
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* Animated Connecting Line behind cards */}
-          <div className="lp-how-line-container">
-            <AnimatedDashedLine />
-          </div>
-
-          <motion.div
-            className="lp-how-grid"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            {[
-              { step: "01", icon: "🌾", title: "Register for Free", desc: "Create your account in seconds — no documents needed. Tell us about your farm, location and crops." },
-              { step: "02", icon: "🔍", title: "Explore Features",  desc: "Access mandi rates, get AI crop advice, browse schemes, list crops on marketplace and more." },
-              { step: "03", icon: "💰", title: "Earn Better",       desc: "Sell directly at better prices, claim government benefits, and make smarter farming decisions every day." },
-            ].map((h, i) => (
-              <motion.div key={h.step} variants={fadeUp} className="lp-how-card lp-spotlight-card">
-                <div className="lp-spotlight-border"></div>
-                <div className="lp-how-card-inner">
-                  <div className="lp-how-step-badge">{h.step}</div>
-                  <motion.div className="lp-how-icon"
-                    whileHover={{ scale: 1.15, rotate: -10, y: -5 }}
-                    transition={{ type: "spring", stiffness: 400 }}>
-                    {h.icon}
-                  </motion.div>
-                  <h3 className="lp-how-title">{h.title}</h3>
-                  <p className="lp-how-desc">{h.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </Reveal>
-
-      {/* ══════════════════════════════════════════════════════
           WEATHER + SHOP FINDER  (2-column CTAs with photos)
       ══════════════════════════════════════════════════════ */}
       <Reveal className="lp-section lp-section--dual-cta">
@@ -1141,20 +1252,13 @@ export default function Landing() {
         </div>
       </Reveal>
 
-      {/* ══════════════════════════════════════════════════════
-          FINAL CTA STRIP
-      ══════════════════════════════════════════════════════ */}
       <Reveal className="lp-section lp-section--final-cta">
         <div className="lp-final-cta">
           <div className="lp-final-cta-mesh" />
-          <div className="lp-final-cta-orb lp-final-cta-orb--1" />
-          <div className="lp-final-cta-orb lp-final-cta-orb--2" />
+          
+          
           <div className="lp-final-cta-content">
-            <motion.div className="lp-final-cta-emoji"
-              animate={{ y: [0, -10, 0], rotate: [0, 5, 0, -5, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-              🌾
-            </motion.div>
+            
             <h2 className="lp-final-cta-h2">Ready to Transform Your Farm?</h2>
             <p className="lp-final-cta-p">
               Join thousands of farmers already using AgriConnect to get better prices,
@@ -1435,7 +1539,7 @@ export default function Landing() {
 
         /* ── Section Wrapper ─────────────────────────────────────────── */
         .lp-section {
-          width: 100%; padding: 80px clamp(20px, 6vw, 100px); box-sizing: border-box;
+          width: 100%; padding: 50px clamp(20px, 6vw, 100px); box-sizing: border-box;
         }
         .lp-section--quicklinks { padding-top: 32px; padding-bottom: 32px; background: transparent; margin-top: -40px; position: relative; z-index: 10; }
         .lp-section--how { background: #fff; position: relative; overflow: hidden; }
@@ -1495,10 +1599,12 @@ export default function Landing() {
           gap: clamp(40px, 8vw, 100px);
           align-items: center;
         }
-        .lp-split-section--news       { background: #ffffff; }
+        .lp-split-section--community  { background: #ffffff; }
         .lp-split-section--schemes    { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; }
         .lp-split-section--mandi      { background: #ffffff; }
         .lp-split-section--ai         { background: #FAFAFA; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;}
+        .lp-split-section--knowledge  { background: #ffffff; }
+        .lp-split-section--donations  { background: #FAFAFA; border-top: 1px solid #F1F5F9; }
         .lp-split-section--marketplace { background: #ffffff; }
         .lp-split-section--reverse    { direction: rtl; }
         .lp-split-section--reverse > * { direction: ltr; }
@@ -1753,7 +1859,7 @@ export default function Landing() {
         .lp-features-section {
           position: relative; overflow: hidden;
           background: #022c22; /* Very dark green */
-          padding: 100px clamp(20px, 6vw, 100px);
+          padding: 60px clamp(20px, 6vw, 100px);
         }
         .lp-features-bg {
           position: absolute; inset: -20%; pointer-events: none;
