@@ -62,16 +62,6 @@ export default function Navbar() {
   return (
     <>
       {/* ── Announcement bar ─────────────────────────────────── */}
-      <div className="nb-announce">
-        <span>
-          PM-KISAN 17th instalment released — ₹6,000/year for eligible farmers
-          &nbsp;|&nbsp; Helpline: 1800-123-4567
-        </span>
-        <div className="nb-lang">
-          <span>हिन्दी</span>
-          <span>English</span>
-        </div>
-      </div>
 
       {/* ── Main navbar ──────────────────────────────────────── */}
       <nav className={`nb${scrolled ? " nb--scrolled" : ""}`}>
@@ -172,7 +162,7 @@ export default function Navbar() {
                           className="nb-drop-item"
                           onClick={() => setDropOpen(false)}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                           Profile Settings
                         </Link>
                         <div className="nb-drop-divider" />

@@ -58,9 +58,8 @@ import ShopFinder from "../pages/ShopFinder";
 import Community from "../pages/community/Community";
 import PostDetail from "../pages/community/PostDetail";
 import CropCalendarPage from "../pages/CropCalendarPage";
-
-
-export default function AppRoutes() {
+import About from "../pages/About";
+import Contact from "../pages/Contact"; export default function AppRoutes() {
   return (
     <Routes>
 
@@ -132,6 +131,10 @@ export default function AppRoutes() {
 
       {/* ── Crop Calendar ── */}
       <Route path="/calendar" element={<CropCalendarPage />} />
+
+      {/* ── Company Pages ── */}
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
 
       {/* ── Catch all ── */}
