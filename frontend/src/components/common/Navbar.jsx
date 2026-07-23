@@ -10,6 +10,7 @@ import { logoutAllRoles } from "../../redux/slices/authSlice";
 const PUBLIC_LINKS = [
   { to: "/marketplace", label: "Marketplace" },
   { to: "/crop-knowledge", label: "Crop Knowledge" },
+  { to: "/calendar", label: "Crop Calendar" },
   { to: "/mandi", label: "Mandi Rates" },
   { to: "/recommendations/crop", label: "Crop Advisor" },
   { to: "/schemes", label: "Schemes" },

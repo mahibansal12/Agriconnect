@@ -13,6 +13,7 @@ function CropCalendar() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hoveredEventId, setHoveredEventId] = useState(null);
+  const [eventToEdit, setEventToEdit] = useState(null);
 
   // Refs for scrolling to events
   const eventRefs = useRef({});
@@ -36,6 +37,31 @@ function CropCalendar() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleEditEvent = (event) => {
+    setEventToEdit(event);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteEvent = async (event) => {
+    if (window.confirm("Are you sure you want to delete this activity?")) {
+      try {
+        await axiosInstance.delete(`/v1/farmer-events/${event._id}`);
+        fetchData();
+      } catch (err) {
+        console.error("Failed to delete event", err);
+      }
+    }
+  };
+
+  const handleMarkDoneEvent = async (event) => {
+    try {
+      await axiosInstance.patch(`/v1/farmer-events/${event._id}`, { status: 'completed' });
+      fetchData();
+    } catch (err) {
+      console.error("Failed to mark event done", err);
+    }
+  };
 
   const getEventsForMonth = (date) => {
     return personalEvents.filter((e) => {
@@ -295,6 +321,9 @@ function CropCalendar() {
                         <CalendarEvent 
                           event={event} 
                           isHighlighted={hoveredEventId === event._id}
+                          onEdit={handleEditEvent}
+                          onDelete={handleDeleteEvent}
+                          onMarkDone={handleMarkDoneEvent}
                         />
                       </div>
                     ))}
@@ -308,9 +337,10 @@ function CropCalendar() {
       
       <AddEventModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => { setIsModalOpen(false); setEventToEdit(null); }} 
         selectedDate={selectedDate} 
-        onEventAdded={() => fetchData()} 
+        onEventAdded={() => fetchData()}
+        eventToEdit={eventToEdit}
       />
     </div>
   );
