@@ -10,34 +10,36 @@ import axiosInstance from "../utils/axiosInstance";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SCHEME_CATEGORY_ICON = {
-  subsidy:   "💰",
-  loan:      "🏦",
+  subsidy: "💰",
+  loan: "🏦",
   insurance: "🛡️",
-  training:  "📚",
-  other:     "📋",
+  training: "📚",
+  other: "📋",
 };
 
 const CAT_COLORS = {
   government: { bg: "#dbeafe", color: "#1d4ed8", label: "Government" },
-  market:     { bg: "#fef3c7", color: "#92400e", label: "Market" },
-  weather:    { bg: "#e0f2fe", color: "#0c4a6e", label: "Weather" },
+  market: { bg: "#fef3c7", color: "#92400e", label: "Market" },
+  weather: { bg: "#e0f2fe", color: "#0c4a6e", label: "Weather" },
   technology: { bg: "#ede9fe", color: "#4c1d95", label: "Technology" },
-  general:    { bg: "#d1fae5", color: "#064e3b", label: "General" },
+  general: { bg: "#d1fae5", color: "#064e3b", label: "General" },
 };
 
 const POST_CAT_STYLE = {
-  general:       { bg: "#fee2e2", color: "#b91c1c", label: "General", icon: "💬" },
-  "crop-tips":   { bg: "#dcfce7", color: "#15803d", label: "Crop Tips", icon: "🌱" },
-  weather:       { bg: "#e0f2fe", color: "#0c4a6e", label: "Weather", icon: "🌦️" },
-  market:        { bg: "#fef3c7", color: "#92400e", label: "Market", icon: "📊" },
-  "pest-control":{ bg: "#ede9fe", color: "#5b21b6", label: "Pest Control", icon: "🐛" },
+  general: { bg: "#fee2e2", color: "#b91c1c", label: "General", icon: "💬" },
+  "crop-tips": { bg: "#dcfce7", color: "#15803d", label: "Crop Tips", icon: "🌱" },
+  weather: { bg: "#e0f2fe", color: "#0c4a6e", label: "Weather", icon: "🌦️" },
+  market: { bg: "#fef3c7", color: "#92400e", label: "Market", icon: "📊" },
+  "pest-control": { bg: "#ede9fe", color: "#5b21b6", label: "Pest Control", icon: "🐛" },
 };
+
+const QUICK_LINK_IMG = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80";
 
 // All features of the platform
 const ALL_FEATURES = [
   { to: "/marketplace", icon: "🛒", label: "Marketplace", sub: "Buy & sell crops directly to buyers across India", photo: "/marketplace_photo.png", color: "#0EA5E9", grad: "linear-gradient(135deg, #0EA5E9, #0284C7)", tag: "Trade" },
   { to: "/mandi", icon: "📊", label: "Mandi Rates", sub: "Live commodity price updates from mandis", photo: "/mandi_photo.png", color: "#D97706", grad: "linear-gradient(135deg, #F59E0B, #D97706)", tag: "Live" },
-  { to: "/recommendations/crop", icon: "🌱", label: "Crop Advisor", sub: "AI-powered personalised crop suggestions", photo: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80", color: "#059669", grad: "linear-gradient(135deg, #10B981, #059669)", tag: "AI Powered" },
+  { to: "/recommendations/crop", icon: "🌱", label: "Crop Advisor", sub: "Personalised crop suggestions for you", photo: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80", color: "#059669", grad: "linear-gradient(135deg, #10B981, #059669)", tag: "Advisor" },
   { to: "/schemes", icon: "📋", label: "Govt Schemes", sub: "Explore subsidies, loans, insurance & training", photo: "/schemes_photo.png", color: "#7C3AED", grad: "linear-gradient(135deg, #8B5CF6, #7C3AED)", tag: "Benefits" },
   { to: "/news", icon: "📰", label: "Agri News", sub: "Latest agriculture news, policies & market trends", photo: "/news_photo.png", color: "#DC2626", grad: "linear-gradient(135deg, #EF4444, #DC2626)", tag: "Breaking" },
   { to: "/community", icon: "👥", label: "Community", sub: "Connect with farmers across India", photo: "/community_photo_1.jpg", color: "#0891B2", grad: "linear-gradient(135deg, #22D3EE, #0891B2)", tag: "Connect" },
@@ -216,13 +218,13 @@ function AnimatedDashedLine() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Landing() {
-  const [weather, setWeather]               = useState(null);
-  const [locationName, setLocationName]     = useState("Detecting location...");
+  const [weather, setWeather] = useState(null);
+  const [locationName, setLocationName] = useState("Detecting location...");
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [schemes, setSchemes]               = useState([]);
-  const [mandiRates, setMandiRates]         = useState([]);
+  const [schemes, setSchemes] = useState([]);
+  const [mandiRates, setMandiRates] = useState([]);
   const [communityPosts, setCommunityPosts] = useState([]);
-  const [mandiLoading, setMandiLoading]     = useState(true);
+  const [mandiLoading, setMandiLoading] = useState(true);
   const [schemesLoading, setSchemesLoading] = useState(true);
 
   const heroRef = useRef(null);
@@ -446,9 +448,9 @@ export default function Landing() {
               </Link>
             </div>
           </motion.div>
-          
+
           {/* Floating Market Alert */}
-          <motion.div 
+          <motion.div
             className="lp-hero-alert lp-glass-panel"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -478,8 +480,17 @@ export default function Landing() {
             <motion.div key={l.to} variants={scaleIn}>
               <Link to={l.to} className="lp-quick-card lp-spotlight-card" style={{ "--card-color": l.color, "--card-grad": l.grad }}>
                 <div className="lp-spotlight-border"></div>
-                <div className="lp-spotlight-content">
+                <div className="lp-quick-img-wrap">
+                  <img
+                    src={l.photo}
+                    alt={l.label}
+                    className="lp-quick-img"
+                    loading="lazy"
+                  />
+                  <div className="lp-quick-img-overlay" style={{ background: l.grad + "D9" }} />
                   <span className="lp-quick-tag">{l.tag}</span>
+                </div>
+                <div className="lp-spotlight-content">
                   <motion.span className="lp-quick-icon"
                     whileHover={{ scale: 1.25, rotate: 10 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}>
@@ -509,9 +520,9 @@ export default function Landing() {
           </p>
           <div className="lp-marketplace-features">
             {[
-              { icon: "✅", t: "Verified Buyers", s: "Buyers you can trust" },
-              { icon: "💬", t: "Direct Chat",     s: "Negotiate price directly" },
-              { icon: "🚀", t: "Quick Listing",   s: "List in under 2 minutes" },
+              { icon: "🤝", t: "Direct Buyers", s: "Connect with genuine buyers" },
+              { icon: "💬", t: "Direct Chat", s: "Negotiate price directly" },
+              { icon: "🚀", t: "Quick Crop Listing", s: "List your harvest in 2 mins" },
             ].map((f, i) => (
               <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
                 <span className="lp-mp-feat-icon">{f.icon}</span>
@@ -540,27 +551,24 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
-            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
-              <span className="lp-badge-dot lp-badge-dot--blue" />
-              <span>Zero Commission</span>
-            </motion.div>
-            
+
+
+
             <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✅</div>
-                 <div>
-                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0A2E0C' }}>Order #4092</div>
-                   <div style={{ fontSize: 11, color: '#0284C7', fontWeight: 600 }}>Payment Secured</div>
-                 </div>
-               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>✅</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#0A2E0C' }}>Order #4092</div>
+                  <div style={{ fontSize: 11, color: '#0284C7', fontWeight: 600 }}>Payment Secured</div>
+                </div>
+              </div>
             </motion.div>
           </div>
           <div className="lp-split-stat-row">
             {[
-              { val: "0%", label: "Commission" },
-              { val: "15+", label: "Crop Types" },
+              { val: "All", label: "Crop Types" },
               { val: "Fast", label: "Settlement" },
+              { val: "Direct", label: "Contact" },
             ].map(s => (
               <motion.div key={s.label} className="lp-split-stat lp-split-stat--blue" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
                 <div className="lp-split-stat-val">{s.val}</div>
@@ -568,6 +576,7 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+
         </Reveal>
       </section>
 
@@ -575,14 +584,14 @@ export default function Landing() {
 
 
 
-      
 
-      
+
+
 
       {/* ══════════════════════════════════════════════════════
           FINAL CTA STRIP
       ══════════════════════════════════════════════════════ */}
-      
+
       <section className="lp-section lp-split-section lp-split-section--mandi">
         {/* Left — info + graph + rate preview */}
         <Reveal className="lp-split-info" delay={0}>
@@ -646,24 +655,24 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
+
             <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
               <span className="lp-badge-dot lp-badge-dot--green" />
               <span>Updated Hourly</span>
             </motion.div>
-            
+
             {/* Floating Glass Chart Card */}
             <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}>
-               <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>TOP GAINER</div>
-               <div style={{ fontSize: 16, fontWeight: 800, color: '#0A2E0C', margin: '2px 0' }}>Wheat <span style={{ color: '#16A34A', fontSize: 14 }}>↑ 4%</span></div>
-               <div style={{ width: 80, height: 2, background: '#16A34A', marginTop: 6, borderRadius: 2 }}></div>
+              <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>TOP GAINER</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#0A2E0C', margin: '2px 0' }}>Wheat <span style={{ color: '#16A34A', fontSize: 14 }}>↑ 4%</span></div>
+              <div style={{ width: 80, height: 2, background: '#16A34A', marginTop: 6, borderRadius: 2 }}></div>
             </motion.div>
           </div>
           <div className="lp-split-stat-row">
             {[
-              { val: "500+", label: "Mandis" },
-              { val: "200+", label: "Commodities" },
-              { val: "Hourly", label: "Updates" },
+              { val: "Fresh", label: "Commodities" },
+              { val: "Live", label: "Market Data" },
+              { val: "Verified", label: "Mandis" },
             ].map(s => (
               <motion.div key={s.label} className="lp-split-stat lp-split-stat--amber" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
                 <div className="lp-split-stat-val">{s.val}</div>
@@ -671,10 +680,11 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+
         </Reveal>
       </section>
 
-      
+
 
       {/* ══════════════════════════════════════════════════════
           🤖 AI + CROP ADVISOR SPLIT HIGHLIGHT
@@ -770,7 +780,7 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
+
             {/* Floating UI Badges */}
             <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
               <span className="lp-badge-dot lp-badge-dot--red" />
@@ -781,19 +791,20 @@ export default function Landing() {
               🌧️ Monsoon alerts active
             </motion.div>
           </div>
-          
           <div className="lp-split-stat-row">
             {[
-              { val: "5+", label: "Categories" },
-              { val: "Daily", label: "Updates" },
+              { val: "Daily", label: "Discussions" },
+              { val: "Active", label: "Farmers" },
               { val: "Free", label: "Access" },
-            ].map((s, i) => (
+            ].map(s => (
               <motion.div key={s.label} className="lp-split-stat lp-split-stat--red" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
                 <div className="lp-split-stat-val">{s.val}</div>
                 <div className="lp-split-stat-label">{s.label}</div>
               </motion.div>
             ))}
           </div>
+
+
         </Reveal>
       </section>
 
@@ -812,20 +823,17 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
+
             {/* Floating UI Badges */}
-            <motion.div className="lp-floating-badge lp-floating-badge--tr" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}>
-              <span>🏛️ Govt Verified</span>
-            </motion.div>
-            
+
+
             <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
               💰 PM-Kisan Support
             </motion.div>
           </div>
-          
           <div className="lp-split-stat-row">
             {[
-              { val: "50+", label: "Schemes" },
+              { val: "Top", label: "Featured Schemes" },
               { val: "₹Free", label: "To Apply" },
               { val: "All", label: "Farmers" },
             ].map(s => (
@@ -835,6 +843,8 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+
+
         </Reveal>
 
         {/* Right — info + animated carousel */}
@@ -958,26 +968,26 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
+
             <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
               <span className="lp-badge-dot lp-badge-dot--green" />
               <span>100+ Crop Guides</span>
             </motion.div>
-            
+
             <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🐛</div>
-                 <div>
-                   <div style={{ fontSize: 13, fontWeight: 800, color: '#064e3b' }}>Fall Armyworm</div>
-                   <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>Treatment Found</div>
-                 </div>
-               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🐛</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#064e3b' }}>Fall Armyworm</div>
+                  <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>Treatment Found</div>
+                </div>
+              </div>
             </motion.div>
           </div>
           <div className="lp-split-stat-row">
             {[
-              { val: "100+", label: "Crop Varieties" },
-              { val: "300+", label: "Pest Solutions" },
+              { val: "A-Z", label: "Crop Guides" },
+              { val: "Fast", label: "Pest Solutions" },
               { val: "Free", label: "For Everyone" },
             ].map(s => (
               <motion.div key={s.label} className="lp-split-stat lp-split-stat--green" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
@@ -986,6 +996,7 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+
         </Reveal>
       </section>
 
@@ -1000,27 +1011,14 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
-            <motion.div className="lp-floating-badge lp-floating-badge--tr lp-badge--glow" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}>
-              <span>🤖 AI Powered</span>
-            </motion.div>
-            
+
+
+
             <motion.div className="lp-floating-glass-pill lp-floating-glass-pill--bl" animate={{ y: [0, 8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>
               ✨ "Best crop for clay soil?"
             </motion.div>
           </div>
-          <div className="lp-split-stat-row">
-            {[
-              { val: "24/7", label: "Available" },
-              { val: "Hindi", label: "+ English" },
-              { val: "Free", label: "For All" },
-            ].map(s => (
-              <motion.div key={s.label} className="lp-split-stat lp-split-stat--indigo" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
-                <div className="lp-split-stat-val">{s.val}</div>
-                <div className="lp-split-stat-label">{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
+
         </Reveal>
 
         <Reveal className="lp-split-info" delay={0}>
@@ -1066,7 +1064,6 @@ export default function Landing() {
             {[
               { icon: "🤝", t: "Raise Funds", s: "Start a campaign for your needs" },
               { icon: "💸", t: "Zero Fees", s: "100% goes to the farmer" },
-              { icon: "🛡️", t: "Verified", s: "All campaigns are KYC verified" },
             ].map((f, i) => (
               <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
                 <span className="lp-mp-feat-icon">{f.icon}</span>
@@ -1097,39 +1094,15 @@ export default function Landing() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
             <div className="lp-split-photo-overlay" />
-            
-            <motion.div className="lp-floating-badge lp-floating-badge--tl" animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
-              <span className="lp-badge-dot lp-badge-dot--orange" />
-              <span>Verified Campaigns</span>
-            </motion.div>
-            
-            <motion.div className="lp-floating-glass-card lp-floating-glass-card--br" animate={{ y: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>❤️</div>
-                 <div>
-                   <div style={{ fontSize: 13, fontWeight: 800, color: '#9a3412' }}>₹5,000 Donated</div>
-                   <div style={{ fontSize: 11, color: '#c2410c', fontWeight: 600 }}>Just now</div>
-                 </div>
-               </div>
-            </motion.div>
+
+
           </div>
-          <div className="lp-split-stat-row">
-            {[
-              { val: "100%", label: "Direct Transfer" },
-              { val: "24h", label: "Verification" },
-              { val: "Free", label: "To Use" },
-            ].map(s => (
-              <motion.div key={s.label} className="lp-split-stat lp-split-stat--orange" whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
-                <div className="lp-split-stat-val">{s.val}</div>
-                <div className="lp-split-stat-label">{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
+
         </Reveal>
       </section>
 
 
-      
+
 
       {/* ══════════════════════════════════════════════════════
           🌟 ALL FEATURES SHOWCASE  (photo grid, parallax bg, spotlight)
@@ -1138,11 +1111,11 @@ export default function Landing() {
         <motion.div className="lp-features-bg" style={{ y: featBgY }}>
           <div className="lp-features-bg-img" />
         </motion.div>
-        
+
         {/* Decorative elements */}
         <div className="lp-features-decor lp-features-decor--1" />
         <div className="lp-features-decor lp-features-decor--2" />
-        
+
         <div className="lp-features-content">
           <Reveal>
             <div className="lp-features-header">
@@ -1270,10 +1243,10 @@ export default function Landing() {
       <Reveal className="lp-section lp-section--final-cta">
         <div className="lp-final-cta">
           <div className="lp-final-cta-mesh" />
-          
-          
+
+
           <div className="lp-final-cta-content">
-            
+
             <h2 className="lp-final-cta-h2">Ready to Transform Your Farm?</h2>
             <p className="lp-final-cta-p">
               Join thousands of farmers already using AgriConnect to get better prices,
@@ -1571,10 +1544,9 @@ export default function Landing() {
           display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;
         }
         .lp-quick-card {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center; gap: 10px;
-          min-height: 160px; padding: 24px 16px;
-          text-decoration: none;
+          display: flex; flex-direction: column;
+          height: 200px; padding: 0;
+          text-decoration: none; overflow: hidden;
           background: #ffffff;
           border: 1px solid #E2E8F0;
           box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
@@ -1583,33 +1555,54 @@ export default function Landing() {
         .lp-quick-card:hover {
           transform: translateY(-8px);
           box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
-          border-color: transparent; /* Spotlight border takes over */
+          border-color: transparent;
         }
         .lp-spotlight-border {
            position: absolute; inset: 0; border-radius: 16px; padding: 2px;
            background: var(--card-grad, #16A34A);
            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
            -webkit-mask-composite: xor; mask-composite: exclude;
-           opacity: 0; transition: opacity 0.3s;
+           opacity: 0; transition: opacity 0.3s; z-index: 3; pointer-events: none;
         }
         .lp-quick-card:hover .lp-spotlight-border { opacity: 1; }
-        
+
+        /* Image top section — fixed height so all cards align */
+        .lp-quick-img-wrap {
+          position: relative; width: 100%; height: 110px; flex-shrink: 0;
+          overflow: hidden;
+        }
+        .lp-quick-img {
+          width: 100%; height: 100%; object-fit: cover; display: block;
+          transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .lp-quick-card:hover .lp-quick-img { transform: scale(1.1); }
+        .lp-quick-img-overlay {
+          position: absolute; inset: 0; opacity: 0.55;
+          transition: opacity 0.4s;
+        }
+        .lp-quick-card:hover .lp-quick-img-overlay { opacity: 0.35; }
+
         .lp-spotlight-content {
            display: flex; flex-direction: column; align-items: center; justify-content: center;
-           position: relative; z-index: 2; height: 100%; width: 100%;
+           position: relative; z-index: 2; flex: 1; width: 100%;
+           padding: 8px 10px 10px;
+           text-align: center;
         }
 
         .lp-quick-tag {
-          position: absolute; top: -10px; right: -10px; /* adjusted relative to content */
+          position: absolute; top: 8px; right: 8px; z-index: 2;
           font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
           text-transform: uppercase; padding: 4px 8px; border-radius: 100px;
           background: var(--card-color, #16A34A); color: #fff;
           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
-        .lp-quick-icon  { font-size: 32px; margin-bottom: 4px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
-        .lp-quick-label { font-size: 14px; font-weight: 800; color: #0F172A; text-align: center; }
-        .lp-quick-sub   { font-size: 11px; color: #64748B; text-align: center; line-height: 1.4; display: none; margin-top: 4px; }
-        .lp-quick-card:hover .lp-quick-sub { display: block; animation: fadeIn 0.3s ease forwards; }
+        .lp-quick-icon  { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .lp-quick-label { font-size: 12px; font-weight: 800; color: #0F172A; text-align: center; line-height: 1.2; }
+        .lp-quick-sub   {
+          font-size: 10px; color: #64748B; text-align: center; line-height: 1.3;
+          display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+          overflow: hidden; margin-top: 2px;
+        }
         @keyframes fadeIn { from {opacity: 0; transform: translateY(4px);} to {opacity: 1; transform: translateY(0);} }
 
         /* ── Split Sections ──────────────────────────────────────────── */
