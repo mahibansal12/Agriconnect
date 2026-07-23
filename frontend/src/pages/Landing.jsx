@@ -25,6 +25,14 @@ const CAT_COLORS = {
   general:    { bg: "#d1fae5", color: "#064e3b", label: "General" },
 };
 
+const POST_CAT_STYLE = {
+  general:       { bg: "#fee2e2", color: "#b91c1c", label: "General", icon: "💬" },
+  "crop-tips":   { bg: "#dcfce7", color: "#15803d", label: "Crop Tips", icon: "🌱" },
+  weather:       { bg: "#e0f2fe", color: "#0c4a6e", label: "Weather", icon: "🌦️" },
+  market:        { bg: "#fef3c7", color: "#92400e", label: "Market", icon: "📊" },
+  "pest-control":{ bg: "#ede9fe", color: "#5b21b6", label: "Pest Control", icon: "🐛" },
+};
+
 // All features of the platform
 const ALL_FEATURES = [
   { to: "/marketplace", icon: "🛒", label: "Marketplace", sub: "Buy & sell crops directly to buyers across India", photo: "/marketplace_photo.png", color: "#0EA5E9", grad: "linear-gradient(135deg, #0EA5E9, #0284C7)", tag: "Trade" },
@@ -213,7 +221,7 @@ export default function Landing() {
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [schemes, setSchemes]               = useState([]);
   const [mandiRates, setMandiRates]         = useState([]);
-  const [news, setNews]                     = useState([]);
+  const [communityPosts, setCommunityPosts] = useState([]);
   const [mandiLoading, setMandiLoading]     = useState(true);
   const [schemesLoading, setSchemesLoading] = useState(true);
 
@@ -222,9 +230,9 @@ export default function Landing() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  // News carousel
-  const newsLen = news.length || 1;
-  const { idx: newsIdx, dir: newsDir, go: goNews, progress: newsProgress } = useAutoCarousel(newsLen, 5000);
+  // Community posts carousel
+  const postsLen = communityPosts.length || 1;
+  const { idx: postIdx, dir: postDir, go: goPost, progress: postProgress } = useAutoCarousel(postsLen, 5000);
 
   // Schemes carousel
   const schemeLen = schemes.length || 1;
@@ -244,12 +252,12 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    axiosInstance.get("/v1/news")
+    axiosInstance.get("/v1/community/posts")
       .then(res => {
-        const articles = Array.isArray(res.data?.data) ? res.data.data : [];
-        setNews([...articles].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6));
+        const posts = Array.isArray(res.data?.data) ? res.data.data : [];
+        setCommunityPosts([...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6));
       })
-      .catch(() => setNews([]));
+      .catch(() => setCommunityPosts([]));
   }, []);
 
   useEffect(() => {
@@ -298,9 +306,11 @@ export default function Landing() {
     return "🌤️";
   };
 
-  const currentNews = news[newsIdx];
+  const currentPost = communityPosts[postIdx];
   const currentScheme = schemes[schemeIdx];
-  const currentNewsStyle = currentNews ? (CAT_COLORS[currentNews.category] || { bg: "#f3f4f6", color: "#374151", label: currentNews?.category }) : null;
+  const currentPostStyle = currentPost ? (POST_CAT_STYLE[currentPost.category] || { bg: "#f3f4f6", color: "#374151", label: currentPost?.category, icon: "💬" }) : null;
+  const postAuthorName = currentPost?.author?.name || "Farmer";
+  const postAuthorInitial = postAuthorName.trim().charAt(0).toUpperCase();
 
   // ── Hover Spotlight Effect Logic ─────────────────────────────────────────────
   const handleMouseMove = (e) => {
@@ -495,14 +505,12 @@ export default function Landing() {
           <h2 className="lp-section-h2">Sell Your Crops<br /><span className="lp-h2-accent-blue">Directly to Buyers</span></h2>
           <p className="lp-section-desc">
             List your harvest in minutes and connect with verified buyers across India. No
-            middlemen, no hidden charges. Negotiate directly and get better prices with
-            AI-powered pricing suggestions.
+            middlemen, no hidden charges. Negotiate directly and get better prices.
           </p>
           <div className="lp-marketplace-features">
             {[
-              { icon: "✅", t: "Verified Buyers", s: "All buyers are KYC verified" },
+              { icon: "✅", t: "Verified Buyers", s: "Buyers you can trust" },
               { icon: "💬", t: "Direct Chat",     s: "Negotiate price directly" },
-              { icon: "🤖", t: "AI Pricing",      s: "Smart price suggestions" },
               { icon: "🚀", t: "Quick Listing",   s: "List in under 2 minutes" },
             ].map((f, i) => (
               <motion.div key={f.t} className="lp-mp-feat" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.2 }}>
@@ -680,39 +688,46 @@ export default function Landing() {
             Connect with fellow farmers, share your experiences, and learn from the community. A dedicated space for Indian farmers to grow together.
           </p>
 
-          {/* Animated news card */}
+          {/* Animated community post card */}
           <div className="lp-carousel-box lp-carousel-box--news">
-            {news.length === 0 ? (
+            {communityPosts.length === 0 ? (
               <div className="lp-carousel-empty">
                 <div className="lp-carousel-skeleton" />
                 <div className="lp-carousel-skeleton lp-carousel-skeleton--sm" />
                 <div className="lp-carousel-skeleton lp-carousel-skeleton--xs" />
               </div>
             ) : (
-              <AnimatePresence mode="wait" custom={newsDir}>
+              <AnimatePresence mode="wait" custom={postDir}>
                 <motion.div
-                  key={newsIdx}
-                  custom={newsDir}
+                  key={postIdx}
+                  custom={postDir}
                   variants={slideVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
                   className="lp-news-slide"
                 >
-                  <div className="lp-news-slide-cat"
-                    style={{ background: currentNewsStyle?.bg, color: currentNewsStyle?.color }}>
-                    {currentNewsStyle?.label || currentNews?.category}
+                  <div className="lp-post-slide-author">
+                    <div className="lp-post-slide-avatar">{postAuthorInitial}</div>
+                    <div>
+                      <div className="lp-post-slide-name">{postAuthorName}</div>
+                      <div className="lp-post-slide-time">🕐 {timeAgo(currentPost?.createdAt)}</div>
+                    </div>
+                    <div className="lp-news-slide-cat lp-post-slide-cat"
+                      style={{ background: currentPostStyle?.bg, color: currentPostStyle?.color }}>
+                      {currentPostStyle?.icon} {currentPostStyle?.label || currentPost?.category}
+                    </div>
                   </div>
-                  <div className="lp-news-slide-title">{currentNews?.title}</div>
+                  <div className="lp-news-slide-title">{currentPost?.title}</div>
                   <div className="lp-news-slide-excerpt">
-                    {(currentNews?.content || "").slice(0, 140)}…
+                    {(currentPost?.content || "").slice(0, 140)}…
                   </div>
                   <div className="lp-news-slide-meta">
-                    <span className="lp-news-slide-date">🕐 {timeAgo(currentNews?.createdAt)}</span>
+                    <span className="lp-news-slide-date">❤️ {Array.isArray(currentPost?.likes) ? currentPost.likes.length : (currentPost?.likes || 0)} likes</span>
                     <Link
-                      to={`/news/${currentNews?._id}`}
+                      to={`/community/${currentPost?._id}`}
                       className="lp-news-slide-read">
-                      Read more <span className="lp-arrow-icon">→</span>
+                      View post <span className="lp-arrow-icon">→</span>
                     </Link>
                   </div>
                 </motion.div>
@@ -720,16 +735,16 @@ export default function Landing() {
             )}
 
             {/* Progress Dots */}
-            {news.length > 0 && (
+            {communityPosts.length > 0 && (
               <div className="lp-carousel-dots">
-                {news.map((_, i) => (
+                {communityPosts.map((_, i) => (
                   <button
                     key={i}
-                    className={`lp-dot-btn ${i === newsIdx ? "lp-dot-btn--active lp-dot-btn--red" : ""}`}
-                    onClick={() => goNews(i)}
-                    aria-label={`News ${i + 1}`}
+                    className={`lp-dot-btn ${i === postIdx ? "lp-dot-btn--active lp-dot-btn--red" : ""}`}
+                    onClick={() => goPost(i)}
+                    aria-label={`Post ${i + 1}`}
                   >
-                    {i === newsIdx && <div className="lp-dot-progress" style={{ width: `${newsProgress}%`, background: "#DC2626" }} />}
+                    {i === postIdx && <div className="lp-dot-progress" style={{ width: `${postProgress}%`, background: "#DC2626" }} />}
                   </button>
                 ))}
               </div>
@@ -1760,6 +1775,16 @@ export default function Landing() {
 
         /* News slide */
         .lp-news-slide { padding: 28px 32px; }
+        .lp-post-slide-author { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .lp-post-slide-avatar {
+          width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+          background: linear-gradient(135deg, #F87171, #DC2626); color: #fff;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 16px; font-weight: 800; box-shadow: 0 4px 10px rgba(220,38,38,0.25);
+        }
+        .lp-post-slide-name { font-size: 14px; font-weight: 800; color: #0F172A; }
+        .lp-post-slide-time { font-size: 12px; color: #94A3B8; font-weight: 600; margin-top: 1px; }
+        .lp-post-slide-cat { margin-left: auto; margin-bottom: 0; white-space: nowrap; }
         .lp-news-slide-cat {
           display: inline-flex; padding: 4px 12px; border-radius: 100px;
           font-size: 12px; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;
