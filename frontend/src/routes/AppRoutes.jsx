@@ -14,26 +14,26 @@ const ComingSoon = ({ name }) => (
   </div>
 );
 
-import Login    from "../pages/auth/Login";
+import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-import ResetPassword   from "../pages/auth/ResetPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
-import Landing         from "../pages/Landing";
+import Landing from "../pages/Landing";
 import FarmerDashboard from "../pages/dashboard/FarmerDashboard";
 
 import Marketplace from "../pages/marketplace/Marketplace";
-import CropDetail  from "../pages/marketplace/CropDetail";
-import AddListing  from "../pages/marketplace/AddListing";
+import CropDetail from "../pages/marketplace/CropDetail";
+import AddListing from "../pages/marketplace/AddListing";
 import PrivateRoute from '../components/common/PrivateRoute';
-import RoleRoute    from '../components/common/RoleRoute';
+import RoleRoute from '../components/common/RoleRoute';
 
 import MandiRates from "../pages/MandiRates";
 
-import CropRecommendation  from "../pages/recommendations/CropRecommendation";
+import CropRecommendation from "../pages/recommendations/CropRecommendation";
 import WaterBasedRecommendation from "../pages/recommendations/WaterBasedRecommendation";
-import SeedRecommendation  from "../pages/recommendations/SeedRecommendation";
-import Calculators         from "../pages/Calculators";
+import SeedRecommendation from "../pages/recommendations/SeedRecommendation";
+import Calculators from "../pages/Calculators";
 
 import AdminRoutes from './AdminRoutes';
 import FarmerRoutes from './FarmerRoutes';
@@ -42,9 +42,9 @@ import BuyerRoutes from './BuyerRoutes';
 import AIAssistant from "../pages/AIAssistant";
 
 
-import CropKnowledge       from "../pages/crop-knowledge/CropKnowledge";
+import CropKnowledge from "../pages/crop-knowledge/CropKnowledge";
 import CropKnowledgeDetail from "../pages/crop-knowledge/CropKnowledgeDetail";
-import Weather              from "../pages/Weather";
+import Weather from "../pages/Weather";
 import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail";
 import Schemes from "../pages/schemes/Schemes";
@@ -66,33 +66,33 @@ export default function AppRoutes() {
 
       {/* ── Public routes ── */}
       <Route path="/" element={<Landing />} />
-      <Route path="/login"    element={<Login/>} />
-      <Route path="/register" element={<Register/>} />
-      <Route path="/forgot-password" element={<ForgotPassword/>} />
-      <Route path="/reset-password/:token" element={<ResetPassword/>} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* ── Marketplace ── */}
-      <Route path="/marketplace"        element={<Marketplace />} />
-      <Route path="/marketplace/:id"    element={<CropDetail />} />
-      <Route path="/marketplace/add"    element={<AddListing />} />
+      <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/marketplace/:id" element={<CropDetail />} />
+      <Route path="/marketplace/add" element={<AddListing />} />
       <Route path="/marketplace/edit/:id" element={<AddListing />} />
 
       <Route path="/mandi" element={<MandiRates />} />
       <Route
         path="/dashboard/farmer"
         element={
-        <PrivateRoute>
-          <RoleRoute role="farmer">
-            <FarmerDashboard />
-          </RoleRoute>
-        </PrivateRoute>
+          <PrivateRoute>
+            <RoleRoute role="farmer">
+              <FarmerDashboard />
+            </RoleRoute>
+          </PrivateRoute>
         }
       />
 
-      <Route path="/recommendations/crop"  element={<CropRecommendation />}   />
+      <Route path="/recommendations/crop" element={<CropRecommendation />} />
       <Route path="/recommendations/water" element={<WaterBasedRecommendation />} />
-      <Route path="/recommendations/seed"  element={<SeedRecommendation />}   />
-      <Route path="/calculators"           element={<Calculators />}          />
+      <Route path="/recommendations/seed" element={<SeedRecommendation />} />
+      <Route path="/calculators" element={<Calculators />} />
 
       <Route path="/admin/*" element={<AdminRoutes />} />
       <Route path="/farmer/*" element={<FarmerRoutes />} />
@@ -100,7 +100,7 @@ export default function AppRoutes() {
 
       <Route path="/ai-assistant" element={<AIAssistant />} />
       {/* ── Crop knowledge */}
-      <Route path="/crop-knowledge"     element={<CropKnowledge />} />
+      <Route path="/crop-knowledge" element={<CropKnowledge />} />
       <Route path="/crop-knowledge/:id" element={<CropKnowledgeDetail />} />
 
       {/* ── Weather  ── */}
@@ -108,11 +108,11 @@ export default function AppRoutes() {
 
       {/* ── News  ── */}
       <Route path="/news" element={<News />} />
-      <Route path="/news/:id" element={<NewsDetail />} /> 
-        
+      <Route path="/news/:id" element={<NewsDetail />} />
+
       {/* ── Schemes  ── */}
       <Route path="/schemes" element={<Schemes />} />
-      <Route path="/schemes/:id" element={<SchemeDetail />} />  
+      <Route path="/schemes/:id" element={<SchemeDetail />} />
 
       {/* ── Donations ── */}
       <Route path="/donations" element={<Donations />} />
@@ -132,11 +132,11 @@ export default function AppRoutes() {
 
       {/* ── Crop Calendar ── */}
       <Route path="/calendar" element={<CropCalendarPage />} />
-      
+
 
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
 
-      </Routes>
+    </Routes>
   );
 }

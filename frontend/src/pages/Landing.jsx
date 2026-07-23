@@ -33,6 +33,8 @@ const POST_CAT_STYLE = {
   "pest-control":{ bg: "#ede9fe", color: "#5b21b6", label: "Pest Control", icon: "🐛" },
 };
 
+const QUICK_LINK_IMG = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80";
+
 // All features of the platform
 const ALL_FEATURES = [
   { to: "/marketplace", icon: "🛒", label: "Marketplace", sub: "Buy & sell crops directly to buyers across India", photo: "/marketplace_photo.png", color: "#0EA5E9", grad: "linear-gradient(135deg, #0EA5E9, #0284C7)", tag: "Trade" },
@@ -478,8 +480,17 @@ export default function Landing() {
             <motion.div key={l.to} variants={scaleIn}>
               <Link to={l.to} className="lp-quick-card lp-spotlight-card" style={{ "--card-color": l.color, "--card-grad": l.grad }}>
                 <div className="lp-spotlight-border"></div>
-                <div className="lp-spotlight-content">
+                <div className="lp-quick-img-wrap">
+                  <img
+                    src={l.photo}
+                    alt={l.label}
+                    className="lp-quick-img"
+                    loading="lazy"
+                  />
+                  <div className="lp-quick-img-overlay" style={{ background: l.grad + "D9" }} />
                   <span className="lp-quick-tag">{l.tag}</span>
+                </div>
+                <div className="lp-spotlight-content">
                   <motion.span className="lp-quick-icon"
                     whileHover={{ scale: 1.25, rotate: 10 }}
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}>
@@ -1571,10 +1582,9 @@ export default function Landing() {
           display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;
         }
         .lp-quick-card {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center; gap: 10px;
-          min-height: 160px; padding: 24px 16px;
-          text-decoration: none;
+          display: flex; flex-direction: column;
+          height: 200px; padding: 0;
+          text-decoration: none; overflow: hidden;
           background: #ffffff;
           border: 1px solid #E2E8F0;
           box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
@@ -1583,33 +1593,54 @@ export default function Landing() {
         .lp-quick-card:hover {
           transform: translateY(-8px);
           box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
-          border-color: transparent; /* Spotlight border takes over */
+          border-color: transparent;
         }
         .lp-spotlight-border {
            position: absolute; inset: 0; border-radius: 16px; padding: 2px;
            background: var(--card-grad, #16A34A);
            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
            -webkit-mask-composite: xor; mask-composite: exclude;
-           opacity: 0; transition: opacity 0.3s;
+           opacity: 0; transition: opacity 0.3s; z-index: 3; pointer-events: none;
         }
         .lp-quick-card:hover .lp-spotlight-border { opacity: 1; }
-        
+
+        /* Image top section — fixed height so all cards align */
+        .lp-quick-img-wrap {
+          position: relative; width: 100%; height: 110px; flex-shrink: 0;
+          overflow: hidden;
+        }
+        .lp-quick-img {
+          width: 100%; height: 100%; object-fit: cover; display: block;
+          transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .lp-quick-card:hover .lp-quick-img { transform: scale(1.1); }
+        .lp-quick-img-overlay {
+          position: absolute; inset: 0; opacity: 0.55;
+          transition: opacity 0.4s;
+        }
+        .lp-quick-card:hover .lp-quick-img-overlay { opacity: 0.35; }
+
         .lp-spotlight-content {
            display: flex; flex-direction: column; align-items: center; justify-content: center;
-           position: relative; z-index: 2; height: 100%; width: 100%;
+           position: relative; z-index: 2; flex: 1; width: 100%;
+           padding: 8px 10px 10px;
+           text-align: center;
         }
 
         .lp-quick-tag {
-          position: absolute; top: -10px; right: -10px; /* adjusted relative to content */
+          position: absolute; top: 8px; right: 8px; z-index: 2;
           font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
           text-transform: uppercase; padding: 4px 8px; border-radius: 100px;
           background: var(--card-color, #16A34A); color: #fff;
           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
-        .lp-quick-icon  { font-size: 32px; margin-bottom: 4px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
-        .lp-quick-label { font-size: 14px; font-weight: 800; color: #0F172A; text-align: center; }
-        .lp-quick-sub   { font-size: 11px; color: #64748B; text-align: center; line-height: 1.4; display: none; margin-top: 4px; }
-        .lp-quick-card:hover .lp-quick-sub { display: block; animation: fadeIn 0.3s ease forwards; }
+        .lp-quick-icon  { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .lp-quick-label { font-size: 12px; font-weight: 800; color: #0F172A; text-align: center; line-height: 1.2; }
+        .lp-quick-sub   {
+          font-size: 10px; color: #64748B; text-align: center; line-height: 1.3;
+          display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+          overflow: hidden; margin-top: 2px;
+        }
         @keyframes fadeIn { from {opacity: 0; transform: translateY(4px);} to {opacity: 1; transform: translateY(0);} }
 
         /* ── Split Sections ──────────────────────────────────────────── */
