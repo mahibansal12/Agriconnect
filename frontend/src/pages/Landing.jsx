@@ -1,4 +1,4 @@
-// src/pages/Landing.jsx  ── Premium UI Enhancements ─────────────────────────
+// src/pages/Landing.jsx   Premium UI Enhancements
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useInView } from "framer-motion";
@@ -7,7 +7,7 @@ import Footer from "../components/common/Footer";
 import { formatPrice, formatDate } from "../utils/formatters";
 import axiosInstance from "../utils/axiosInstance";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+//  Constants
 
 const SCHEME_CATEGORY_ICON = {
   subsidy: "💰",
@@ -63,7 +63,7 @@ const timeAgo = (dateString) => {
   return `${days} day${days !== 1 ? "s" : ""} ago`;
 };
 
-// ─── Animation Variants ───────────────────────────────────────────────────────
+//  Animation Variants
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
@@ -88,7 +88,7 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -60 : 60, opacity: 0, scale: 0.98, filter: "blur(4px)", transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }),
 };
 
-// ─── Scroll Reveal Wrapper ────────────────────────────────────────────────────
+//  Scroll Reveal Wrapper
 function Reveal({ children, className = "", delay = 0, once = true }) {
   return (
     <motion.div
@@ -103,7 +103,7 @@ function Reveal({ children, className = "", delay = 0, once = true }) {
   );
 }
 
-// ─── Auto-Carousel Hook ───────────────────────────────────────────────────────
+//  Auto-Carousel Hook
 function useAutoCarousel(length, interval = 3500) {
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
@@ -146,7 +146,7 @@ function useAutoCarousel(length, interval = 3500) {
   return { idx, dir, go, progress };
 }
 
-// ─── Animated SVG Spark Graph ─────────────────────────────────────────────────
+//  Animated SVG Spark Graph
 function SparkGraph({ color = "#16A34A" }) {
   const pts = [30, 55, 40, 70, 45, 85, 60, 50, 80, 65, 95, 40, 120, 58, 145, 35, 165, 52, 190, 30, 215, 48, 240, 25, 265, 44, 290, 20];
   const pathD = pts.reduce((acc, v, i) => (i % 2 === 0 ? `${acc}${i === 0 ? "M" : " L"}${v},` : `${acc}${100 - v * 0.65}`), "");
@@ -184,7 +184,7 @@ function SparkGraph({ color = "#16A34A" }) {
   );
 }
 
-// ─── Animated Connecting Line (How it works) ──────────────────────────────────
+//  Animated Connecting Line (How it works)
 function AnimatedDashedLine() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -216,7 +216,7 @@ function AnimatedDashedLine() {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+//  Main Component
 export default function Landing() {
   const [weather, setWeather] = useState(null);
   const [locationName, setLocationName] = useState("Detecting location...");
@@ -245,7 +245,7 @@ export default function Landing() {
   const { scrollYProgress: featScroll } = useScroll({ target: featRef, offset: ["start end", "end start"] });
   const featBgY = useTransform(featScroll, [0, 1], [-80, 80]);
 
-  // ── Data Fetching ────────────────────────────────────────────────────────────
+  //  Data Fetching
   useEffect(() => {
     axiosInstance.get("/v1/mandi/rates", { params: { limit: 6, sortBy: "arrivalDate", order: "desc" } })
       .then(res => setMandiRates(res.data?.data?.rates || []))
@@ -314,7 +314,7 @@ export default function Landing() {
   const postAuthorName = currentPost?.author?.name || "Farmer";
   const postAuthorInitial = postAuthorName.trim().charAt(0).toUpperCase();
 
-  // ── Hover Spotlight Effect Logic ─────────────────────────────────────────────
+  //  Hover Spotlight Effect Logic
   const handleMouseMove = (e) => {
     const cards = document.querySelectorAll('.lp-spotlight-card');
     cards.forEach(card => {
@@ -332,14 +332,12 @@ export default function Landing() {
   }, []);
 
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  //  Render
   return (
     <div className="lp">
       <Navbar />
 
-      {/* ══════════════════════════════════════════════════════
-          HERO
-      ══════════════════════════════════════════════════════ */}
+      {/* Hero */}
       <section className="lp-hero" ref={heroRef}>
         <motion.div className="lp-hero-bg-img" style={{ y: heroY, opacity: heroOpacity }}>
           <img src="/hero_farm_bg.png" alt="farm landscape" />
@@ -465,9 +463,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          QUICK LINKS STRIP (Spotlight Glow Cards)
-      ══════════════════════════════════════════════════════ */}
+      {/* Quick Links Strip (spotlight Glow Cards) */}
       <section className="lp-section lp-section--quicklinks">
         <motion.div
           className="lp-quick-grid"
@@ -505,9 +501,7 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          📰 NEWS SECTION  (full-width split)
-      ══════════════════════════════════════════════════════ */}
+      {/* News Section */}
 
 
       <section className="lp-section lp-split-section lp-split-section--marketplace">
@@ -588,9 +582,7 @@ export default function Landing() {
 
 
 
-      {/* ══════════════════════════════════════════════════════
-          FINAL CTA STRIP
-      ══════════════════════════════════════════════════════ */}
+      {/* Final Cta Strip */}
 
       <section className="lp-section lp-split-section lp-split-section--mandi">
         {/* Left — info + graph + rate preview */}
@@ -686,9 +678,7 @@ export default function Landing() {
 
 
 
-      {/* ══════════════════════════════════════════════════════
-          🤖 AI + CROP ADVISOR SPLIT HIGHLIGHT
-      ══════════════════════════════════════════════════════ */}
+      {/* Ai + Crop Advisor Split Highlight */}
       <section className="lp-section lp-split-section lp-split-section--community">
         {/* Left — info + animated carousel */}
         <Reveal className="lp-split-info" delay={0}>
@@ -808,9 +798,7 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          🏛️ SCHEMES SECTION  (full-width split, reversed)
-      ══════════════════════════════════════════════════════ */}
+      {/* ️ Schemes Section */}
       <section className="lp-section lp-split-section lp-split-section--schemes lp-split-section--reverse">
         {/* Left — photo + stats */}
         <Reveal className="lp-split-photo-side" delay={0.15}>
@@ -919,9 +907,7 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          📊 MANDI RATES SECTION  (full-width split)
-      ══════════════════════════════════════════════════════ */}
+      {/* Mandi Rates Section */}
       <section className="lp-section lp-split-section lp-split-section--knowledge">
         <Reveal className="lp-split-info" delay={0}>
           <div className="lp-section-eyebrow lp-section-eyebrow--green">📖 Knowledge Hub</div>
@@ -1050,9 +1036,7 @@ export default function Landing() {
         </Reveal>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          🛒 MARKETPLACE HIGHLIGHT
-      ══════════════════════════════════════════════════════ */}
+      {/* Marketplace Highlight */}
       <section className="lp-section lp-split-section lp-split-section--donations lp-split-section--reverse">
         <Reveal className="lp-split-info" delay={0}>
           <div className="lp-section-eyebrow lp-section-eyebrow--orange">❤️ Community Support</div>
@@ -1104,9 +1088,7 @@ export default function Landing() {
 
 
 
-      {/* ══════════════════════════════════════════════════════
-          🌟 ALL FEATURES SHOWCASE  (photo grid, parallax bg, spotlight)
-      ══════════════════════════════════════════════════════ */}
+      {/* All Features Showcase */}
       <section className="lp-section lp-features-section" ref={featRef}>
         <motion.div className="lp-features-bg" style={{ y: featBgY }}>
           <div className="lp-features-bg-img" />
@@ -1173,9 +1155,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          WEATHER + SHOP FINDER  (2-column CTAs with photos)
-      ══════════════════════════════════════════════════════ */}
+      {/* Weather + Shop Finder */}
       <Reveal className="lp-section lp-section--dual-cta">
         <div className="lp-dual-cta-grid">
           {/* Weather CTA */}
@@ -1269,9 +1249,7 @@ export default function Landing() {
 
       <Footer />
 
-      {/* ══════════════════════════════════════════════════════
-          SCOPED CSS - Premium Enhancements
-      ══════════════════════════════════════════════════════ */}
+      {/* Scoped Css - Premium Enhancements */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -1281,7 +1259,7 @@ export default function Landing() {
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #FBF5E7; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* ── Base ────────────────────────────────────────────────────── */
+        /* Base */
         .lp {
           display: flex; flex-direction: column; min-height: 100vh;
           background: #FBF5E7;
@@ -1314,7 +1292,7 @@ export default function Landing() {
           border-color: rgba(255, 255, 255, 0.4);
         }
 
-        /* ── Spotlight Glow Effect (For Cards) ───────────────────────── */
+        /* Spotlight Glow Effect (For Cards) */
         .lp-spotlight-card {
           position: relative;
           background: rgba(255, 255, 255, 0.8);
@@ -1341,7 +1319,7 @@ export default function Landing() {
         }
         .lp-spotlight-card:hover::before { opacity: 1; }
 
-        /* ── HERO ────────────────────────────────────────────────────── */
+        /* HERO */
         .lp-hero {
           position: relative; overflow: hidden;
           min-height: 38vh;
@@ -1530,7 +1508,7 @@ export default function Landing() {
         .lp-alert-title { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 3px; }
         .lp-alert-sub { font-size: 12px; color: #A7F3D0; font-weight: 500; }
 
-        /* ── Section Wrapper ─────────────────────────────────────────── */
+        /* Section Wrapper */
         .lp-section {
           width: 100%; padding: 50px clamp(20px, 6vw, 100px); box-sizing: border-box;
         }
@@ -1539,7 +1517,7 @@ export default function Landing() {
         .lp-section--dual-cta { background: #FDF4E3; }
         .lp-section--final-cta { background: #FDF4E3; padding-bottom: 100px; }
 
-        /* ── Quick Links Grid ────────────────────────────────────────── */
+        /* Quick Links Grid */
         .lp-quick-grid {
           display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;
         }
@@ -1605,7 +1583,7 @@ export default function Landing() {
         }
         @keyframes fadeIn { from {opacity: 0; transform: translateY(4px);} to {opacity: 1; transform: translateY(0);} }
 
-        /* ── Split Sections ──────────────────────────────────────────── */
+        /* Split Sections */
         .lp-split-section {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -1752,7 +1730,7 @@ export default function Landing() {
         }
         .lp-split-stat-label { font-size: 12px; color: #64748B; margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;}
 
-        /* ── Carousel Box ──────────────────────────────────────────── */
+        /* Carousel Box */
         .lp-carousel-box {
           border-radius: 20px; overflow: hidden; margin-bottom: 24px;
           position: relative; min-height: 200px;
@@ -1835,7 +1813,7 @@ export default function Landing() {
         .lp-dot-btn--active { width: 32px; border-radius: 5px; background: rgba(0,0,0,0.05); }
         .lp-dot-progress { position: absolute; left: 0; top: 0; height: 100%; }
 
-        /* ── Mandi Section Specifics ───────────────────────────────── */
+        /* Mandi Section Specifics */
         .lp-mandi-live-row {
           display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
         }
@@ -1878,7 +1856,7 @@ export default function Landing() {
         .lp-rate-chip-price { font-size: 15px; font-weight: 900; color: #D97706; }
         .lp-rate-chip-skel  { width: 130px; height: 50px; border-radius: 12px; background: #FEF3C7; animation: lp-shimmer 1.5s ease-in-out infinite; }
 
-        /* ── Features Grid Section ─────────────────────────────────── */
+        /* Features Grid Section */
         .lp-features-section {
           position: relative; overflow: hidden;
           background: #022c22; /* Very dark green */
@@ -1960,7 +1938,7 @@ export default function Landing() {
           transition: gap 0.2s;
         }
 
-        /* ── AI Section Specifics ─────────────────────────────────── */
+        /* AI Section Specifics */
         .lp-ai-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
         .lp-ai-chip {
           font-size: 14px; font-weight: 700; color: #4338CA;
@@ -1970,14 +1948,14 @@ export default function Landing() {
           cursor: pointer;
         }
 
-        /* ── Marketplace Section Specifics ────────────────────────── */
+        /* Marketplace Section Specifics */
         .lp-marketplace-features { display: flex; flex-direction: column; gap: 20px; margin-bottom: 32px; }
         .lp-mp-feat { display: flex; align-items: center; gap: 18px; }
         .lp-mp-feat-icon { font-size: 24px; flex-shrink: 0; width: 50px; height: 50px; background: #E0F2FE; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2,132,199,0.1); }
         .lp-mp-feat-title { font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 2px;}
         .lp-mp-feat-sub   { font-size: 14px; color: #64748B; }
 
-        /* ── How It Works ─────────────────────────────────────────── */
+        /* How It Works */
         .lp-how-header { text-align: center; margin-bottom: 60px; }
         .lp-how-line-container { position: absolute; top: 110px; left: 15%; width: 70%; z-index: -1; }
         
@@ -1998,7 +1976,7 @@ export default function Landing() {
         .lp-how-title { font-size: 22px; font-weight: 900; color: #0F172A; margin-bottom: 14px; letter-spacing: -0.02em; }
         .lp-how-desc  { font-size: 15px; color: #475569; line-height: 1.7; }
 
-        /* ── Dual CTA Grid ─────────────────────────────────────────── */
+        /* Dual CTA Grid */
         .lp-dual-cta-grid {
           display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
         }
@@ -2047,7 +2025,7 @@ export default function Landing() {
         }
         .lp-dual-cta-card:hover .lp-dual-cta-btn { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
 
-        /* ── Final CTA ────────────────────────────────────────────── */
+        /* Final CTA */
         .lp-final-cta {
           background: linear-gradient(135deg, #022c22 0%, #065f46 50%, #047857 100%);
           border-radius: 32px; padding: 80px 60px;
@@ -2076,7 +2054,7 @@ export default function Landing() {
         .lp-final-cta-p  { font-size: 20px; color: rgba(255,255,255,0.85); line-height: 1.7; margin: 0 auto 40px; max-width: 600px; font-weight: 400;}
         .lp-final-cta-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
-        /* ── Responsive ───────────────────────────────────────────── */
+        /* Responsive */
         @media (max-width: 1280px) {
           .lp-features-grid { grid-template-columns: repeat(3, 1fr); }
         }
