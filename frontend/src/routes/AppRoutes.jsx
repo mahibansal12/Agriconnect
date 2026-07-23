@@ -136,7 +136,6 @@ import Contact from "../pages/Contact"; export default function AppRoutes() {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
 
-
       {/* ── Catch all ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
 
