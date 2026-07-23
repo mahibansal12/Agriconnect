@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { loadUserFromStorage } from "./redux/slices/authSlice";
 import AppRoutes from "./routes/AppRoutes";
 import FloatingAIAssistant from "./components/common/FloatingAIAssistant";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ export default function App() {
 
   return (
     <>
+      <ScrollToTop />
       <AppRoutes />
       <FloatingAIAssistant />
     </>
