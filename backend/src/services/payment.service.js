@@ -4,7 +4,7 @@ import { razorpayInstance } from "../config/razorpay.js";
 // creates a Razorpay order — frontend uses this to open the payment UI
 const createRazorpayOrder = async (amount) => {
     const options = {
-        amount: amount * 100,       
+        amount: amount * 100,
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
     };
@@ -24,7 +24,32 @@ const verifyPaymentSignature = (razorpayOrderId, razorpayPaymentId, signature) =
         .update(body)
         .digest("hex");
 
-    return expectedSignature === signature;
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(expectedSignature, "hex"),
+            Buffer.from(signature, "hex")
+        );
+    } catch {
+        return false;
+    }
+};
+
+const verifyWebhookSignature = (rawBody, signature) => {
+    if (!signature) return false;
+
+    const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
+        .update(rawBody)
+        .digest("hex");
+
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(expectedSignature, "hex"),
+            Buffer.from(signature, "hex")
+        );
+    } catch {
+        return false;
+    }
 };
 
 // issues a full refund for a captured Razorpay payment
@@ -38,4 +63,4 @@ const createRazorpayRefund = async (paymentId, amountInRupees) => {
     return refund;
 };
 
-export { createRazorpayOrder, verifyPaymentSignature, createRazorpayRefund };
+export { createRazorpayOrder, verifyPaymentSignature, createRazorpayRefund, verifyWebhookSignature };

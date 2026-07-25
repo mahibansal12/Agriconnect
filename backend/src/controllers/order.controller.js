@@ -8,6 +8,7 @@ import {
     createRazorpayOrder,
     verifyPaymentSignature,
     createRazorpayRefund,
+    verifyWebhookSignature,
 } from "../services/payment.service.js";
 import { PLATFORM_COMMISSION_PERCENT } from "../constants.js";
 import {
@@ -263,7 +264,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
     order.orderStatus = orderStatus;
     if (orderStatus === "confirmed") order.confirmedAt = new Date();
-    if (orderStatus === "shipped")   order.shippedAt   = new Date();
+    if (orderStatus === "shipped") order.shippedAt = new Date();
     if (orderStatus === "delivered") order.deliveredAt = new Date();
     await order.save({ validateBeforeSave: false });
 
@@ -321,11 +322,11 @@ const cancelOrder = asyncHandler(async (req, res) => {
             );
 
             order.razorpayRefundId = refund.id;
-            order.refundStatus    = "initiated";
-            order.refundAmount    = order.totalPrice;
-            order.refundedAt      = new Date();
-            order.paymentStatus   = "refunded";
-            refundInitiated       = true;
+            order.refundStatus = "initiated";
+            order.refundAmount = order.totalPrice;
+            order.refundedAt = new Date();
+            order.paymentStatus = "refunded";
+            refundInitiated = true;
         } catch (refundErr) {
             // Refund API call failed — log it and mark as failed so admin
             // can manually process it via Razorpay dashboard.
@@ -352,11 +353,11 @@ const cancelOrder = asyncHandler(async (req, res) => {
             }
             if (order.buyer?.email) {
                 await sendRefundEmail(order.buyer.email, order.buyer.name, {
-                    cropName:     order.cropName,
-                    quantity:     order.quantity,
-                    unit:         order.unit,
+                    cropName: order.cropName,
+                    quantity: order.quantity,
+                    unit: order.unit,
                     refundAmount: order.totalPrice,
-                    refundId:     order.razorpayRefundId,
+                    refundId: order.razorpayRefundId,
                 });
             }
         }
@@ -371,10 +372,53 @@ const cancelOrder = asyncHandler(async (req, res) => {
             refundInitiated
                 ? `Order cancelled. Refund of ₹${order.totalPrice} initiated — it will reach your payment source in 5-7 business days.`
                 : order.paymentStatus === "pending"
-                ? "Order cancelled successfully (no payment was made)."
-                : "Order cancelled. Refund initiation failed — please contact support."
+                    ? "Order cancelled successfully (no payment was made)."
+                    : "Order cancelled. Refund initiation failed — please contact support."
         )
     );
+});
+
+const handleRazorpayWebhook = asyncHandler(async (req, res) => {
+    const signature = req.headers["x-razorpay-signature"];
+    const isValid = verifyWebhookSignature(req.body, signature);
+
+    if (!isValid) {
+        throw new ApiError(400, "Invalid webhook signature");
+    }
+
+    const event = JSON.parse(req.body.toString());
+
+    if (event.event === "payment.captured") {
+        const payment = event.payload?.payment?.entity;
+        if (payment?.order_id) {
+            const order = await Order.findOne({ razorpayOrderId: payment.order_id });
+
+            if (order && order.paymentStatus === "pending") {
+                order.razorpayPaymentId = payment.id;
+                order.paymentStatus = "paid";
+                order.orderStatus = "placed";
+                await order.save({ validateBeforeSave: false });
+
+                await CropListing.findByIdAndUpdate(order.listing, {
+                    $inc: { quantity: -order.quantity },
+                });
+            }
+        }
+    }
+
+    if (event.event === "refund.processed") {
+        const refund = event.payload?.refund?.entity;
+        if (refund?.payment_id) {
+            const order = await Order.findOne({ razorpayPaymentId: refund.payment_id });
+
+            if (order && order.refundStatus !== "processed") {
+                order.refundStatus = "processed";
+                await order.save({ validateBeforeSave: false });
+            }
+        }
+    }
+
+    return res.status(200).json({ status: "ok" });
 });
 
 export {
@@ -385,4 +429,5 @@ export {
     getOrderById,
     updateOrderStatus,
     cancelOrder,
+    handleRazorpayWebhook,
 };
