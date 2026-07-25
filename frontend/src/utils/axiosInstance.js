@@ -1,8 +1,11 @@
 import axios from "axios";
 
-// Base URL — vite proxy forwards /api → http://localhost:5000 in dev
+// Base URL — uses VITE_API_URL in production, falls back to Vite's
+// dev-server proxy path in local development.
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 const axiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: `${API_BASE}/api`,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -39,7 +42,10 @@ axiosInstance.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          const { data } = await axios.post("/api/v1/user/refresh-token", { refreshToken });
+          const { data } = await axios.post(
+            `${API_BASE}/api/v1/user/refresh-token`,
+            { refreshToken }
+          );
           const newAccessToken = data?.data?.accessToken;
           const newRefreshToken = data?.data?.refreshToken;
           if (newAccessToken) {
