@@ -1,20 +1,29 @@
+// NEW
 import express from 'express';
 import cors from "cors";
 import cookieParser from "cookie-parser"
-import {apiLimiter} from "./middlewares/rateLimiter.middleware.js"
+import { apiLimiter } from "./middlewares/rateLimiter.middleware.js"
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { handleRazorpayWebhook } from "./controllers/order.controller.js";
 
 const app = express();
 
 app.use(cors({
-    origin : process.env.CORS_ORIGIN,
-    credentials : true
+    origin: process.env.CORS_ORIGIN,
+    credentials: true
 }));
 
 app.use(apiLimiter);
+
+app.post(
+    "/api/v1/orders/webhook",
+    express.raw({ type: "application/json" }),
+    handleRazorpayWebhook
+);
+
 //app.use(express.json());
 app.use(express.json({
-    limit : '14kb'
+    limit: '14kb'
 }));
 
 app.use(express.urlencoded({ extended: true, limit: '14kb' }));
@@ -30,7 +39,7 @@ import pestRoutes from "./routes/pest.routes.js"
 import shopRoutes from "./routes/shop.routes.js"
 import donationRoutes from "./routes/donation.routes.js"
 import donationRequestRoutes from "./routes/donationRequest.routes.js"
-import  cropListingRouter from "./routes/cropListing.routes.js"
+import cropListingRouter from "./routes/cropListing.routes.js"
 import weatherRoutes from "./routes/weather.routes.js"
 import mandiRouter from "./routes/mandiRate.routes.js";
 import orderRouter from "./routes/order.routes.js"
@@ -54,13 +63,13 @@ app.use("/api/v1/donation-requests", donationRequestRoutes)
 app.use("/api/v1/listing", cropListingRouter)
 app.use("/api/v1/weather", weatherRoutes)
 app.use("/api/v1/mandi", mandiRouter);
-app.use("/api/v1/orders",orderRouter)
+app.use("/api/v1/orders", orderRouter)
 app.use("/api/v1/recommend", recommendationRouter)
-app.use("/api/v1/ai",aiRouter)
+app.use("/api/v1/ai", aiRouter)
 app.use("/api/v1/community", communityRoutes)
 app.use("/api/v1/admin", adminRouter)
 
-app.use(errorHandler); 
+app.use(errorHandler);
 
 
-export  { app };
+export { app };
