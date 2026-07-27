@@ -15,7 +15,16 @@ let socketInstance = null;
 
 const getSocket = () => {
   if (!socketInstance) {
-    socketInstance = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL;
+
+    if (!socketUrl && import.meta.env.DEV) {
+      console.warn(
+        '[useSocket] VITE_SOCKET_URL is not set — falling back to same-origin. ' +
+        'Set VITE_SOCKET_URL in your .env file for local development.'
+      );
+    }
+
+    socketInstance = io(socketUrl || window.location.origin, {
       withCredentials: true,
       autoConnect: true,
       reconnection: true,
